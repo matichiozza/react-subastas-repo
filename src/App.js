@@ -11,7 +11,7 @@ import PrivateRoute from './components/PrivateRoute';
 const Home = () => (
   <div>
     <h1>Bienvenido a la App</h1>
-    <p>Contenido públicoo</p>
+    <p>Contenido público</p>
   </div>
 );
 
