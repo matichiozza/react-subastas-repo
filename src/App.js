@@ -1,24 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Login from './components/Login';
+import Register from './components/Register';
+import MiCuenta from './components/MiCuenta';
+import MisPublicaciones from './components/MisPublicaciones';
+import PrivateRoute from './components/PrivateRoute';
+
+// Componente de inicio
+const Home = () => (
+  <div>
+    <h1>Bienvenido a la App</h1>
+    <p>Contenido público</p>
+  </div>
+);
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Navbar /> {/* Agregamos el Navbar en la parte superior de la aplicación */}
+      <Routes>
+        {/* Ruta pública */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Rutas protegidas */}
+        <Route
+          path="/cuenta"
+          element={
+            <PrivateRoute>
+              <MiCuenta />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/publicaciones"
+          element={
+            <PrivateRoute>
+              <MisPublicaciones />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
