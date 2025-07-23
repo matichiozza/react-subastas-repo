@@ -100,19 +100,58 @@ const TodasPublicaciones = () => {
             <div className="row g-4">
               {publicacionesFiltradas.slice(0, 8).map((pub, idx) => (
                 <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={pub.id || idx}>
-                  <div className="card h-100 shadow-sm p-3" style={{ border: '1.5px solid #ececf3', minHeight: 220 }}>
-                    {pub.imagenes && pub.imagenes.length > 0 && (
-                      <div className="mb-2 text-center">
-                        <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 10, objectFit: 'cover' }} />
+                  <div className="card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
+                    {/* Imagen principal */}
+                    {pub.imagenes && pub.imagenes.length > 0 ? (
+                      <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ) : (
+                      <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
+                        <span role="img" aria-label="sin imagen">🖼️</span>
                       </div>
                     )}
-                    <div className="mb-2" style={{ fontSize: '0.95em', color: '#888' }}>
-                      {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : ''}
+                    <div className="p-2 d-flex flex-column justify-content-between h-100">
+                      {/* Categoría y condición */}
+                      <div className="d-flex align-items-center mb-1 gap-2">
+                        <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
+                        <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
+                        {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
+                      </div>
+                      {/* Título */}
+                      <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
+                      {/* Descripción corta */}
+                      <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
+                      {/* Precio y ofertas */}
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <div style={{ fontWeight: 600, color: '#5a48f6', fontSize: '0.98em' }}>
+                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${pub.precioActual}` : `Inicial: $${pub.precioInicial}`}
+                        </div>
+                        <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
+                      </div>
+                      {/* Fecha de finalización */}
+                      <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
+                        <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
+                      </div>
+                      {/* Usuario */}
+                      <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
+                        {pub.usuario?.fotoPerfil ? (
+                          <img src={`http://localhost:8080${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                        ) : (
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
+                            <span role="img" aria-label="user">👤</span>
+                          </div>
+                        )}
+                        <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
+                          <span className="fw-semibold">{pub.usuario?.nombre || pub.usuario?.username || 'Usuario'}</span>
+                          <span style={{ color: '#888', fontSize: '0.85em' }}>{[pub.usuario?.ciudad, pub.usuario?.pais].filter(Boolean).join(', ')}</span>
+                        </div>
+                      </div>
+                      {/* Botón de ver detalles */}
+                      <div className="d-grid mt-2">
+                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#5a48f6', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }}>Ver detalles</button>
+                      </div>
                     </div>
-                    <h6 className="fw-bold mb-1" style={{ color: '#5a48f6' }}>{pub.titulo}</h6>
-                    <div className="mb-1" style={{ fontSize: '0.98em' }}>{pub.descripcion}</div>
-                    <div className="mb-2" style={{ fontWeight: 500 }}>Precio inicial: <span style={{ color: '#3a2bb7' }}>${pub.precioInicial}</span></div>
-                    <div className="mb-2" style={{ fontSize: '0.95em', color: '#555' }}>Usuario: <span className="fw-semibold">{pub.usuario?.username}</span></div>
                   </div>
                 </div>
               ))}
