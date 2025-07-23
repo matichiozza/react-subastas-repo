@@ -1,0 +1,101 @@
+body {
+  background: #fffbe6;
+  color: #222;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  min-height: 100vh;
+  background: #f7f8fa;
+  display: flex;
+  flex-direction: column;
+  padding-top: 70px; /* Espacio para el navbar fijo */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #222;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.5px;
+}
+
+a {
+  color: #5a48f6;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #3a2bb7;
+}
+
+button, .btn {
+  background: linear-gradient(90deg, #5a48f6 0%, #7b6cf6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.5em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(90, 72, 246, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+button:hover, .btn:hover {
+  background: linear-gradient(90deg, #3a2bb7 0%, #5a48f6 100%);
+  box-shadow: 0 4px 16px rgba(90, 72, 246, 0.15);
+}
+
+input, select, textarea {
+  background: #fff;
+  color: #222;
+  border: 1px solid #e0e2e7;
+  border-radius: 7px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-size: 1em;
+  transition: border 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border: 1.5px solid #5a48f6;
+  outline: none;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(90, 72, 246, 0.07);
+  padding: 2em;
+  margin: 1.5em 0;
+  border: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e0e2e7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c7c9d3;
+  border-radius: 4px;
+}
+
+.carousel-inner img {
+  border-radius: 16px;
+}
+
+.lead {
+  color: #444;
+  font-size: 1.2em;
+}
+
+.alert-info {
+  background: #f0f4ff;
+  color: #3a2bb7;
+  border: none;
+}
