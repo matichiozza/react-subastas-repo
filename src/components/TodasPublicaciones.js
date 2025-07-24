@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const categorias = [
   'Electrónica',
@@ -29,6 +30,7 @@ const TodasPublicaciones = () => {
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPublicaciones = async () => {
@@ -149,7 +151,7 @@ const TodasPublicaciones = () => {
                       </div>
                       {/* Botón de ver detalles */}
                       <div className="d-grid mt-2">
-                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#5a48f6', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }}>Ver detalles</button>
+                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#5a48f6', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
                       </div>
                     </div>
                   </div>
