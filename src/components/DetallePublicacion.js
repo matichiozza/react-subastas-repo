@@ -19,15 +19,20 @@ const DetallePublicacion = () => {
   const stompClientRef = useRef(null);
 
   useEffect(() => {
+    if (!token) return;
     const fetchPublicacion = async () => {
       setLoading(true);
       setError(null);
       try {
+        console.log("Token usado en fetch publicación:", token);
         const res = await fetch(`http://localhost:8080/publicaciones/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+        console.log("Respuesta de detalle:", res);
+        console.log("Status:", res.status);
+        const data = await res.json().catch(() => null);
+        console.log("Data publicación:", data);
         if (!res.ok) throw new Error('No se pudo cargar la publicación');
-        const data = await res.json();
         setPublicacion(data);
       } catch (err) {
         setError(err.message);
@@ -39,18 +44,24 @@ const DetallePublicacion = () => {
   }, [id, token]);
 
   useEffect(() => {
+    if (!token) return;
     const fetchOfertas = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`);
-        if (!res.ok) throw new Error('No se pudo cargar el historial de ofertas');
-        const data = await res.json();
+        console.log("Token usado en fetch ofertas:", token);
+        const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        console.log("Respuesta de ofertas:", res);
+        console.log("Status:", res.status);
+        const data = await res.json().catch(() => null);
+        console.log("Data ofertas:", data);
         setOfertas(data);
       } catch {
         setOfertas([]);
       }
     };
     fetchOfertas();
-  }, [id, mensaje]); // Refresca historial tras ofertar
+  }, [id, mensaje, token]); // Refresca historial tras ofertar
 
   useEffect(() => {
     // Conexión WebSocket solo cuando hay id
