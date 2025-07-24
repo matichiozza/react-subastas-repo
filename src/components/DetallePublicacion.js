@@ -17,6 +17,9 @@ const DetallePublicacion = () => {
   const [imgSeleccionada, setImgSeleccionada] = useState(0);
   const navigate = useNavigate();
   const stompClientRef = useRef(null);
+  const [zoom, setZoom] = useState({ visible: false, x: 0, y: 0 });
+  const [zoomEnabled, setZoomEnabled] = useState(false);
+  const imgContainerRef = useRef(null);
 
   useEffect(() => {
     if (!token) return;
@@ -166,14 +169,87 @@ const DetallePublicacion = () => {
         </div>
         {/* Imagen principal y descripción */}
         <div className="col-lg-6 mb-4 col-md-7">
-          <div className="card p-3 mb-3 mt-0" style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            className="card p-3 mb-3 mt-0 position-relative"
+            style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
+            ref={imgContainerRef}
+          >
+            {/* Icono de lupa en la esquina superior derecha */}
+            <button
+              type="button"
+              aria-label={zoomEnabled ? 'Desactivar lupa' : 'Activar lupa'}
+              onClick={() => {
+                setZoomEnabled(z => !z);
+                setZoom(z => ({ ...z, visible: false }));
+              }}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 16,
+                zIndex: 99,
+                background: zoomEnabled ? 'rgba(25,118,210,0.95)' : 'rgba(255,255,255,0.92)',
+                color: zoomEnabled ? '#fff' : '#1976d2',
+                border: '2px solid #1976d2',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 16px rgba(25,118,210,0.18)',
+                cursor: 'pointer',
+                transition: 'background 0.2s, color 0.2s',
+                fontSize: 16,
+              }}
+            >
+              {zoomEnabled ? (
+                <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>×</span>
+              ) : (
+                <span style={{ fontSize: 16, lineHeight: 1 }}>🔍</span>
+              )}
+            </button>
             {publicacion.imagenes && publicacion.imagenes.length > 0 ? (
-              <img
-                src={`http://localhost:8080${publicacion.imagenes[imgSeleccionada]}`}
-                alt={`Imagen ${imgSeleccionada + 1}`}
-                className="img-fluid"
-                style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 12, maxWidth: '100%' }}
-              />
+              <div
+                style={{ position: 'relative', display: 'inline-block' }}
+                onMouseMove={e => {
+                  if (!zoomEnabled) return;
+                  const rect = imgContainerRef.current.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  setZoom({ visible: true, x, y });
+                }}
+                onMouseLeave={() => setZoom(z => ({ ...z, visible: false }))}
+                className={zoom.visible && zoomEnabled ? 'lupa-activa' : ''}
+              >
+                <img
+                  src={`http://localhost:8080${publicacion.imagenes[imgSeleccionada]}`}
+                  alt={`Imagen ${imgSeleccionada + 1}`}
+                  className="img-fluid"
+                  style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 12, maxWidth: '100%', display: 'block' }}
+                />
+                {/* Lupa de zoom */}
+                {zoomEnabled && zoom.visible && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      pointerEvents: 'none',
+                      left: zoom.x - 90,
+                      top: zoom.y - 90,
+                      width: 180,
+                      height: 180,
+                      borderRadius: '50%',
+                      border: '2.5px solid #1976d2',
+                      boxShadow: '0 4px 16px rgba(25,118,210,0.18)',
+                      backgroundImage: `url(http://localhost:8080${publicacion.imagenes[imgSeleccionada]})`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '320% 320%',
+                      backgroundPosition: `${((zoom.x / rectWidth(imgContainerRef)) * 100).toFixed(2)}% ${((zoom.y / rectHeight(imgContainerRef)) * 100).toFixed(2)}%`,
+                      zIndex: 10,
+                      borderColor: '#1976d2',
+                    }}
+                  />
+                )}
+              </div>
             ) : (
               <div className="d-flex align-items-center justify-content-center" style={{ height: 220, color: '#bbb', fontSize: 48 }}>
                 <span role="img" aria-label="sin imagen">🖼️</span>
@@ -251,15 +327,37 @@ const DetallePublicacion = () => {
               <div className="text-muted">No hay ofertas aún.</div>
             ) : (
               <ul className="list-group list-group-flush">
-                {ofertas.map((of, idx) => (
-                  <li key={of.id} className="list-group-item d-flex align-items-center justify-content-between" style={{ background: 'none', border: 'none', borderBottom: '1px solid #ececf3' }}>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fw-semibold" style={{ color: '#1976d2' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
-                      <span className="badge bg-light text-dark border ms-2" style={{ fontSize: '0.92em' }}>{of.fecha}</span>
-                    </div>
-                    <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.08em' }}>${of.monto}</span>
-                  </li>
-                ))}
+                {ofertas
+                  .slice()
+                  .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                  .map((of) => {
+                    let fecha = '';
+                    let hora = '';
+                    if (of.fecha) {
+                      const d = new Date(of.fecha);
+                      if (!isNaN(d)) {
+                        fecha = d.toLocaleDateString();
+                        hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      } else {
+                        fecha = of.fecha;
+                      }
+                    }
+                    return (
+                      <li
+                        key={of.id}
+                        className="list-group-item px-3 py-3"
+                        style={{ background: 'none', border: 'none', borderBottom: '1px solid #ececf3' }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center flex-wrap" style={{ rowGap: 6 }}>
+                          <span className="fw-semibold" style={{ color: '#1976d2', fontSize: '1.04em', maxWidth: '60vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
+                          <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.13em', minWidth: 80, textAlign: 'right' }}>${of.monto}</span>
+                        </div>
+                        <div className="mt-1" style={{ color: '#888', fontSize: '0.97em', letterSpacing: 0.2 }}>
+                          {fecha} {hora && <span style={{ marginLeft: 10 }}>{hora}</span>}
+                        </div>
+                      </li>
+                    );
+                  })}
               </ul>
             )}
           </div>
@@ -268,5 +366,18 @@ const DetallePublicacion = () => {
     </div>
   );
 };
+
+// Helpers para obtener el tamaño del contenedor de la imagen
+function rectWidth(ref) {
+  return ref.current ? ref.current.offsetWidth : 1;
+}
+function rectHeight(ref) {
+  return ref.current ? ref.current.offsetHeight : 1;
+}
+
+// CSS para ocultar el cursor cuando la lupa está activa
+const style = document.createElement('style');
+style.innerHTML = `.lupa-activa { cursor: none !important; }`;
+document.head.appendChild(style);
 
 export default DetallePublicacion; 
