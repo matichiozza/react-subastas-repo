@@ -18,7 +18,9 @@ const Navbar = () => {
 
   const handleBuscar = (e) => {
     e.preventDefault();
-    if (busqueda.trim()) {
+    if (!busqueda.trim()) {
+      navigate('/publicaciones');
+    } else {
       navigate(`/publicaciones?busqueda=${encodeURIComponent(busqueda)}`);
     }
   };
@@ -54,7 +56,7 @@ const Navbar = () => {
       <div className="container-fluid" style={{ maxWidth: 1300, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Columna 1: Logo */}
         <div style={{ flex: '0 0 auto' }}>
-          <Link className="navbar-brand fw-bold me-3" to="/" style={{ color: '#5a48f6', fontSize: '1.3em', letterSpacing: '-1px', padding: 0 }}>
+          <Link className="navbar-brand fw-bold me-3" to="/" style={{ color: '#1976d2', fontSize: '1.3em', letterSpacing: '-1px', padding: 0 }}>
             <span style={{ fontWeight: 700 }}>Subastas</span><span style={{ color: '#222', fontWeight: 400 }}>Corp</span>
           </Link>
         </div>
@@ -64,13 +66,13 @@ const Navbar = () => {
             <input
               className="form-control me-2"
               type="search"
-              placeholder="Buscar productos, categorías..."
+              placeholder="Buscar productos..."
               aria-label="Buscar"
               style={{ borderRadius: 20, fontSize: '0.98em', background: '#f7f8fa', border: '1.5px solid #ececf3', boxShadow: 'none', paddingLeft: 18 }}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, boxShadow: 'none', background: '#5a48f6', border: 'none' }}>
+            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
               <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
             </button>
           </form>
@@ -100,39 +102,51 @@ const Navbar = () => {
                     value={busqueda}
                     onChange={e => setBusqueda(e.target.value)}
                   />
-                  <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, boxShadow: 'none', background: '#5a48f6', border: 'none' }}>
+                  <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
                     <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
                   </button>
                 </form>
               </li>
               <li className="nav-item mb-2 mb-lg-0">
                 <button
-                  className="nav-link btn btn-link"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none' }}
+                  className="nav-link btn"
+                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
                   onClick={handleVender}
                   type="button"
+                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                 >
-                  <span role="img" aria-label="vender">📤</span> Vender
+                  Vender
                 </button>
               </li>
               <li className="nav-item mb-2 mb-lg-0">
                 <button
-                  className="nav-link btn btn-link"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none' }}
+                  className="nav-link btn"
+                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
                   onClick={handleComprar}
                   type="button"
+                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                 >
-                  <span role="img" aria-label="comprar">🛒</span> Comprar
+                  Comprar
                 </button>
               </li>
               <li className="nav-item mb-2 mb-lg-0">
                 <button
-                  className="nav-link btn btn-link"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none' }}
+                  className="nav-link btn"
+                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
                   onClick={handleCategorias}
                   type="button"
+                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                 >
-                  <span role="img" aria-label="categorias">📂</span> Categorías
+                  Categorías
                 </button>
               </li>
               {/* Botón de cuenta, igual para logueado y no logueado */}
@@ -148,11 +162,11 @@ const Navbar = () => {
                   type="button"
                   aria-label={user ? 'Cuenta' : 'Ingresar'}
                 >
-                  <BsPersonCircle size={26} color="#7b6cf6" />
+                  <BsPersonCircle size={26} color="#2196f3" />
                 </button>
                 {/* Menú desplegable solo si está logueado */}
                 {user && menuOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(90,72,246,0.08)', zIndex: 1000 }}>
+                  <div style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(25,118,210,0.08)', zIndex: 1000 }}>
                     <Link to="/micuenta" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mi cuenta</Link>
                     <Link to="/mispublicaciones" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mis publicaciones</Link>
                     <Link to="/micuenta" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mis datos personales</Link>
@@ -174,7 +188,7 @@ const Navbar = () => {
           left: 0,
           right: 0,
           background: '#fff',
-          boxShadow: '0 8px 32px rgba(90,72,246,0.10)',
+          boxShadow: '0 8px 32px rgba(25,118,210,0.10)',
           zIndex: 2000,
           padding: '1.2em 1.2em 1em 1.2em',
           borderBottomLeftRadius: 18,
@@ -188,13 +202,13 @@ const Navbar = () => {
             <input
               className="form-control me-2"
               type="search"
-              placeholder="Buscar productos, categorías..."
+              placeholder="Buscar productos..."
               aria-label="Buscar"
               style={{ borderRadius: 20, fontSize: '0.98em', background: '#f7f8fa', border: '1.5px solid #ececf3', boxShadow: 'none', paddingLeft: 18 }}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, boxShadow: 'none', background: '#5a48f6', border: 'none' }}>
+            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
               <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
             </button>
           </form>
@@ -220,7 +234,7 @@ const Navbar = () => {
                 type="button"
                 aria-label="Cuenta"
               >
-                <BsPersonCircle size={26} color="#7b6cf6" />
+                <BsPersonCircle size={26} color="#2196f3" />
               </button>
             </>
           ) : (
@@ -231,7 +245,7 @@ const Navbar = () => {
               type="button"
               aria-label="Ingresar"
             >
-              <BsPersonCircle size={26} color="#7b6cf6" />
+              <BsPersonCircle size={26} color="#2196f3" />
             </button>
           )}
         </div>

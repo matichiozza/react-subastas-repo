@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const categorias = [
   'Electrónica',
@@ -31,6 +31,11 @@ const TodasPublicaciones = () => {
   const [loading, setLoading] = useState(true);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Obtener parámetro de búsqueda de la URL
+  const params = new URLSearchParams(location.search);
+  const busqueda = params.get('busqueda')?.toLowerCase() || '';
 
   useEffect(() => {
     const fetchPublicaciones = async () => {
@@ -51,9 +56,17 @@ const TodasPublicaciones = () => {
     fetchPublicaciones();
   }, [token]);
 
-  const publicacionesFiltradas = categoriaSeleccionada
-    ? publicaciones.filter(pub => (pub.categoria || '').toLowerCase() === categoriaSeleccionada.toLowerCase())
-    : publicaciones;
+  // Filtrado por categoría y búsqueda
+  let publicacionesFiltradas = publicaciones;
+  if (categoriaSeleccionada) {
+    publicacionesFiltradas = publicacionesFiltradas.filter(pub => (pub.categoria || '').toLowerCase() === categoriaSeleccionada.toLowerCase());
+  }
+  if (busqueda) {
+    publicacionesFiltradas = publicacionesFiltradas.filter(pub =>
+      (pub.titulo && pub.titulo.toLowerCase().includes(busqueda)) ||
+      (pub.descripcion && pub.descripcion.toLowerCase().includes(busqueda))
+    );
+  }
 
   return (
     <div className="container py-4">
@@ -61,7 +74,7 @@ const TodasPublicaciones = () => {
         {/* Filtros laterales */}
         <div className="col-lg-3 mb-4">
           <div className="card p-3">
-            <h6 className="mb-3" style={{ color: '#5a48f6', fontWeight: 700 }}>Categorías</h6>
+            <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>Categorías</h6>
             <ul className="list-unstyled mb-0">
               <li className={`d-flex align-items-center mb-2${categoriaSeleccionada === '' ? ' fw-bold' : ''}`} style={{ fontSize: '1.05em', cursor: 'pointer' }} onClick={() => setCategoriaSeleccionada('')}>
                 <span style={{ marginRight: 8 }}>🔎</span>
@@ -126,7 +139,7 @@ const TodasPublicaciones = () => {
                       <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
                       {/* Precio y ofertas */}
                       <div className="d-flex align-items-center justify-content-between mb-1">
-                        <div style={{ fontWeight: 600, color: '#5a48f6', fontSize: '0.98em' }}>
+                        <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
                           {pub.precioActual && pub.precioActual > 0 ? `Actual: $${pub.precioActual}` : `Inicial: $${pub.precioInicial}`}
                         </div>
                         <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
@@ -151,7 +164,7 @@ const TodasPublicaciones = () => {
                       </div>
                       {/* Botón de ver detalles */}
                       <div className="d-grid mt-2">
-                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#5a48f6', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
+                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#1976d2', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
                       </div>
                     </div>
                   </div>
@@ -164,7 +177,7 @@ const TodasPublicaciones = () => {
       {/* Info proyecto */}
       <div className="row mt-5 mb-2">
         <div className="col-12 col-lg-10 mx-auto text-center">
-          <h5 className="mb-3" style={{ color: '#5a48f6', fontWeight: 700 }}>¿Qué es SubastasCorp?</h5>
+          <h5 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>¿Qué es SubastasCorp?</h5>
           <p className="lead">SubastasCorp es una plataforma moderna y profesional para gestionar subastas online. Regístrate, publica tus productos, haz ofertas y encuentra oportunidades únicas. ¡Disfruta de una experiencia segura y fácil de usar!</p>
         </div>
       </div>

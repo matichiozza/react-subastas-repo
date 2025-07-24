@@ -82,7 +82,7 @@ const Home = () => {
         {/* Filtros laterales */}
         <div className="col-lg-3 mb-4">
           <div className="card p-3 mb-4">
-            <h6 className="mb-3" style={{ color: '#5a48f6', fontWeight: 700 }}>Eventos</h6>
+            <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>Eventos</h6>
             {tiposEvento.map(tipo => (
               <div className="form-check mb-2" key={tipo.value}>
                 <input
@@ -101,7 +101,7 @@ const Home = () => {
             ))}
           </div>
           <div className="card p-3">
-            <h6 className="mb-3" style={{ color: '#5a48f6', fontWeight: 700 }}>Categorías</h6>
+            <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>Categorías</h6>
             <ul className="list-unstyled mb-0">
               {categoriasEjemplo.map(cat => (
                 <li key={cat.nombre} className="d-flex align-items-center mb-2" style={{ fontSize: '1.05em' }}>
@@ -117,7 +117,7 @@ const Home = () => {
         <div className="col-lg-9">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">Destacados del día</h4>
-            <span style={{ color: '#5a48f6', fontWeight: 500, cursor: 'pointer' }}>Ver todos los eventos</span>
+            <span style={{ color: '#1976d2', fontWeight: 500, cursor: 'pointer' }}>Ver todos los eventos</span>
           </div>
           {loading ? (
             <div>Cargando...</div>
@@ -131,9 +131,9 @@ const Home = () => {
                     <div className="mb-2" style={{ fontSize: '0.95em', color: '#888' }}>
                       {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : ''}
                     </div>
-                    <h6 className="fw-bold mb-1" style={{ color: '#5a48f6' }}>{pub.titulo}</h6>
+                    <h6 className="fw-bold mb-1" style={{ color: '#1976d2' }}>{pub.titulo}</h6>
                     <div className="mb-1" style={{ fontSize: '0.98em' }}>{pub.descripcion}</div>
-                    <div className="mb-2" style={{ fontWeight: 500 }}>Precio inicial: <span style={{ color: '#3a2bb7' }}>${pub.precioInicial}</span></div>
+                    <div className="mb-2" style={{ fontWeight: 500 }}>Precio inicial: <span style={{ color: '#1565c0' }}>${pub.precioInicial}</span></div>
                     <div className="mb-2" style={{ fontSize: '0.95em', color: '#555' }}>Usuario: <span className="fw-semibold">{pub.usuario?.username}</span></div>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ const Home = () => {
       {/* Info proyecto */}
       <div className="row mt-5 mb-2">
         <div className="col-12 col-lg-10 mx-auto text-center">
-          <h5 className="mb-3" style={{ color: '#5a48f6', fontWeight: 700 }}>¿Qué es SubastasCorp?</h5>
+          <h5 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>¿Qué es SubastasCorp?</h5>
           <p className="lead">SubastasCorp es una plataforma moderna y profesional para gestionar subastas online. Regístrate, publica tus productos, haz ofertas y encuentra oportunidades únicas. ¡Disfruta de una experiencia segura y fácil de usar!</p>
         </div>
       </div>

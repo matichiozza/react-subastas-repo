@@ -68,9 +68,9 @@ const MisPublicaciones = () => {
                   <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-success' : 'bg-secondary'}`} style={{ fontSize: '0.9em' }}>{pub.estado || 'Sin estado'}</span>
                   <span style={{ fontSize: '0.95em', color: '#888' }}>{pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : ''}</span>
                 </div>
-                <h6 className="fw-bold mb-1" style={{ color: '#5a48f6' }}>{pub.titulo}</h6>
+                <h6 className="fw-bold mb-1" style={{ color: '#1976d2' }}>{pub.titulo}</h6>
                 <div className="mb-1" style={{ fontSize: '0.98em' }}>{pub.descripcion}</div>
-                <div className="mb-2" style={{ fontWeight: 500 }}>Precio inicial: <span style={{ color: '#3a2bb7' }}>${pub.precioInicial}</span></div>
+                <div className="mb-2" style={{ fontWeight: 500 }}>Precio inicial: <span style={{ color: '#1565c0' }}>${pub.precioInicial}</span></div>
                 <div className="d-flex gap-2 mt-auto">
                   <button className="btn btn-outline-primary btn-sm" style={{ borderRadius: 8, fontWeight: 500 }}>Editar</button>
                   <button className="btn btn-outline-danger btn-sm" style={{ borderRadius: 8, fontWeight: 500 }} onClick={() => handleEliminar(pub.id)}>Eliminar</button>

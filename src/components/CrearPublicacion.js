@@ -146,8 +146,8 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
           {pasos.map((p, idx) => (
             <div key={p.label} className="text-center flex-fill" style={{ opacity: idx <= step ? 1 : 0.4 }}>
               <div style={{ fontSize: '2em' }}>{p.icon}</div>
-              <div style={{ fontWeight: 600, fontSize: '0.98em', color: idx === step ? '#5a48f6' : '#888' }}>{p.label}</div>
-              {idx < pasos.length - 1 && <div style={{ height: 2, background: idx < step ? '#5a48f6' : '#ececf3', margin: '0.5em 0' }} />}
+              <div style={{ fontWeight: 600, fontSize: '0.98em', color: idx === step ? '#1976d2' : '#888' }}>{p.label}</div>
+              {idx < pasos.length - 1 && <div style={{ height: 2, background: idx < step ? '#1976d2' : '#ececf3', margin: '0.5em 0' }} />}
             </div>
           ))}
         </div>
@@ -156,12 +156,12 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
           {step === 0 && (
             <>
               <div className="mb-3">
-                <label className="form-label">Título <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Título <span style={{ color: '#1976d2' }}>*</span></label>
                 <input type="text" name="titulo" className="form-control" placeholder="Ej: Zapatillas Nike Air Max" value={form.titulo} onChange={handleChange} required />
                 <small className="text-muted">Elige un título claro y atractivo para tu publicación.</small>
               </div>
               <div className="mb-3">
-                <label className="form-label">Categoría <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Categoría <span style={{ color: '#1976d2' }}>*</span></label>
                 <select name="categoria" className="form-select" value={form.categoria} onChange={handleChange} required>
                   <option value="">Selecciona una categoría</option>
                   {categorias.map(cat => (
@@ -176,7 +176,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
           {step === 1 && (
             <>
               <div className="mb-3">
-                <label className="form-label">Condición <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Condición <span style={{ color: '#1976d2' }}>*</span></label>
                 <select name="condicion" className="form-select" value={form.condicion} onChange={handleChange} required>
                   <option value="">Selecciona una opción</option>
                   <option value="Nuevo">Nuevo</option>
@@ -185,7 +185,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                 <small className="text-muted">¿El producto es nuevo o usado?</small>
               </div>
               <div className="mb-3">
-                <label className="form-label">Descripción <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Descripción <span style={{ color: '#1976d2' }}>*</span></label>
                 <textarea name="descripcion" className="form-control" placeholder="Describe tu producto, estado, detalles relevantes..." value={form.descripcion} onChange={handleChange} required rows={3} />
                 <small className="text-muted">Agrega detalles que ayuden a los compradores a decidirse.</small>
               </div>
@@ -195,7 +195,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
           {step === 2 && (
             <>
               <div className="mb-3">
-                <label className="form-label">Imágenes <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Imágenes <span style={{ color: '#1976d2' }}>*</span></label>
                 <div className="d-flex flex-wrap gap-3 mb-2">
                   {imagenesPreview.map((img, idx) => (
                     <div key={idx} style={{ position: 'relative', width: 90, height: 90, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(90,72,246,0.10)' }}>
@@ -204,7 +204,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                     </div>
                   ))}
                   {form.imagenes.length < 5 && (
-                    <button type="button" className="d-flex flex-column align-items-center justify-content-center" style={{ width: 90, height: 90, border: '2px dashed #ececf3', borderRadius: 12, background: '#fafbff', color: '#5a48f6', fontSize: 32, cursor: 'pointer', outline: 'none' }} onClick={() => fileInputRef.current.click()}>
+                    <button type="button" className="d-flex flex-column align-items-center justify-content-center" style={{ width: 90, height: 90, border: '2px dashed #ececf3', borderRadius: 12, background: '#fafbff', color: '#1976d2', fontSize: 32, cursor: 'pointer', outline: 'none' }} onClick={() => fileInputRef.current.click()}>
                       <span style={{ fontSize: 32, lineHeight: 1 }}>+</span>
                       <span style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Agregar</span>
                     </button>
@@ -222,15 +222,15 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                 <small className="text-muted">Puedes subir hasta 5 imágenes. Arrastra o haz clic para seleccionar.</small>
               </div>
               <div className="mb-3">
-                <label className="form-label">Precio Inicial <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Precio Inicial <span style={{ color: '#1976d2' }}>*</span></label>
                 <input type="number" name="precioInicial" className="form-control" placeholder="$0.00" value={form.precioInicial} onChange={handleChange} required min="0" step="0.01" />
               </div>
               <div className="mb-3">
-                <label className="form-label">Incremento Mínimo <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Incremento Mínimo <span style={{ color: '#1976d2' }}>*</span></label>
                 <input type="number" name="incrementoMinimo" className="form-control" placeholder="$100" value={form.incrementoMinimo} onChange={handleChange} required min="0" step="0.01" />
               </div>
               <div className="mb-3">
-                <label className="form-label">Fecha de Finalización <span style={{ color: '#5a48f6' }}>*</span></label>
+                <label className="form-label">Fecha de Finalización <span style={{ color: '#1976d2' }}>*</span></label>
                 <input type="date" name="fechaFin" className="form-control" value={form.fechaFin} onChange={handleChange} required />
               </div>
             </>

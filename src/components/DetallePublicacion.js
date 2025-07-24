@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 const DetallePublicacion = () => {
   const { id } = useParams();
@@ -14,6 +16,7 @@ const DetallePublicacion = () => {
   const [ofertas, setOfertas] = useState([]);
   const [imgSeleccionada, setImgSeleccionada] = useState(0);
   const navigate = useNavigate();
+  const stompClientRef = useRef(null);
 
   useEffect(() => {
     const fetchPublicacion = async () => {
@@ -49,6 +52,28 @@ const DetallePublicacion = () => {
     fetchOfertas();
   }, [id, mensaje]); // Refresca historial tras ofertar
 
+  useEffect(() => {
+    // Conexión WebSocket solo cuando hay id
+    if (!id) return;
+    const socket = new SockJS('http://localhost:8080/ws');
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        stompClient.subscribe(`/topic/publicacion.${id}`, (msg) => {
+          const data = JSON.parse(msg.body);
+          setPublicacion(data.publicacionActualizada);
+          setOfertas(data.ofertas);
+        });
+      },
+    });
+    stompClient.activate();
+    stompClientRef.current = stompClient;
+    return () => {
+      stompClient.deactivate();
+    };
+  }, [id]);
+
   if (loading) return <div className="container py-5 text-center">Cargando...</div>;
   if (error) return <div className="container py-5 text-center text-danger">{error}</div>;
   if (!publicacion) return <div className="container py-5 text-center">No encontrada</div>;
@@ -68,7 +93,7 @@ const DetallePublicacion = () => {
         setOfertando(false);
         return;
       }
-      const res = await fetch(`http://localhost:8080/ofertas`, {
+      const res = await fetch(`http://localhost:8080/publicaciones/ofertas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,12 +101,15 @@ const DetallePublicacion = () => {
         },
         body: JSON.stringify({ publicacionId: publicacion.id, monto }),
       });
-      if (!res.ok) throw new Error('No se pudo realizar la oferta');
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'No se pudo realizar la oferta');
+      }
+      const data = await res.json();
       setMensaje('¡Oferta realizada con éxito!');
       setOferta('');
-      // Refrescar datos
-      const data = await res.json();
-      setPublicacion(data.publicacionActualizada || { ...publicacion, precioActual: monto });
+      setPublicacion(data.publicacionActualizada);
+      setOfertas(data.ofertas);
     } catch (err) {
       setMensaje(err.message);
     } finally {
@@ -93,7 +121,7 @@ const DetallePublicacion = () => {
   const breadcrumb = (
     <nav aria-label="breadcrumb" className="mb-3">
       <ol className="breadcrumb" style={{ background: 'none', padding: 0, marginBottom: 0 }}>
-        <li className="breadcrumb-item"><span style={{ cursor: 'pointer', color: '#5a48f6' }} onClick={() => navigate('/publicaciones')}>Publicaciones</span></li>
+        <li className="breadcrumb-item"><span style={{ cursor: 'pointer', color: '#1976d2' }} onClick={() => navigate('/publicaciones')}>Publicaciones</span></li>
         <li className="breadcrumb-item active" aria-current="page">{publicacion.categoria || 'Sin categoría'}</li>
       </ol>
     </nav>
@@ -127,7 +155,7 @@ const DetallePublicacion = () => {
         </div>
         {/* Imagen principal y descripción */}
         <div className="col-lg-6 mb-4 col-md-7">
-          <div className="card p-3 mb-3" style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card p-3 mb-3 mt-0" style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {publicacion.imagenes && publicacion.imagenes.length > 0 ? (
               <img
                 src={`http://localhost:8080${publicacion.imagenes[imgSeleccionada]}`}
@@ -141,15 +169,14 @@ const DetallePublicacion = () => {
               </div>
             )}
           </div>
-          {/* Descripción en tarjeta moderna */}
-          <div className="card shadow-sm p-4" style={{ borderRadius: 18, background: 'linear-gradient(90deg, #f7f8fa 60%, #ececf3 100%)', border: '1.5px solid #ececf3' }}>
-            <h5 className="fw-bold mb-2" style={{ color: '#5a48f6' }}>Descripción</h5>
-            <div style={{ fontSize: '1.08em', color: '#444', lineHeight: 1.6 }}>{publicacion.descripcion}</div>
+          {/* Descripción en tarjeta sutil */}
+          <div style={{ border: '1px solid #ececf3', borderRadius: 12, background: '#fff', padding: '1.1em 1.3em', marginTop: 8, marginBottom: 0 }}>
+            <div style={{ fontSize: '1.05em', color: '#444', lineHeight: 1.7, fontWeight: 400 }}>{publicacion.descripcion}</div>
           </div>
         </div>
         {/* Datos y formulario + historial de ofertas */}
         <div className="col-lg-5">
-          <div className="card p-4 mb-4" style={{ borderRadius: 16 }}>
+          <div className="card p-4 mb-4 mt-0" style={{ borderRadius: 16 }}>
             <div className="d-flex align-items-center mb-3 gap-3">
               {publicacion.usuario?.fotoPerfil ? (
                 <img src={`http://localhost:8080${publicacion.usuario.fotoPerfil}`} alt={publicacion.usuario.username} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
@@ -164,14 +191,14 @@ const DetallePublicacion = () => {
               </div>
               <span className={`badge ${publicacion.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontSize: '0.95em', marginLeft: 'auto' }}>{publicacion.estado}</span>
             </div>
-            <h3 className="fw-bold mb-2" style={{ color: '#5a48f6' }}>{publicacion.titulo}</h3>
+            <h3 className="fw-bold mb-2" style={{ color: '#1976d2' }}>{publicacion.titulo}</h3>
             <div className="mb-2">
-              <span className="badge bg-light text-dark border me-2" style={{ fontWeight: 500, fontSize: '0.95em' }}>{publicacion.categoria || 'Sin categoría'}</span>
+              <span className="badge bg-light text-dark border me-2" style={{ fontWeight: 500, fontSize: '0.95em', background: '#e3f2fd', color: '#1976d2' }}>{publicacion.categoria || 'Sin categoría'}</span>
               <span className={`badge ${publicacion.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.95em' }}>{publicacion.condicion || 'Condición'}</span>
             </div>
             <div className="mb-2">
-              <span style={{ fontWeight: 600, color: '#5a48f6', fontSize: '1.15em' }}>Precio actual: ${precioActual}</span>
-              <span className="ms-3" style={{ color: '#888', fontSize: '0.98em' }}>Incremento mínimo: ${incremento}</span>
+              <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.15em' }}>Precio actual: ${precioActual}</span>
+              <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${incremento}</span>
             </div>
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
               <span role="img" aria-label="fin">⏰</span> Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
@@ -207,8 +234,8 @@ const DetallePublicacion = () => {
             )}
           </div>
           {/* Historial de ofertas debajo de la tarjeta de datos */}
-          <div className="card p-3" style={{ borderRadius: 14 }}>
-            <h5 className="fw-bold mb-3" style={{ color: '#5a48f6' }}>Historial de ofertas</h5>
+          <div className="card p-3 mt-0" style={{ borderRadius: 14 }}>
+            <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Historial de ofertas</h5>
             {ofertas.length === 0 ? (
               <div className="text-muted">No hay ofertas aún.</div>
             ) : (
@@ -216,10 +243,10 @@ const DetallePublicacion = () => {
                 {ofertas.map((of, idx) => (
                   <li key={of.id} className="list-group-item d-flex align-items-center justify-content-between" style={{ background: 'none', border: 'none', borderBottom: '1px solid #ececf3' }}>
                     <div className="d-flex align-items-center gap-2">
-                      <span className="fw-semibold" style={{ color: '#222' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
+                      <span className="fw-semibold" style={{ color: '#1976d2' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
                       <span className="badge bg-light text-dark border ms-2" style={{ fontSize: '0.92em' }}>{of.fecha}</span>
                     </div>
-                    <span style={{ fontWeight: 600, color: '#5a48f6', fontSize: '1.08em' }}>${of.monto}</span>
+                    <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.08em' }}>${of.monto}</span>
                   </li>
                 ))}
               </ul>

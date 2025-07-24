@@ -23,17 +23,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a {
-  color: #5a48f6;
+  color: #1976d2;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 a:hover {
-  color: #3a2bb7;
+  color: #1565c0;
 }
 
 button, .btn {
-  background: linear-gradient(90deg, #5a48f6 0%, #7b6cf6 100%);
+  background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -41,13 +41,13 @@ button, .btn {
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(90, 72, 246, 0.08);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
   transition: background 0.2s, box-shadow 0.2s;
 }
 
 button:hover, .btn:hover {
-  background: linear-gradient(90deg, #3a2bb7 0%, #5a48f6 100%);
-  box-shadow: 0 4px 16px rgba(90, 72, 246, 0.15);
+  background: linear-gradient(90deg, #1565c0 0%, #1976d2 100%);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
 }
 
 input, select, textarea {
@@ -62,14 +62,14 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-  border: 1.5px solid #5a48f6;
+  border: 1.5px solid #1976d2;
   outline: none;
 }
 
 .card {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(90, 72, 246, 0.07);
+  box-shadow: 0 2px 16px rgba(25, 118, 210, 0.07);
   padding: 2em;
   margin: 1.5em 0;
   border: none;
@@ -95,7 +95,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .alert-info {
-  background: #f0f4ff;
-  color: #3a2bb7;
+  background: #e3f2fd;
+  color: #1565c0;
   border: none;
 }
