@@ -25,6 +25,11 @@ const categorias = [
   'Arte',
 ];
 
+// Función para normalizar tildes y minúsculas
+function normalizar(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 const TodasPublicaciones = () => {
   const { token } = useContext(AuthContext);
   const [publicaciones, setPublicaciones] = useState([]);
@@ -41,7 +46,7 @@ const TodasPublicaciones = () => {
   // Sincronizar filtro de categoría con el parámetro de la URL
   useEffect(() => {
     // Si el parámetro de búsqueda coincide exactamente con una categoría, activar el filtro de categoría
-    const categoriaMatch = categorias.find(cat => cat.toLowerCase() === busqueda);
+    const categoriaMatch = categorias.find(cat => normalizar(cat) === normalizar(busqueda));
     if (categoriaMatch) {
       setCategoriaSeleccionada(categoriaMatch);
     } else {
@@ -59,7 +64,6 @@ const TodasPublicaciones = () => {
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
-        console.log('TodasPublicaciones: publicaciones recibidas =', data);
         setPublicaciones(data.reverse());
       } catch {
         setPublicaciones([]);
@@ -73,7 +77,7 @@ const TodasPublicaciones = () => {
   // Filtrado por categoría y búsqueda
   let publicacionesFiltradas = publicaciones;
   if (categoriaSeleccionada) {
-    publicacionesFiltradas = publicacionesFiltradas.filter(pub => (pub.categoria || '').toLowerCase() === categoriaSeleccionada.toLowerCase());
+    publicacionesFiltradas = publicacionesFiltradas.filter(pub => normalizar(pub.categoria) === normalizar(categoriaSeleccionada));
   }
   // Solo aplicar búsqueda textual si no hay filtro de categoría exacto
   if (busqueda && !categoriaSeleccionada) {
@@ -128,10 +132,35 @@ const TodasPublicaciones = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">Publicaciones</h4>
             {categoriaSeleccionada && (
-              <span style={{ color: '#5a48f6', fontWeight: 500 }}>
-                Filtrando por: {categoriaSeleccionada}
-                <button className="btn btn-link btn-sm ms-2" style={{ color: '#e74c3c', textDecoration: 'none' }} onClick={() => setCategoriaSeleccionada('')}>
-                  Quitar filtro
+              <span style={{ color: '#1976d2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
+                Filtrando por: <span style={{ background: '#e3f2fd', color: '#1976d2', borderRadius: 8, padding: '2px 10px', fontWeight: 700, fontSize: '1em', marginLeft: 4 }}>{categoriaSeleccionada}</span>
+                <button
+                  className="btn btn-sm ms-2"
+                  style={{
+                    background: '#e74c3c',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    fontSize: '0.98em',
+                    padding: '4px 14px',
+                    boxShadow: '0 2px 8px rgba(231,76,60,0.08)',
+                    transition: 'background 0.18s',
+                    marginLeft: 8,
+                  }}
+                  onClick={() => {
+                    setCategoriaSeleccionada('');
+                    // Limpiar el parámetro 'busqueda' de la URL
+                    const params = new URLSearchParams(location.search);
+                    if (params.has('busqueda')) {
+                      params.delete('busqueda');
+                      navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+                    }
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = '#c0392b'}
+                  onMouseOut={e => e.currentTarget.style.background = '#e74c3c'}
+                >
+                  <span style={{ fontWeight: 700, fontSize: '1.1em', marginRight: 2 }}>×</span> Quitar filtro
                 </button>
               </span>
             )}
