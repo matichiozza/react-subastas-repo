@@ -26,6 +26,10 @@ const preguntas = [
   { q: '¿Cómo participo en una subasta?', a: 'Solo debes registrarte, buscar un producto y hacer tu oferta.' },
   { q: '¿Es seguro pagar por la plataforma?', a: 'Sí, usamos métodos de pago protegidos y cifrado de datos.' },
   { q: '¿Puedo vender cualquier cosa?', a: 'Sí, siempre que cumpla con nuestras políticas y leyes vigentes.' },
+  { q: '¿Qué pasa si no recibo mi producto?', a: 'Tenemos un sistema de garantías y reembolsos para proteger a los compradores.' },
+  { q: '¿Cómo funciona el sistema de ofertas?', a: 'Puedes hacer ofertas en cualquier momento hasta que termine la subasta. La oferta más alta gana.' },
+  { q: '¿Hay comisiones por vender?', a: 'Sí, aplicamos una pequeña comisión del 5% sobre el precio final de venta.' },
+  { q: '¿Puedo cancelar una oferta?', a: 'No, las ofertas son vinculantes. Asegúrate de estar seguro antes de ofertar.' },
 ];
 
 const Home = () => {
@@ -66,7 +70,35 @@ const Home = () => {
           <div style={{ maxWidth: 520 }}>
             <h1 style={{ fontWeight: 800, fontSize: '2.7em', lineHeight: 1.1, marginBottom: 18 }}>¡Descubre, oferta y gana en <span style={{ color: '#ffe082' }}>SubastasCorp</span>!</h1>
             <p style={{ fontSize: '1.25em', color: '#e3e3e3', marginBottom: 28 }}>La plataforma más moderna y segura para comprar y vender en subastas online.</p>
-            <button className="btn btn-light btn-lg px-4 py-2 fw-bold" style={{ borderRadius: 16, color: '#1976d2', fontSize: '1.1em', boxShadow: '0 2px 12px rgba(25,118,210,0.10)' }} onClick={() => navigate('/publicaciones')}>Ver subastas</button>
+            <button 
+              className="btn btn-lg fw-bold" 
+              style={{ 
+                borderRadius: 20, 
+                fontSize: '1.2em', 
+                padding: '0.8em 2em',
+                background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
+                color: '#1976d2',
+                border: '2px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 8px 32px rgba(255,255,255,0.2), 0 4px 16px rgba(25,118,210,0.15)',
+                transition: 'all 0.3s ease',
+                textShadow: 'none',
+                position: 'relative',
+                overflow: 'hidden'
+              }} 
+              onClick={() => navigate('/publicaciones')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,255,255,0.3), 0 6px 20px rgba(25,118,210,0.2)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #fff 0%, #ffffff 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.2), 0 4px 16px rgba(25,118,210,0.15)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)';
+              }}
+            >
+              <span style={{ position: 'relative', zIndex: 2 }}>VER SUBASTAS</span>
+            </button>
           </div>
           <div className="d-none d-md-block" style={{ flex: 1, textAlign: 'center' }}>
             <img src="https://images.unsplash.com/photo-1515168833906-d2a3b82b3029?auto=format&fit=crop&w=600&q=80" alt="Hero" style={{ maxWidth: 340, borderRadius: 24, boxShadow: '0 8px 32px rgba(25,118,210,0.18)' }} />
@@ -138,30 +170,56 @@ const Home = () => {
           <div className="row g-4 justify-content-center">
             {subastasDestacadas.map(pub => (
               <div className="col-12 col-md-6 col-lg-4" key={pub.id}>
-                <div className="card h-100 shadow-sm border-0" style={{ borderRadius: 18, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.08)', minHeight: 320, transition: 'box-shadow 0.2s' }}>
+                <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
+                  {/* Imagen principal */}
                   {pub.imagenes && pub.imagenes.length > 0 ? (
-                    <div style={{ height: 140, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <div style={{ height: 700, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ) : (
-                    <div style={{ height: 140, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 38 }}>
+                    <div style={{ height: 700, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
                       <span role="img" aria-label="sin imagen">🖼️</span>
                     </div>
                   )}
-                  <div className="p-3 d-flex flex-column flex-grow-1">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                      <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.92em', background: '#e3f2fd', color: '#1976d2' }}>{pub.categoria || 'Sin categoría'}</span>
-                      <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.92em' }}>{pub.condicion || 'Condición'}</span>
-                      {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.92em' }}>{pub.estado}</span>}
+                  <div className="p-2 d-flex flex-column justify-content-between h-100">
+                    {/* Categoría y condición */}
+                    <div className="d-flex align-items-center mb-1 gap-2">
+                      <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
+                      <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
+                      {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
                     </div>
-                    <h6 className="fw-bold mb-1" style={{ color: '#1976d2', fontSize: '1.08em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
-                    <div className="mb-1 text-truncate" style={{ fontSize: '0.97em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
-                    <div className="mb-2 d-flex align-items-center gap-2" style={{ fontWeight: 500 }}>
-                      <span style={{ color: '#1565c0', fontSize: '1.05em' }}>Precio actual: ${pub.precioActual && pub.precioActual > 0 ? pub.precioActual : pub.precioInicial}</span>
-                      <span className="badge bg-warning text-dark ms-auto" style={{ fontSize: '0.90em' }}>{pub.ofertasTotales || 0} ofertas</span>
+                    {/* Título */}
+                    <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
+                    {/* Descripción corta */}
+                    <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
+                    {/* Precio y ofertas */}
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
+                        {pub.precioActual && pub.precioActual > 0 ? `Actual: $${pub.precioActual}` : `Inicial: $${pub.precioInicial}`}
+                      </div>
+                      <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
                     </div>
-                    <div className="d-grid mt-auto pt-2">
-                      <button className="btn btn-primary" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
+                    {/* Fecha de finalización */}
+                    <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
+                      <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
+                    </div>
+                    {/* Usuario */}
+                    <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
+                      {pub.usuario?.fotoPerfil ? (
+                        <img src={`http://localhost:8080${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                      ) : (
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
+                          <span role="img" aria-label="user">👤</span>
+                        </div>
+                      )}
+                      <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
+                        <span className="fw-semibold">{pub.usuario?.nombre || pub.usuario?.username || 'Usuario'}</span>
+                        <span style={{ color: '#888', fontSize: '0.85em' }}>{[pub.usuario?.ciudad, pub.usuario?.pais].filter(Boolean).join(', ')}</span>
+                      </div>
+                    </div>
+                    {/* Botón de ver detalles */}
+                    <div className="d-grid mt-2">
+                      <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#1976d2', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
                     </div>
                   </div>
                 </div>
@@ -201,33 +259,117 @@ const Home = () => {
 
       {/* BENEFICIOS */}
       <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>¿Por qué elegirnos?</h3>
+        <div className="text-center mb-5">
+          <h2 className="fw-bold mb-3" style={{ color: '#1976d2', fontSize: '2.5em' }}>¿Por qué elegirnos?</h2>
+          <p className="lead" style={{ color: '#666', fontSize: '1.2em', maxWidth: 600, margin: '0 auto' }}>
+            Descubre las ventajas que hacen de SubastasCorp la plataforma líder en subastas online
+          </p>
+        </div>
         <div className="row g-4 justify-content-center">
-          {beneficios.map(b => (
+          {beneficios.map((b, index) => (
             <div className="col-12 col-md-6 col-lg-3" key={b.titulo}>
-              <div className="card text-center p-4 h-100" style={{ borderRadius: 16, border: 'none', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.07)' }}>
-                <div style={{ fontSize: 38, marginBottom: 10 }}>{b.icono}</div>
-                <h6 className="fw-bold mb-2">{b.titulo}</h6>
-                <div>{b.desc}</div>
+              <div 
+                className="card h-100 border-0 position-relative overflow-hidden"
+                style={{ 
+                  borderRadius: 24, 
+                  background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
+                  boxShadow: '0 8px 32px rgba(25,118,210,0.08)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'default',
+                  minHeight: 280
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 48px rgba(25,118,210,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(25,118,210,0.08)';
+                }}
+              >
+                {/* Fondo decorativo */}
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: -20,
+                    right: -20,
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}20, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}10)`,
+                    zIndex: 0
+                  }}
+                />
+                
+                <div className="p-3 d-flex flex-column align-items-center text-center position-relative" style={{ zIndex: 1 }}>
+                  {/* Icono con fondo circular */}
+                  <div 
+                    className="mb-4 d-flex align-items-center justify-content-center"
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}, ${['#64b5f6', '#f6c16a', '#ce93d8', '#81c784'][index]})`,
+                      boxShadow: `0 8px 24px ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}30`,
+                      fontSize: 32,
+                      color: '#fff'
+                    }}
+                  >
+                    {b.icono}
+                  </div>
+                  
+                  {/* Título */}
+                  <h5 className="fw-bold mb-3" style={{ color: '#1976d2', fontSize: '1.3em' }}>
+                    {b.titulo}
+                  </h5>
+                  
+                  {/* Descripción */}
+                  <p className="mb-0" style={{ color: '#666', fontSize: '1.05em', lineHeight: 1.6 }}>
+                    {b.desc}
+                  </p>
+                  
+                  {/* Línea decorativa */}
+                  <div 
+                    className="mt-3"
+                    style={{
+                      width: 40,
+                      height: 3,
+                      borderRadius: 2,
+                      background: `linear-gradient(90deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}, ${['#64b5f6', '#f6c16a', '#ce93d8', '#81c784'][index]})`
+                    }}
+                  />
+                </div>
               </div>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* TESTIMONIOS */}
-      <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>Testimonios</h3>
-        <div className="row g-4 justify-content-center">
-          {testimonios.map(t => (
-            <div className="col-12 col-md-4" key={t.nombre}>
-              <div className="card p-4 h-100 text-center" style={{ borderRadius: 16, border: 'none', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.07)' }}>
-                <div style={{ fontSize: 38, marginBottom: 10 }}>{t.avatar}</div>
-                <div style={{ fontWeight: 500, color: '#1976d2', fontSize: '1.08em' }}>{t.nombre}</div>
-                <div className="mt-2" style={{ color: '#444', fontSize: '1.05em' }}><em>“{t.texto}”</em></div>
-              </div>
+        
+        {/* Estadísticas adicionales */}
+        <div className="row mt-5 g-4 justify-content-center">
+          <div className="col-12 col-md-3 text-center">
+            <div className="p-4">
+              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>10K+</div>
+              <div style={{ color: '#666', fontSize: '1.1em' }}>Usuarios activos</div>
             </div>
-          ))}
+          </div>
+          <div className="col-12 col-md-3 text-center">
+            <div className="p-4">
+              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>50K+</div>
+              <div style={{ color: '#666', fontSize: '1.1em' }}>Subastas completadas</div>
+            </div>
+          </div>
+          <div className="col-12 col-md-3 text-center">
+            <div className="p-4">
+              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>99%</div>
+              <div style={{ color: '#666', fontSize: '1.1em' }}>Satisfacción</div>
+            </div>
+          </div>
+          <div className="col-12 col-md-3 text-center">
+            <div className="p-4">
+              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>24/7</div>
+              <div style={{ color: '#666', fontSize: '1.1em' }}>Soporte disponible</div>
+            </div>
+          </div>
         </div>
       </section>
 

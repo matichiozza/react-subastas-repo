@@ -3,26 +3,26 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const categorias = [
-  'Electrónica',
-  'Computación',
-  'Teléfonos',
-  'Hogar',
-  'Muebles',
-  'Cocina',
-  'Moda',
-  'Calzado',
-  'Accesorios',
-  'Joyería',
-  'Deportes',
-  'Aire libre',
-  'Vehículos',
-  'Herramientas',
-  'Juguetes',
-  'Bebés',
-  'Mascotas',
-  'Libros',
-  'Música',
-  'Arte',
+  { nombre: 'Accesorios', emoji: '👜' },
+  { nombre: 'Aire libre', emoji: '🌲' },
+  { nombre: 'Arte', emoji: '🎭' },
+  { nombre: 'Bebés', emoji: '🍼' },
+  { nombre: 'Calzado', emoji: '👞' },
+  { nombre: 'Computación', emoji: '💻' },
+  { nombre: 'Cocina', emoji: '🍽️' },
+  { nombre: 'Deportes', emoji: '⚽' },
+  { nombre: 'Electrónica', emoji: '⚡' },
+  { nombre: 'Herramientas', emoji: '🔨' },
+  { nombre: 'Hogar', emoji: '🏠' },
+  { nombre: 'Joyería', emoji: '💍' },
+  { nombre: 'Juguetes', emoji: '🧸' },
+  { nombre: 'Libros', emoji: '📖' },
+  { nombre: 'Mascotas', emoji: '🐾' },
+  { nombre: 'Moda', emoji: '👕' },
+  { nombre: 'Muebles', emoji: '🪑' },
+  { nombre: 'Música', emoji: '🎼' },
+  { nombre: 'Teléfonos', emoji: '📱' },
+  { nombre: 'Vehículos', emoji: '🚙' },
 ];
 
 // Función para normalizar tildes y minúsculas
@@ -46,9 +46,9 @@ const TodasPublicaciones = () => {
   // Sincronizar filtro de categoría con el parámetro de la URL
   useEffect(() => {
     // Si el parámetro de búsqueda coincide exactamente con una categoría, activar el filtro de categoría
-    const categoriaMatch = categorias.find(cat => normalizar(cat) === normalizar(busqueda));
+    const categoriaMatch = categorias.find(cat => normalizar(cat.nombre) === normalizar(busqueda));
     if (categoriaMatch) {
-      setCategoriaSeleccionada(categoriaMatch);
+      setCategoriaSeleccionada(categoriaMatch.nombre);
     } else {
       setCategoriaSeleccionada('');
     }
@@ -109,19 +109,19 @@ const TodasPublicaciones = () => {
               </li>
               {categorias.map(cat => (
                 <li
-                  key={cat}
-                  className={`d-flex align-items-center mb-2${categoriaSeleccionada === cat ? ' fw-bold' : ''}`}
+                  key={cat.nombre}
+                  className={`d-flex align-items-center mb-2${categoriaSeleccionada === cat.nombre ? ' fw-bold' : ''}`}
                   style={{ fontSize: '1.05em', cursor: 'pointer' }}
                   onClick={() => {
-                    setCategoriaSeleccionada(cat);
+                    setCategoriaSeleccionada(cat.nombre);
                     // Actualizar la URL con el parámetro 'busqueda' de la categoría
                     const params = new URLSearchParams(location.search);
-                    params.set('busqueda', cat);
+                    params.set('busqueda', cat.nombre);
                     navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
                   }}
                 >
-                  <span style={{ marginRight: 8 }}>📦</span>
-                  <span>{cat}</span>
+                  <span style={{ marginRight: 8 }}>{cat.emoji}</span>
+                  <span>{cat.nombre}</span>
                 </li>
               ))}
             </ul>
