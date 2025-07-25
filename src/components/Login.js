@@ -13,7 +13,7 @@ const Login = () => {
     e.preventDefault();
     const success = await login(username, password);
     if (success) {
-      navigate('/micuenta');
+      navigate('/');
     } else {
       setError('Credenciales incorrectas.');
     }

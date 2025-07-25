@@ -11,6 +11,11 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef();
 
+  // LOGS DE DEPURACIÓN
+  React.useEffect(() => {
+    console.log('Navbar: user =', user);
+  }, [user]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -155,8 +160,11 @@ const Navbar = () => {
                   className="btn btn-light d-flex align-items-center justify-content-center mx-auto"
                   style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                   onClick={() => {
-                    if (user) setMenuOpen(open => !open);
-                    else navigate('/login');
+                    if (user) {
+                      setMenuOpen(open => !open);
+                    } else {
+                      navigate('/login');
+                    }
                     setMobileMenuOpen(false);
                   }}
                   type="button"
@@ -166,7 +174,7 @@ const Navbar = () => {
                 </button>
                 {/* Menú desplegable solo si está logueado */}
                 {user && menuOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(25,118,210,0.08)', zIndex: 1000 }}>
+                  <div ref={menuRef} style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(25,118,210,0.08)', zIndex: 1000 }}>
                     <Link to="/micuenta" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mi cuenta</Link>
                     <Link to="/mispublicaciones" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mis publicaciones</Link>
                     <div className="dropdown-divider" style={{ borderTop: '1px solid #ececf3', margin: 0 }}></div>

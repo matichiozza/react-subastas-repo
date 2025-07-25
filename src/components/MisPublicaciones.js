@@ -1,9 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const MisPublicaciones = () => {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,11 +48,17 @@ const MisPublicaciones = () => {
     }
   };
 
+  // Lógica de navegación para crear publicación
+  const handleNuevaPublicacion = () => {
+    if (user) navigate('/crear-publicacion');
+    else navigate('/login');
+  };
+
   return (
     <div className="container py-5">
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h2 className="mb-0" style={{ color: '#1976d2', fontWeight: 700 }}>Mis publicaciones</h2>
-        <button className="btn btn-primary" style={{ borderRadius: 10, fontWeight: 600, fontSize: '1em', padding: '0.55em 1.2em' }} onClick={() => window.location.href = '/crear-publicacion'}>
+        <button className="btn btn-primary" style={{ borderRadius: 10, fontWeight: 600, fontSize: '1em', padding: '0.55em 1.2em' }} onClick={handleNuevaPublicacion}>
           + Nueva publicación
         </button>
       </div>
@@ -62,7 +70,7 @@ const MisPublicaciones = () => {
         <div className="card p-4 text-center mx-auto" style={{ maxWidth: 400, borderRadius: 14, boxShadow: '0 2px 12px rgba(25,118,210,0.08)' }}>
           <div className="mb-2" style={{ fontSize: 32 }}>📦</div>
           <div className="mb-2">No tienes publicaciones aún.</div>
-          <button className="btn btn-primary mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => window.location.href = '/crear-publicacion'}>
+          <button className="btn btn-primary mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={handleNuevaPublicacion}>
             Crear publicación
           </button>
         </div>

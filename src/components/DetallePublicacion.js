@@ -22,7 +22,6 @@ const DetallePublicacion = () => {
   const imgContainerRef = useRef(null);
 
   useEffect(() => {
-    if (!token) return;
     const fetchPublicacion = async () => {
       setLoading(true);
       setError(null);
@@ -47,7 +46,6 @@ const DetallePublicacion = () => {
   }, [id, token]);
 
   useEffect(() => {
-    if (!token) return;
     const fetchOfertas = async () => {
       try {
         console.log("Token usado en fetch ofertas:", token);

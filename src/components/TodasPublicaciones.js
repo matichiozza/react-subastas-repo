@@ -35,7 +35,20 @@ const TodasPublicaciones = () => {
 
   // Obtener parámetro de búsqueda de la URL
   const params = new URLSearchParams(location.search);
-  const busqueda = params.get('busqueda')?.toLowerCase() || '';
+  const busquedaParam = params.get('busqueda') || '';
+  const busqueda = busquedaParam.toLowerCase();
+
+  // Sincronizar filtro de categoría con el parámetro de la URL
+  useEffect(() => {
+    // Si el parámetro de búsqueda coincide exactamente con una categoría, activar el filtro de categoría
+    const categoriaMatch = categorias.find(cat => cat.toLowerCase() === busqueda);
+    if (categoriaMatch) {
+      setCategoriaSeleccionada(categoriaMatch);
+    } else {
+      setCategoriaSeleccionada('');
+    }
+    // eslint-disable-next-line
+  }, [busquedaParam]);
 
   useEffect(() => {
     const fetchPublicaciones = async () => {
@@ -46,6 +59,7 @@ const TodasPublicaciones = () => {
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
+        console.log('TodasPublicaciones: publicaciones recibidas =', data);
         setPublicaciones(data.reverse());
       } catch {
         setPublicaciones([]);
@@ -61,7 +75,8 @@ const TodasPublicaciones = () => {
   if (categoriaSeleccionada) {
     publicacionesFiltradas = publicacionesFiltradas.filter(pub => (pub.categoria || '').toLowerCase() === categoriaSeleccionada.toLowerCase());
   }
-  if (busqueda) {
+  // Solo aplicar búsqueda textual si no hay filtro de categoría exacto
+  if (busqueda && !categoriaSeleccionada) {
     publicacionesFiltradas = publicacionesFiltradas.filter(pub =>
       (pub.titulo && pub.titulo.toLowerCase().includes(busqueda)) ||
       (pub.descripcion && pub.descripcion.toLowerCase().includes(busqueda))
@@ -73,10 +88,18 @@ const TodasPublicaciones = () => {
       <div className="row">
         {/* Filtros laterales */}
         <div className="col-lg-3 mb-4">
-          <div className="card p-3">
+          <div className="mt-0 card p-3">
             <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>Categorías</h6>
             <ul className="list-unstyled mb-0">
-              <li className={`d-flex align-items-center mb-2${categoriaSeleccionada === '' ? ' fw-bold' : ''}`} style={{ fontSize: '1.05em', cursor: 'pointer' }} onClick={() => setCategoriaSeleccionada('')}>
+              <li className={`d-flex align-items-center mb-2${categoriaSeleccionada === '' ? ' fw-bold' : ''}`} style={{ fontSize: '1.05em', cursor: 'pointer' }} onClick={() => {
+                setCategoriaSeleccionada('');
+                // Limpiar el parámetro 'busqueda' de la URL
+                const params = new URLSearchParams(location.search);
+                if (params.has('busqueda')) {
+                  params.delete('busqueda');
+                  navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+                }
+              }}>
                 <span style={{ marginRight: 8 }}>🔎</span>
                 <span>Todas</span>
               </li>
@@ -85,7 +108,13 @@ const TodasPublicaciones = () => {
                   key={cat}
                   className={`d-flex align-items-center mb-2${categoriaSeleccionada === cat ? ' fw-bold' : ''}`}
                   style={{ fontSize: '1.05em', cursor: 'pointer' }}
-                  onClick={() => setCategoriaSeleccionada(cat)}
+                  onClick={() => {
+                    setCategoriaSeleccionada(cat);
+                    // Actualizar la URL con el parámetro 'busqueda' de la categoría
+                    const params = new URLSearchParams(location.search);
+                    params.set('busqueda', cat);
+                    navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
+                  }}
                 >
                   <span style={{ marginRight: 8 }}>📦</span>
                   <span>{cat}</span>
@@ -115,7 +144,7 @@ const TodasPublicaciones = () => {
             <div className="row g-4">
               {publicacionesFiltradas.slice(0, 8).map((pub, idx) => (
                 <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={pub.id || idx}>
-                  <div className="card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
+                  <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
                     {/* Imagen principal */}
                     {pub.imagenes && pub.imagenes.length > 0 ? (
                       <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
