@@ -20,6 +20,16 @@ const DetallePublicacion = () => {
   const [zoom, setZoom] = useState({ visible: false, x: 0, y: 0 });
   const [zoomEnabled, setZoomEnabled] = useState(false);
   const imgContainerRef = useRef(null);
+  // Estado para el modal y método de pago
+  const [showModal, setShowModal] = useState(false);
+  const [metodoPago, setMetodoPago] = useState('Transferencia bancaria');
+  // Tarjetas hardcodeadas para el modal
+  const tarjetasGuardadas = [
+    { id: 1, tipo: 'Visa', ultimos: '1234', nombre: 'Matias Chiozza' },
+    { id: 2, tipo: 'Mastercard', ultimos: '5678', nombre: 'Matias Chiozza' },
+  ];
+  const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState(tarjetasGuardadas[0]?.id || null);
+  const [modalClosing, setModalClosing] = useState(false);
 
   useEffect(() => {
     const fetchPublicacion = async () => {
@@ -94,8 +104,13 @@ const DetallePublicacion = () => {
   const precioActual = publicacion.precioActual && publicacion.precioActual > 0 ? publicacion.precioActual : publicacion.precioInicial;
   const siguienteOferta = precioActual + incremento;
 
-  const handleOfertar = async (e) => {
+  // Modificar handleOfertar para que solo envíe si viene del modal
+  const handleOfertar = async (e, desdeModal = false) => {
     e.preventDefault();
+    if (!desdeModal) {
+      setShowModal(true);
+      return;
+    }
     setOfertando(true);
     setMensaje(null);
     try {
@@ -122,11 +137,20 @@ const DetallePublicacion = () => {
       setOferta('');
       setPublicacion(data.publicacionActualizada);
       setOfertas(data.ofertas);
+      setShowModal(false);
     } catch (err) {
       setMensaje(err.message);
     } finally {
       setOfertando(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setModalClosing(true);
+    setTimeout(() => {
+      setShowModal(false);
+      setModalClosing(false);
+    }, 220); // igual a la duración de la animación
   };
 
   // Breadcrumb
@@ -138,6 +162,12 @@ const DetallePublicacion = () => {
       </ol>
     </nav>
   );
+
+  // Función para formatear montos con separador de miles
+  function formatearMonto(valor) {
+    if (isNaN(valor)) return valor;
+    return Number(valor).toLocaleString('es-AR');
+  }
 
   return (
     <div className="container py-4">
@@ -293,7 +323,7 @@ const DetallePublicacion = () => {
             </div>
             {/* Formulario de oferta */}
             {publicacion.estado === 'ACTIVO' ? (
-              <form onSubmit={handleOfertar} className="mt-3">
+              <form onSubmit={e => handleOfertar(e, false)} className="mt-3">
                 <div className="input-group mb-2">
                   <span className="input-group-text">$</span>
                   <input
@@ -361,6 +391,94 @@ const DetallePublicacion = () => {
           </div>
         </div>
       </div>
+      {(showModal || modalClosing) && (
+        <div className={`modal-overlay${modalClosing ? ' modal-overlay-out' : ''}`} onClick={handleCloseModal}>
+          <div className={`modal-content${modalClosing ? ' modal-out' : ''}`} onClick={e => e.stopPropagation()}>
+            <h2>Confirmar oferta</h2>
+            <div className="modal-flex-row">
+              {/* Desglose */}
+              <div className="modal-desglose mb-3" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
+                <div className="modal-desglose-title">Desglose de pago</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                  <span>Monto ofertado:</span>
+                  <span>${formatearMonto(oferta)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
+                  <span>Seña (10%):</span>
+                  <span>${formatearMonto((parseFloat(oferta) * 0.10).toFixed(2))}</span>
+                </div>
+                <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1976d2' }}>
+                  <span>Total a pagar ahora:</span>
+                  <span>${formatearMonto((parseFloat(oferta) * 0.10).toFixed(2))}</span>
+                </div>
+                <div style={{ fontSize: '0.97em', color: '#888', marginTop: 2 }}>
+                  Solo abonarás la seña ahora. Si ganas la subasta, coordinarás el pago del resto con el vendedor.
+                </div>
+              </div>
+              {/* Selector de tarjetas */}
+              <div className="modal-metodo mb-2" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
+                <div className="modal-metodo-title">Selecciona una tarjeta para la seña:</div>
+                <div className="tarjetas-lista" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {tarjetasGuardadas.map(t => (
+                    <div
+                      key={t.id}
+                      className={`tarjeta-item${tarjetaSeleccionada === t.id ? ' seleccionada' : ''}`}
+                      style={{
+                        border: tarjetaSeleccionada === t.id ? '2.5px solid #1976d2' : '1.5px solid #e0e2e7',
+                        borderRadius: 10,
+                        padding: '0.8em 1.1em',
+                        background: '#f7f8fa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        boxShadow: tarjetaSeleccionada === t.id ? '0 2px 12px rgba(25,118,210,0.10)' : 'none',
+                        transition: 'border 0.2s, box-shadow 0.2s',
+                        gap: 12,
+                      }}
+                      onClick={() => setTarjetaSeleccionada(t.id)}
+                    >
+                      <span style={{ fontSize: 22 }}>{t.tipo === 'Visa' ? '💳' : '💳'}</span>
+                      <span style={{ fontWeight: 600, fontSize: '1.08em', color: '#1976d2', marginRight: 8 }}>{t.tipo}</span>
+                      <span style={{ color: '#888', fontSize: '1em', marginRight: 8 }}>•••• {t.ultimos}</span>
+                      <span style={{ color: '#888', fontSize: '0.97em' }}>{t.nombre}</span>
+                    </div>
+                  ))}
+                  <div
+                    className="tarjeta-item agregar"
+                    style={{
+                      border: '1.5px dashed #bdbdbd',
+                      borderRadius: 10,
+                      padding: '0.8em 1.1em',
+                      background: '#fff',
+                      color: '#888',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      cursor: 'not-allowed',
+                      opacity: 0.7,
+                      fontWeight: 500,
+                    }}
+                    title="Próximamente podrás agregar una nueva tarjeta"
+                  >
+                    <span style={{ fontSize: 22 }}>➕</span>
+                    <span>Agregar nueva tarjeta</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Advertencia */}
+            <div className="modal-warning">
+              <p>⚠️ <b>Advertencia:</b> Las ofertas son <b>vinculantes</b>. No podrás cancelar ni modificar tu oferta una vez enviada.</p>
+              <p>Si ganas la subasta, deberás cumplir con el pago y coordinar la entrega.</p>
+            </div>
+            {/* Acciones */}
+            <div className="modal-actions">
+              <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={e => handleOfertar(e, true)} disabled={ofertando || !tarjetaSeleccionada}>Confirmar oferta</button>
+              <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

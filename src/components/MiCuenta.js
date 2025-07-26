@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -56,6 +56,229 @@ const MiCuenta = () => {
   const [sugerencias, setSugerencias] = useState([]);
   const [showSugerencias, setShowSugerencias] = useState(false);
   const sugerenciasRef = useRef();
+  const [tarjetas, setTarjetas] = useState([]);
+  const [loadingTarjetas, setLoadingTarjetas] = useState(false);
+  const [errorTarjetas, setErrorTarjetas] = useState(null);
+  const [showModalTarjeta, setShowModalTarjeta] = useState(false);
+  const [formTarjeta, setFormTarjeta] = useState({
+    nombreCompleto: '',
+    numero: '',
+    fechaVencimiento: '',
+    codigoSeguridad: '',
+    dniTitular: ''
+  });
+  const [erroresTarjeta, setErroresTarjeta] = useState({});
+  const [loadingTarjeta, setLoadingTarjeta] = useState(false);
+  const [successTarjeta, setSuccessTarjeta] = useState(false);
+  const [tarjetaActiva, setTarjetaActiva] = useState(0);
+
+  // Validaciones
+  const validarTarjeta = () => {
+    const errores = {};
+    
+    // Nombre completo
+    if (!formTarjeta.nombreCompleto.trim()) {
+      errores.nombreCompleto = 'El nombre completo es requerido';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formTarjeta.nombreCompleto)) {
+      errores.nombreCompleto = 'Solo se permiten letras y espacios';
+    }
+    
+    // Número de tarjeta
+    if (!formTarjeta.numero.trim()) {
+      errores.numero = 'El número de tarjeta es requerido';
+    } else if (!/^\d{16}$/.test(formTarjeta.numero.replace(/\s/g, ''))) {
+      errores.numero = 'Debe tener exactamente 16 dígitos';
+    }
+    
+    // Fecha de vencimiento
+    if (!formTarjeta.fechaVencimiento.trim()) {
+      errores.fechaVencimiento = 'La fecha de vencimiento es requerida';
+    } else {
+      const fecha = formTarjeta.fechaVencimiento;
+      const formato = /^(0[1-9]|1[0-2])\/([0-9]{2}|[0-9]{4})$/.test(fecha);
+      if (!formato) {
+        errores.fechaVencimiento = 'Formato: MM/AA o MM/AAAA';
+      } else {
+        const [mes, año] = fecha.split('/');
+        const mesNum = parseInt(mes);
+        const añoNum = parseInt(año);
+        const añoActual = new Date().getFullYear();
+        const añoCompleto = año.length === 2 ? 2000 + añoNum : añoNum;
+        
+        if (mesNum < 1 || mesNum > 12) {
+          errores.fechaVencimiento = 'Mes inválido';
+        } else if (añoCompleto < añoActual) {
+          errores.fechaVencimiento = 'La tarjeta ya venció';
+        }
+      }
+    }
+    
+    // CVV
+    if (!formTarjeta.codigoSeguridad.trim()) {
+      errores.codigoSeguridad = 'El código de seguridad es requerido';
+    } else if (!/^\d{3,4}$/.test(formTarjeta.codigoSeguridad)) {
+      errores.codigoSeguridad = 'Debe tener 3 o 4 dígitos';
+    }
+    
+    // DNI
+    if (!formTarjeta.dniTitular.trim()) {
+      errores.dniTitular = 'El DNI es requerido';
+    } else if (!/^\d{7,8}$/.test(formTarjeta.dniTitular)) {
+      errores.dniTitular = 'Debe tener 7 u 8 dígitos';
+    }
+    
+    setErroresTarjeta(errores);
+    return Object.keys(errores).length === 0;
+  };
+
+  const handleChangeTarjeta = (e) => {
+    const { name, value } = e.target;
+    let processedValue = value;
+    
+    // Formatear número de tarjeta
+    if (name === 'numero') {
+      processedValue = value.replace(/\D/g, '').slice(0, 16);
+    }
+    
+    // Formatear fecha de vencimiento
+    if (name === 'fechaVencimiento') {
+      processedValue = value.replace(/\D/g, '').slice(0, 6);
+      if (processedValue.length >= 2) {
+        processedValue = processedValue.slice(0, 2) + '/' + processedValue.slice(2);
+      }
+    }
+    
+    // Formatear CVV
+    if (name === 'codigoSeguridad') {
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+    
+    // Formatear DNI
+    if (name === 'dniTitular') {
+      processedValue = value.replace(/\D/g, '').slice(0, 8);
+    }
+    
+    setFormTarjeta(prev => ({ ...prev, [name]: processedValue }));
+    
+    // Validar en tiempo real
+    if (erroresTarjeta[name]) {
+      const nuevosErrores = { ...erroresTarjeta };
+      delete nuevosErrores[name];
+      setErroresTarjeta(nuevosErrores);
+    }
+  };
+
+  const handleSubmitTarjeta = async (e) => {
+    e.preventDefault();
+    if (!validarTarjeta()) return;
+    
+    setLoadingTarjeta(true);
+    setSuccessTarjeta(false);
+    
+    try {
+      const res = await fetch('http://localhost:8080/tarjetas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombreCompleto: formTarjeta.nombreCompleto,
+          numero: formTarjeta.numero,
+          fechaVencimiento: formTarjeta.fechaVencimiento,
+          codigoSeguridad: formTarjeta.codigoSeguridad,
+          dniTitular: formTarjeta.dniTitular,
+          usuario: { id: user.id }
+        }),
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'No se pudo guardar la tarjeta');
+      }
+      
+      setSuccessTarjeta(true);
+      setFormTarjeta({
+        nombreCompleto: '',
+        numero: '',
+        fechaVencimiento: '',
+        codigoSeguridad: '',
+        dniTitular: ''
+      });
+      setShowModalTarjeta(false);
+      
+      // Recargar tarjetas
+      const tarjetasRes = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (tarjetasRes.ok) {
+        const nuevasTarjetas = await tarjetasRes.json();
+        setTarjetas(nuevasTarjetas);
+      }
+    } catch (err) {
+      setErrorTarjetas(err.message);
+    } finally {
+      setLoadingTarjeta(false);
+    }
+  };
+
+  const handleAbrirModalAgregar = () => {
+    setShowModalTarjeta(true);
+    setSuccessTarjeta(false);
+    setErrorTarjetas(null);
+    setErroresTarjeta({});
+  };
+
+  const handleCerrarModalTarjeta = () => {
+    setShowModalTarjeta(false);
+    setFormTarjeta({
+      nombreCompleto: '',
+      numero: '',
+      fechaVencimiento: '',
+      codigoSeguridad: '',
+      dniTitular: ''
+    });
+    setErroresTarjeta({});
+  };
+
+  const handlePuntitoClick = (index) => {
+    setTarjetaActiva(index);
+    const container = document.querySelector('.tarjetas-carrusel');
+    if (container) {
+      const tarjetaWidth = 280; // ancho de la tarjeta
+      const gap = 16; // gap entre tarjetas
+      const scrollPosition = index * (tarjetaWidth + gap);
+      container.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollCarrusel = () => {
+    const container = document.querySelector('.tarjetas-carrusel');
+    if (container) {
+      const tarjetaWidth = 280; // ancho de la tarjeta
+      const gap = 16; // gap entre tarjetas
+      const scrollLeft = container.scrollLeft;
+      const index = Math.round(scrollLeft / (tarjetaWidth + gap));
+      setTarjetaActiva(index);
+    }
+  };
+
+  // Fetch tarjetas del usuario
+  useEffect(() => {
+    if (!user || !user.id) return;
+    setLoadingTarjetas(true);
+    setErrorTarjetas(null);
+    fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudieron obtener las tarjetas');
+        return res.json();
+      })
+      .then(data => setTarjetas(data))
+      .catch(err => setErrorTarjetas(err.message))
+      .finally(() => setLoadingTarjetas(false));
+  }, [user, token]);
 
   React.useEffect(() => {
     if (user === null) return; // Espera a que el contexto se inicialice
@@ -308,7 +531,347 @@ const MiCuenta = () => {
             {loading ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
+        {/* Después del formulario de datos personales */}
+        <div className="mt-5">
+          <h3 style={{ color: '#1976d2', fontWeight: 700, marginBottom: 18 }}>Mis tarjetas</h3>
+          {loadingTarjetas ? (
+            <div className="text-center">Cargando tarjetas...</div>
+          ) : errorTarjetas ? (
+            <div className="alert alert-danger text-center">{errorTarjetas}</div>
+          ) : tarjetas.length === 0 ? (
+            <div className="text-muted mb-3">No tienes tarjetas guardadas.</div>
+          ) : (
+            <div className="tarjetas-carrusel-container mb-3" style={{ position: 'relative' }}>
+              {/* Flecha izquierda */}
+              {tarjetas.length > 1 && (
+                <button 
+                  className="btn btn-light position-absolute" 
+                  style={{ 
+                    left: -15, 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    zIndex: 10,
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    border: '2px solid #e0e2e7',
+                    background: 'white',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    color: '#666',
+                    fontWeight: 'bold'
+                  }}
+                  onClick={() => {
+                    const container = document.querySelector('.tarjetas-carrusel');
+                    if (container) {
+                      container.scrollBy({ left: -280, behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  ‹
+                </button>
+              )}
+              
+              <div 
+                className="tarjetas-carrusel" 
+                style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '10px 0', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                onScroll={handleScrollCarrusel}
+              >
+                {tarjetas.map(t => (
+                  <div key={t.id} className="tarjeta-item-carrusel" style={{ 
+                    minWidth: 260, 
+                    maxWidth: 280, 
+                    flex: '0 0 auto',
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    borderRadius: 16,
+                    padding: '18px 16px',
+                    color: '#333',
+                    position: 'relative',
+                    border: '1px solid #e0e2e7'
+                  }}>
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      right: 0, 
+                      left: 0, 
+                      height: '32px', 
+                      background: 'rgba(25,118,210,0.05)', 
+                      borderRadius: '16px 16px 0 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      padding: '0 16px'
+                    }}>
+                      <div style={{ 
+                        width: '32px', 
+                        height: '20px', 
+                        background: 'rgba(25,118,210,0.1)', 
+                        borderRadius: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <div style={{ 
+                          width: '24px', 
+                          height: '14px', 
+                          background: 'rgba(25,118,210,0.2)', 
+                          borderRadius: '2px'
+                        }}></div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginTop: 40 }}>
+                      <div style={{ 
+                        fontSize: '1.1em', 
+                        fontWeight: 700, 
+                        marginBottom: '6px',
+                        color: '#1976d2'
+                      }}>
+                        {t.nombreCompleto}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.95em', 
+                        marginBottom: '10px',
+                        letterSpacing: '1.5px',
+                        fontFamily: 'monospace',
+                        color: '#555'
+                      }}>
+                        •••• •••• •••• {t.numero.slice(-4)}
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '0.85em',
+                        color: '#666'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.75em', opacity: 0.7, color: '#888' }}>VENCE</div>
+                          <div>{t.fechaVencimiento}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.75em', opacity: 0.7, color: '#888' }}>DNI</div>
+                          <div>{t.dniTitular}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      className="btn btn-danger btn-sm position-absolute" 
+                      style={{ 
+                        top: 8, 
+                        right: 8, 
+                        borderRadius: 6, 
+                        fontWeight: 600,
+                        background: '#dc3545',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '0.75em',
+                        padding: '4px 8px'
+                      }} 
+                      /*onClick={() => handleEliminarTarjeta(t.id)}*/
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Flecha derecha */}
+              {tarjetas.length > 1 && (
+                <button 
+                  className="btn btn-light position-absolute" 
+                  style={{ 
+                    right: -15, 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    zIndex: 10,
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    border: '2px solid #e0e2e7',
+                    background: 'white',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    color: '#666',
+                    fontWeight: 'bold'
+                  }}
+                  onClick={() => {
+                    const container = document.querySelector('.tarjetas-carrusel');
+                    if (container) {
+                      container.scrollBy({ left: 280, behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  ›
+                </button>
+              )}
+              
+              {/* Indicadores de navegación */}
+              {tarjetas.length > 1 && (
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 6, 
+                  marginTop: 12 
+                }}>
+                  {tarjetas.map((_, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => handlePuntitoClick(index)}
+                      style={{ 
+                        width: '6px', 
+                        height: '6px', 
+                        borderRadius: '50%', 
+                        background: '#1976d2',
+                        opacity: index === tarjetaActiva ? 1 : 0.4,
+                        cursor: 'pointer',
+                        transition: 'opacity 0.3s ease'
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <button className="btn btn-primary" style={{ borderRadius: 10, fontWeight: 600, fontSize: '1.08em', padding: '0.7em 2em' }} onClick={handleAbrirModalAgregar}>
+            + Agregar nueva tarjeta
+          </button>
+        </div>
       </div>
+      {/* Modal para agregar tarjeta */}
+      {showModalTarjeta && (
+        <div className="modal-overlay" onClick={handleCerrarModalTarjeta}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Agregar nueva tarjeta</h2>
+              <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Completa los datos de tu tarjeta de crédito o débito</p>
+            </div>
+            
+            <form onSubmit={handleSubmitTarjeta}>
+              <div style={{ display: 'grid', gap: 20 }}>
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>👤</span>Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.nombreCompleto ? 'is-invalid' : ''}`}
+                    name="nombreCompleto"
+                    value={formTarjeta.nombreCompleto}
+                    onChange={handleChangeTarjeta}
+                    placeholder="Juan Pérez"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.nombreCompleto && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.nombreCompleto}</div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>🔢</span>Número de tarjeta
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.numero ? 'is-invalid' : ''}`}
+                    name="numero"
+                    value={formTarjeta.numero}
+                    onChange={handleChangeTarjeta}
+                    placeholder="1234 5678 9012 3456"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.numero && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.numero}</div>
+                  )}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>📅</span>Vencimiento
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.fechaVencimiento ? 'is-invalid' : ''}`}
+                      name="fechaVencimiento"
+                      value={formTarjeta.fechaVencimiento}
+                      onChange={handleChangeTarjeta}
+                      placeholder="MM/AA"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.fechaVencimiento && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.fechaVencimiento}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>🔒</span>Código de seguridad
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.codigoSeguridad ? 'is-invalid' : ''}`}
+                      name="codigoSeguridad"
+                      value={formTarjeta.codigoSeguridad}
+                      onChange={handleChangeTarjeta}
+                      placeholder="123"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.codigoSeguridad && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.codigoSeguridad}</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>🆔</span>DNI del titular
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.dniTitular ? 'is-invalid' : ''}`}
+                    name="dniTitular"
+                    value={formTarjeta.dniTitular}
+                    onChange={handleChangeTarjeta}
+                    placeholder="12345678"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.dniTitular && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.dniTitular}</div>
+                  )}
+                </div>
+              </div>
+              
+              {errorTarjetas && (
+                <div className="alert alert-danger mt-4" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
+                  <span style={{ marginRight: 8 }}>⚠️</span>{errorTarjetas}
+                </div>
+              )}
+              {successTarjeta && (
+                <div className="alert alert-success mt-4" style={{ borderRadius: 10, border: 'none', background: '#d4edda', color: '#155724' }}>
+                  <span style={{ marginRight: 8 }}>✅</span>¡Tarjeta guardada exitosamente!
+                </div>
+              )}
+              
+              <div className="modal-actions" style={{ marginTop: 32 }}>
+                <button type="submit" className="btn btn-primary" disabled={loadingTarjeta} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
+                  {loadingTarjeta ? 'Guardando...' : 'Guardar tarjeta'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={handleCerrarModalTarjeta} disabled={loadingTarjeta} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

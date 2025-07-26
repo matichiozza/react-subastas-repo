@@ -99,3 +99,210 @@ input:focus, select:focus, textarea:focus {
   color: #1565c0;
   border: none;
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 37, 51, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity 0.22s cubic-bezier(.4,1.6,.6,1);
+}
+.modal-overlay.modal-overlay-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.modal-content {
+  background: #fff !important;
+  border-radius: 28px !important;
+  box-shadow: 0 16px 48px 0 rgba(25, 118, 210, 0.28), 0 1.5px 0 #e0e2e7;
+  padding: 2.7em 2.2em 2.2em 2.2em;
+  max-width: 800px;
+  width: 99vw;
+  text-align: center;
+  position: relative;
+  border: 2.5px solid #e0e2e7;
+  animation: modalIn 0.22s cubic-bezier(.4,1.6,.6,1) both;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10000;
+  opacity: 1;
+  transition: opacity 0.22s cubic-bezier(.4,1.6,.6,1), transform 0.22s cubic-bezier(.4,1.6,.6,1);
+}
+.modal-content.modal-out {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  pointer-events: none;
+}
+@keyframes modalIn {
+  from { transform: translateY(40px) scale(0.97); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.modal-content h2 {
+  margin-top: 0;
+  color: #1976d2;
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+}
+.modal-warning {
+  background: #fffbe6;
+  color: #b26a00;
+  border-radius: 10px;
+  padding: 0.8em 1em 0.8em 1em;
+  margin: 0 0 1.7em 0;
+  font-size: 1.08em;
+  border: 1.5px solid #ffe082;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+.modal-metodo {
+  margin-bottom: 1.2em;
+  width: 100%;
+  text-align: left;
+  max-width: 340px;
+}
+.modal-metodo select {
+  margin-top: 0.5em;
+  padding: 0.5em 1em;
+  border-radius: 7px;
+  border: 1px solid #e0e2e7;
+  font-size: 1em;
+  background: #f7f8fa;
+  width: 100%;
+}
+.modal-metodo-info {
+  font-size: 0.97em;
+  color: #888;
+  margin-top: 0.3em;
+}
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  margin-top: 1.5em;
+}
+.btn.btn-secondary {
+  background: #ececf3;
+  color: #222;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn.btn-secondary:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.modal-actions .btn {
+  font-size: 1.18em;
+  padding: 0.85em 2.2em;
+  min-width: 150px;
+  border-radius: 10px;
+}
+
+.tarjetas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tarjeta-item {
+  border: 2.5px solid #e0e2e7 !important;
+  border-radius: 10px;
+  padding: 0.8em 1.1em;
+  background: #f7f8fa;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 12px;
+  font-size: 1em;
+  box-shadow: none;
+  transition: none !important;
+}
+.tarjeta-item.seleccionada {
+  border-color: #1976d2 !important;
+  box-shadow: 0 2px 12px rgba(25,118,210,0.10);
+  background: #e3f2fd;
+  transition: none !important;
+}
+.tarjeta-item.agregar {
+  border: 1.5px dashed #bdbdbd;
+  background: #fff;
+  color: #888;
+  cursor: not-allowed;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.modal-desglose-title, .modal-metodo-title {
+  font-weight: 700;
+  font-size: 1.18em;
+  color: #222;
+  margin-bottom: 14px;
+}
+
+.modal-metodo-title {
+  font-size: 1.13em;
+  margin-bottom: 10px;
+}
+
+@media (min-width: 700px) {
+  .modal-flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: 48px;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto 1.8em auto;
+  }
+  .modal-desglose, .modal-metodo {
+    max-width: 340px;
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0 8px;
+  }
+  .modal-warning {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 699px) {
+  .modal-flex-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 1.2em;
+  }
+}
+
+/* Estilos para el carrusel de tarjetas */
+.tarjetas-carrusel::-webkit-scrollbar {
+  display: none;
+}
+
+.tarjetas-carrusel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tarjeta-item-carrusel {
+  /* Sin animaciones */
+}
+
+/* Animación para los indicadores del carrusel */
+.tarjetas-carrusel-container .indicador-activo {
+  opacity: 1 !important;
+  transform: scale(1.2);
+  transition: all 0.3s ease;
+}
