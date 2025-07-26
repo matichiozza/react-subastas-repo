@@ -53,24 +53,40 @@ const DetallePublicacion = () => {
   const [ofertaModal, setOfertaModal] = useState('');
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [pasoPago, setPasoPago] = useState(1); // 1: procesando, 2: confirmado
+  const [showModalBajarse, setShowModalBajarse] = useState(false);
+  const [procesandoBajarse, setProcesandoBajarse] = useState(false);
+
+  // Funciones para cargar datos
+  const fetchPublicacion = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`http://localhost:8080/publicaciones/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error('No se pudo cargar la publicación');
+      setPublicacion(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchOfertas = async () => {
+    try {
+      const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => null);
+      setOfertas(data);
+    } catch {
+      setOfertas([]);
+    }
+  };
 
   useEffect(() => {
-    const fetchPublicacion = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`http://localhost:8080/publicaciones/${id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error('No se pudo cargar la publicación');
-        setPublicacion(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPublicacion();
   }, [id, token]);
 
@@ -142,17 +158,6 @@ const DetallePublicacion = () => {
   }, [showModal, oferta]);
 
   useEffect(() => {
-    const fetchOfertas = async () => {
-      try {
-        const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const data = await res.json().catch(() => null);
-        setOfertas(data);
-      } catch {
-        setOfertas([]);
-      }
-    };
     fetchOfertas();
   }, [id, mensaje, token]); // Refresca historial tras ofertar
 
@@ -239,6 +244,9 @@ const DetallePublicacion = () => {
     }, 220); // igual a la duración de la animación
   };
 
+  // Verificar si el usuario ya ofertó en esta publicación
+  const usuarioYaOferto = ofertas.some(oferta => oferta.usuario?.id === user?.id);
+
   const handleOfertaChange = (e) => {
     const valor = e.target.value;
     // Remover todos los caracteres no numéricos
@@ -253,6 +261,36 @@ const DetallePublicacion = () => {
       setOfertaFormateada(formateado);
     } else {
       setOfertaFormateada('');
+    }
+  };
+
+  const handleBajarseDeSubasta = async () => {
+    if (!user?.id) return;
+    
+    setProcesandoBajarse(true);
+    try {
+      const res = await fetch(`http://localhost:8080/publicaciones/${publicacion.id}/ofertas/usuario/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error('No se pudo procesar la solicitud');
+      }
+
+      // Recargar los datos
+      await fetchOfertas();
+      await fetchPublicacion();
+      setShowModalBajarse(false);
+      setMensaje('Te has bajado de la subasta. Has perdido tu seña.');
+      
+    } catch (err) {
+      setMensaje(err.message);
+    } finally {
+      setProcesandoBajarse(false);
     }
   };
 
@@ -653,25 +691,80 @@ const DetallePublicacion = () => {
             </div>
             {/* Formulario de oferta */}
             {publicacion.estado === 'ACTIVO' ? (
-              <form onSubmit={e => handleOfertar(e, false)} className="mt-3">
-                <div className="input-group mb-2">
-                  <span className="input-group-text">$</span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={ofertaFormateada}
-                    onChange={handleOfertaChange}
-                    placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
-                    required
-                    disabled={!user || ofertando}
-                  />
-                  <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
-                    {ofertando ? 'Ofertando...' : 'Ofertar'}
-                  </button>
-                </div>
-                {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
-                {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
-              </form>
+              <div className="mt-3">
+                {usuarioYaOferto ? (
+                  <div>
+                    <div className="alert alert-warning mb-3" style={{ fontSize: '0.95em', border: '1px solid #ffeaa7', background: '#fff3cd' }}>
+                      <div style={{ fontWeight: 600, color: '#856404', marginBottom: '8px' }}>
+                        ⚠️ Ya has ofertado en esta subasta
+                      </div>
+                      <div style={{ color: '#856404', fontSize: '0.9em' }}>
+                        Tu oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}
+                      </div>
+                    </div>
+                    
+                    {/* Opción para hacer nueva oferta */}
+                    <div className="mb-3">
+                      <form onSubmit={e => handleOfertar(e, false)}>
+                        <div className="input-group mb-2">
+                          <span className="input-group-text">$</span>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={ofertaFormateada}
+                            onChange={handleOfertaChange}
+                            placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
+                            required
+                            disabled={!user || ofertando}
+                          />
+                          <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
+                            {ofertando ? 'Ofertando...' : '💰 Hacer nueva oferta'}
+                          </button>
+                        </div>
+                        <div className="text-muted small" style={{ fontSize: '0.85em' }}>
+                          💡 Solo pagarás la diferencia en seña
+                        </div>
+                        {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
+                        {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
+                      </form>
+                    </div>
+                    
+                    {/* Opción para bajarse */}
+                    <div style={{ borderTop: '1px solid #ffeaa7', paddingTop: 12 }}>
+                      <button 
+                        className="btn btn-outline-danger w-100" 
+                        onClick={() => setShowModalBajarse(true)}
+                        style={{ fontWeight: 600, fontSize: '0.95em' }}
+                      >
+                        🚪 Bajarse de la subasta
+                      </button>
+                      <div className="text-muted small mt-2" style={{ fontSize: '0.85em' }}>
+                        ⚠️ Al bajarte perderás toda tu seña sin reembolso
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={e => handleOfertar(e, false)}>
+                    <div className="input-group mb-2">
+                      <span className="input-group-text">$</span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={ofertaFormateada}
+                        onChange={handleOfertaChange}
+                        placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
+                        required
+                        disabled={!user || ofertando}
+                      />
+                      <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
+                        {ofertando ? 'Ofertando...' : 'Ofertar'}
+                      </button>
+                    </div>
+                    {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
+                    {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
+                  </form>
+                )}
+              </div>
             ) : (
               <div className="alert alert-info mt-3">La subasta no está activa.</div>
             )}
@@ -1016,6 +1109,63 @@ const DetallePublicacion = () => {
                 <div className="procesamiento-barra"></div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para bajarse de la subasta */}
+      {showModalBajarse && (
+        <div className="modal-overlay" onClick={() => setShowModalBajarse(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🚪</div>
+              <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>Bajarse de la subasta</h2>
+              <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>¿Estás seguro de que quieres bajarte?</p>
+            </div>
+            
+            <div className="alert alert-danger" style={{ fontSize: '0.95em', border: '1px solid #f5c6cb', background: '#f8d7da' }}>
+              <div style={{ fontWeight: 600, color: '#721c24', marginBottom: '8px' }}>
+                ⚠️ ADVERTENCIA IMPORTANTE
+              </div>
+              <div style={{ color: '#721c24', fontSize: '0.9em' }}>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  <li>Todas tus ofertas serán eliminadas</li>
+                  <li>Perderás <strong>TODA</strong> tu seña sin reembolso</li>
+                  <li>No podrás volver a ofertar en esta subasta</li>
+                  <li>Esta acción es <strong>IRREVERSIBLE</strong></li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: '12px', marginBottom: '20px', fontSize: '0.95em' }}>
+              <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
+                📊 Resumen de tu participación:
+              </div>
+              <div style={{ color: '#856404' }}>
+                <div>• Ofertas realizadas: {ofertas.filter(o => o.usuario?.id === user?.id).length}</div>
+                <div>• Seña total pagada: ${formatearMonto((ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto * 0.10 || 0).toFixed(2))}</div>
+                <div>• Oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}</div>
+              </div>
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                className="btn btn-danger" 
+                onClick={handleBajarseDeSubasta}
+                disabled={procesandoBajarse}
+                style={{ minWidth: 120, fontWeight: 600 }}
+              >
+                {procesandoBajarse ? 'Procesando...' : 'Sí, bajarme'}
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowModalBajarse(false)}
+                disabled={procesandoBajarse}
+                style={{ minWidth: 120, marginLeft: 12 }}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
