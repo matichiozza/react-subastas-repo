@@ -22,28 +22,44 @@ const DetallePublicacion = () => {
   const imgContainerRef = useRef(null);
   // Estado para el modal y método de pago
   const [showModal, setShowModal] = useState(false);
-  const [metodoPago, setMetodoPago] = useState('Transferencia bancaria');
-  // Tarjetas hardcodeadas para el modal
-  const tarjetasGuardadas = [
-    { id: 1, tipo: 'Visa', ultimos: '1234', nombre: 'Matias Chiozza' },
-    { id: 2, tipo: 'Mastercard', ultimos: '5678', nombre: 'Matias Chiozza' },
-  ];
-  const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState(tarjetasGuardadas[0]?.id || null);
   const [modalClosing, setModalClosing] = useState(false);
+  const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState(null);
+  
+  // Estados para las tarjetas del usuario
+  const [tarjetasUsuario, setTarjetasUsuario] = useState([]);
+  const [loadingTarjetas, setLoadingTarjetas] = useState(false);
+  const [errorTarjetas, setErrorTarjetas] = useState(null);
+  
+  // Estados para el modal de agregar tarjeta
+  const [showModalTarjeta, setShowModalTarjeta] = useState(false);
+  const [formTarjeta, setFormTarjeta] = useState({
+    nombreCompleto: '',
+    numero: '',
+    fechaVencimiento: '',
+    codigoSeguridad: '',
+    dniTitular: ''
+  });
+  const [erroresTarjeta, setErroresTarjeta] = useState({});
+  const [loadingTarjeta, setLoadingTarjeta] = useState(false);
+  const [successTarjeta, setSuccessTarjeta] = useState(false);
+  
+  // Estado para la oferta anterior del usuario
+  const [ofertaAnterior, setOfertaAnterior] = useState(null);
+  const [loadingOfertaAnterior, setLoadingOfertaAnterior] = useState(false);
+  const fetchingOfertaAnterior = useRef(false);
+  
+  // Estado para el valor de oferta en el modal
+  const [ofertaModal, setOfertaModal] = useState('');
 
   useEffect(() => {
     const fetchPublicacion = async () => {
       setLoading(true);
       setError(null);
       try {
-        console.log("Token usado en fetch publicación:", token);
         const res = await fetch(`http://localhost:8080/publicaciones/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        console.log("Respuesta de detalle:", res);
-        console.log("Status:", res.status);
         const data = await res.json().catch(() => null);
-        console.log("Data publicación:", data);
         if (!res.ok) throw new Error('No se pudo cargar la publicación');
         setPublicacion(data);
       } catch (err) {
@@ -55,17 +71,80 @@ const DetallePublicacion = () => {
     fetchPublicacion();
   }, [id, token]);
 
+  // Cargar tarjetas del usuario
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const fetchTarjetas = async () => {
+      setLoadingTarjetas(true);
+      setErrorTarjetas(null);
+      try {
+        const res = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Error al cargar las tarjetas');
+        const data = await res.json();
+        setTarjetasUsuario(data);
+        // Seleccionar la primera tarjeta por defecto si hay tarjetas
+        if (data.length > 0 && !tarjetaSeleccionada) {
+          setTarjetaSeleccionada(data[0].id);
+        }
+      } catch (err) {
+        setErrorTarjetas('No se pudieron cargar las tarjetas');
+      } finally {
+        setLoadingTarjetas(false);
+      }
+    };
+    
+    fetchTarjetas();
+  }, [user?.id, token]);
+
+  // Cargar oferta anterior del usuario
+  useEffect(() => {
+    if (!user?.id || !id || !token || !showModal || fetchingOfertaAnterior.current) return;
+    
+    const fetchOfertaAnterior = async () => {
+      fetchingOfertaAnterior.current = true;
+      setLoadingOfertaAnterior(true);
+      try {
+        const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas/usuario/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOfertaAnterior(data);
+        } else if (res.status === 404) {
+          // No hay oferta anterior
+          setOfertaAnterior(null);
+        } else {
+          setOfertaAnterior(null);
+        }
+      } catch (err) {
+        console.error('Error al cargar oferta anterior:', err);
+        setOfertaAnterior(null);
+      } finally {
+        setLoadingOfertaAnterior(false);
+        fetchingOfertaAnterior.current = false;
+      }
+    };
+    
+    fetchOfertaAnterior();
+  }, [user?.id, id, token, showModal]);
+
+  // Actualizar el valor de oferta en el modal cuando se abra
+  useEffect(() => {
+    if (showModal) {
+      setOfertaModal(oferta);
+    }
+  }, [showModal, oferta]);
+
   useEffect(() => {
     const fetchOfertas = async () => {
       try {
-        console.log("Token usado en fetch ofertas:", token);
         const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        console.log("Respuesta de ofertas:", res);
-        console.log("Status:", res.status);
         const data = await res.json().catch(() => null);
-        console.log("Data ofertas:", data);
         setOfertas(data);
       } catch {
         setOfertas([]);
@@ -150,7 +229,160 @@ const DetallePublicacion = () => {
     setTimeout(() => {
       setShowModal(false);
       setModalClosing(false);
+      fetchingOfertaAnterior.current = false;
     }, 220); // igual a la duración de la animación
+  };
+
+  // Funciones para manejar tarjetas
+  const validarTarjeta = () => {
+    const errores = {};
+    
+    // Nombre completo
+    if (!formTarjeta.nombreCompleto.trim()) {
+      errores.nombreCompleto = 'El nombre completo es requerido';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formTarjeta.nombreCompleto)) {
+      errores.nombreCompleto = 'Solo se permiten letras y espacios';
+    }
+    
+    // Número de tarjeta
+    if (!formTarjeta.numero.trim()) {
+      errores.numero = 'El número de tarjeta es requerido';
+    } else if (!/^\d{16}$/.test(formTarjeta.numero.replace(/\s/g, ''))) {
+      errores.numero = 'Debe tener exactamente 16 dígitos';
+    }
+    
+    // Fecha de vencimiento
+    if (!formTarjeta.fechaVencimiento.trim()) {
+      errores.fechaVencimiento = 'La fecha de vencimiento es requerida';
+    } else {
+      const fecha = formTarjeta.fechaVencimiento;
+      const formato = /^(0[1-9]|1[0-2])\/\d{2}$/.test(fecha);
+      if (!formato) {
+        errores.fechaVencimiento = 'Formato: MM/AA (ej: 04/27)';
+      } else {
+        const [mes, año] = fecha.split('/');
+        const mesNum = parseInt(mes);
+        const añoNum = parseInt(año);
+        const añoActual = new Date().getFullYear() % 100; // Solo los últimos 2 dígitos
+        
+        if (mesNum < 1 || mesNum > 12) {
+          errores.fechaVencimiento = 'Mes inválido';
+        } else if (añoNum < añoActual) {
+          errores.fechaVencimiento = 'La tarjeta ya venció';
+        }
+      }
+    }
+    
+    // CVV
+    if (!formTarjeta.codigoSeguridad.trim()) {
+      errores.codigoSeguridad = 'El código de seguridad es requerido';
+    } else if (!/^\d{3}$/.test(formTarjeta.codigoSeguridad)) {
+      errores.codigoSeguridad = 'Debe tener exactamente 3 dígitos';
+    }
+    
+    // DNI
+    if (!formTarjeta.dniTitular.trim()) {
+      errores.dniTitular = 'El DNI es requerido';
+    } else if (!/^\d{7,8}$/.test(formTarjeta.dniTitular)) {
+      errores.dniTitular = 'Debe tener 7 u 8 dígitos';
+    }
+    
+    setErroresTarjeta(errores);
+    return Object.keys(errores).length === 0;
+  };
+
+  const handleChangeTarjeta = (e) => {
+    const { name, value } = e.target;
+    let processedValue = value;
+    
+    // Formatear número de tarjeta
+    if (name === 'numero') {
+      processedValue = value.replace(/\D/g, '').slice(0, 16);
+    }
+    
+    // Formatear fecha de vencimiento
+    if (name === 'fechaVencimiento') {
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
+      if (processedValue.length >= 2) {
+        processedValue = processedValue.slice(0, 2) + '/' + processedValue.slice(2);
+      }
+    }
+    
+    // Formatear CVV
+    if (name === 'codigoSeguridad') {
+      processedValue = value.replace(/\D/g, '').slice(0, 3);
+    }
+    
+    // Formatear DNI
+    if (name === 'dniTitular') {
+      processedValue = value.replace(/\D/g, '').slice(0, 8);
+    }
+    
+    setFormTarjeta(prev => ({ ...prev, [name]: processedValue }));
+    
+    // Validar en tiempo real
+    if (erroresTarjeta[name]) {
+      const nuevosErrores = { ...erroresTarjeta };
+      delete nuevosErrores[name];
+      setErroresTarjeta(nuevosErrores);
+    }
+  };
+
+  const handleSubmitTarjeta = async (e) => {
+    e.preventDefault();
+    if (!validarTarjeta()) return;
+    
+    setLoadingTarjeta(true);
+    setErrorTarjetas(null);
+    try {
+      const res = await fetch('http://localhost:8080/tarjetas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...formTarjeta,
+          usuario: { id: user.id }
+        }),
+      });
+      
+      if (!res.ok) throw new Error('Error al guardar la tarjeta');
+      
+      const nuevaTarjeta = await res.json();
+      setTarjetasUsuario(prev => [...prev, nuevaTarjeta]);
+      setTarjetaSeleccionada(nuevaTarjeta.id);
+      setSuccessTarjeta(true);
+      
+      // Cerrar modal después de un breve delay
+      setTimeout(() => {
+        handleCerrarModalTarjeta();
+      }, 1500);
+      
+    } catch (err) {
+      setErrorTarjetas('No se pudo guardar la tarjeta');
+    } finally {
+      setLoadingTarjeta(false);
+    }
+  };
+
+  const handleAbrirModalAgregar = () => {
+    setShowModalTarjeta(true);
+    setSuccessTarjeta(false);
+    setErrorTarjetas(null);
+  };
+
+  const handleCerrarModalTarjeta = () => {
+    setShowModalTarjeta(false);
+    setFormTarjeta({
+      nombreCompleto: '',
+      numero: '',
+      fechaVencimiento: '',
+      codigoSeguridad: '',
+      dniTitular: ''
+    });
+    setErroresTarjeta({});
+    setSuccessTarjeta(false);
   };
 
   // Breadcrumb
@@ -167,6 +399,20 @@ const DetallePublicacion = () => {
   function formatearMonto(valor) {
     if (isNaN(valor)) return valor;
     return Number(valor).toLocaleString('es-AR');
+  }
+
+  // Calcular la seña a pagar (diferencia si ya ofertó antes)
+  function calcularSenaAPagar(montoOferta) {
+    if (!ofertaAnterior || !montoOferta) {
+      // Primera oferta o sin oferta: paga 10% completo
+      return parseFloat(montoOferta || 0) * 0.10;
+    } else {
+      // Oferta posterior: paga solo la diferencia de seña
+      const señaAnterior = parseFloat(ofertaAnterior.monto) * 0.10;
+      const señaNueva = parseFloat(montoOferta) * 0.10;
+      const diferencia = señaNueva - señaAnterior;
+      return Math.max(0, diferencia); // No puede ser negativo
+    }
   }
 
   return (
@@ -399,71 +645,122 @@ const DetallePublicacion = () => {
               {/* Desglose */}
               <div className="modal-desglose mb-3" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
                 <div className="modal-desglose-title">Desglose de pago</div>
+                
+                {/* Información de oferta anterior si existe */}
+                {ofertaAnterior && (
+                  <div style={{ 
+                    background: '#fff3cd', 
+                    border: '1px solid #ffeaa7', 
+                    borderRadius: 8, 
+                    padding: '12px', 
+                    marginBottom: '12px',
+                    fontSize: '0.95em'
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
+                      📋 Oferta anterior: ${formatearMonto(ofertaAnterior.monto)}
+                    </div>
+                    <div style={{ color: '#856404' }}>
+                      Ya pagaste seña de: ${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}
+                    </div>
+                  </div>
+                )}
+                
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
                   <span>Monto ofertado:</span>
-                  <span>${formatearMonto(oferta)}</span>
+                  <span>${formatearMonto(ofertaModal)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
-                  <span>Seña (10%):</span>
-                  <span>${formatearMonto((parseFloat(oferta) * 0.10).toFixed(2))}</span>
-                </div>
-                <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1976d2' }}>
-                  <span>Total a pagar ahora:</span>
-                  <span>${formatearMonto((parseFloat(oferta) * 0.10).toFixed(2))}</span>
-                </div>
+                
+                {ofertaAnterior ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
+                      <span>Seña nueva (10%):</span>
+                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc3545', fontWeight: 500, marginTop: 2 }}>
+                      <span>Seña ya pagada:</span>
+                      <span>-${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}</span>
+                    </div>
+                    <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#28a745' }}>
+                      <span>Diferencia a pagar:</span>
+                      <span>${formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
+                      <span>Seña (10%):</span>
+                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                    </div>
+                    <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1976d2' }}>
+                      <span>Total a pagar ahora:</span>
+                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                    </div>
+                  </>
+                )}
+                
                 <div style={{ fontSize: '0.97em', color: '#888', marginTop: 2 }}>
-                  Solo abonarás la seña ahora. Si ganas la subasta, coordinarás el pago del resto con el vendedor.
+                  {ofertaAnterior 
+                    ? 'Solo pagarás la diferencia de seña. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
+                    : 'Solo abonarás la seña ahora. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
+                  }
                 </div>
               </div>
               {/* Selector de tarjetas */}
               <div className="modal-metodo mb-2" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
                 <div className="modal-metodo-title">Selecciona una tarjeta para la seña:</div>
-                <div className="tarjetas-lista" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {tarjetasGuardadas.map(t => (
-                    <div
-                      key={t.id}
-                      className={`tarjeta-item${tarjetaSeleccionada === t.id ? ' seleccionada' : ''}`}
-                      style={{
-                        border: tarjetaSeleccionada === t.id ? '2.5px solid #1976d2' : '1.5px solid #e0e2e7',
-                        borderRadius: 10,
-                        padding: '0.8em 1.1em',
-                        background: '#f7f8fa',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        boxShadow: tarjetaSeleccionada === t.id ? '0 2px 12px rgba(25,118,210,0.10)' : 'none',
-                        transition: 'border 0.2s, box-shadow 0.2s',
-                        gap: 12,
-                      }}
-                      onClick={() => setTarjetaSeleccionada(t.id)}
-                    >
-                      <span style={{ fontSize: 22 }}>{t.tipo === 'Visa' ? '💳' : '💳'}</span>
-                      <span style={{ fontWeight: 600, fontSize: '1.08em', color: '#1976d2', marginRight: 8 }}>{t.tipo}</span>
-                      <span style={{ color: '#888', fontSize: '1em', marginRight: 8 }}>•••• {t.ultimos}</span>
-                      <span style={{ color: '#888', fontSize: '0.97em' }}>{t.nombre}</span>
-                    </div>
-                  ))}
-                  <div
-                    className="tarjeta-item agregar"
-                    style={{
-                      border: '1.5px dashed #bdbdbd',
-                      borderRadius: 10,
-                      padding: '0.8em 1.1em',
-                      background: '#fff',
-                      color: '#888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      cursor: 'not-allowed',
-                      opacity: 0.7,
-                      fontWeight: 500,
-                    }}
-                    title="Próximamente podrás agregar una nueva tarjeta"
-                  >
-                    <span style={{ fontSize: 22 }}>➕</span>
-                    <span>Agregar nueva tarjeta</span>
+                {loadingTarjetas ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                    Cargando tarjetas...
                   </div>
-                </div>
+                ) : errorTarjetas ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#dc3545' }}>
+                    {errorTarjetas}
+                  </div>
+                ) : tarjetasUsuario.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <div style={{ color: '#666', marginBottom: '15px' }}>
+                      No tienes tarjetas guardadas. Agrega una para continuar.
+                    </div>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={handleAbrirModalAgregar}
+                      style={{ borderRadius: 8, fontWeight: 600 }}
+                    >
+                      + Agregar tarjeta
+                    </button>
+                  </div>
+                ) : (
+                  <div className="tarjetas-lista" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {tarjetasUsuario.map(t => (
+                      <div
+                        key={t.id}
+                        className={`tarjeta-item${tarjetaSeleccionada === t.id ? ' seleccionada' : ''}`}
+                        style={{
+                          border: tarjetaSeleccionada === t.id ? '2.5px solid #1976d2' : '1.5px solid #e0e2e7',
+                          borderRadius: 10,
+                          padding: '0.8em 1.1em',
+                          background: '#f7f8fa',
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          boxShadow: tarjetaSeleccionada === t.id ? '0 2px 12px rgba(25,118,210,0.10)' : 'none',
+                          transition: 'border 0.2s, box-shadow 0.2s',
+                          gap: 12,
+                        }}
+                        onClick={() => setTarjetaSeleccionada(t.id)}
+                      >
+                        <span style={{ fontSize: 22 }}>💳</span>
+                        <span style={{ fontWeight: 600, fontSize: '1.08em', color: '#1976d2', marginRight: 8 }}>
+                          {t.numero.slice(-4).startsWith('4') ? 'Visa' : 'Mastercard'}
+                        </span>
+                        <span style={{ color: '#888', fontSize: '1em', marginRight: 8 }}>
+                          •••• {t.numero.slice(-4)}
+                        </span>
+                        <span style={{ color: '#888', fontSize: '0.97em' }}>{t.nombreCompleto}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             {/* Advertencia */}
@@ -476,6 +773,142 @@ const DetallePublicacion = () => {
               <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={e => handleOfertar(e, true)} disabled={ofertando || !tarjetaSeleccionada}>Confirmar oferta</button>
               <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando}>Cancelar</button>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal para agregar tarjeta */}
+      {showModalTarjeta && (
+        <div className="modal-overlay" onClick={handleCerrarModalTarjeta}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Agregar nueva tarjeta</h2>
+              <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Completa los datos de tu tarjeta de crédito o débito</p>
+            </div>
+            
+            <form onSubmit={handleSubmitTarjeta}>
+              <div style={{ display: 'grid', gap: 20 }}>
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>👤</span>Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.nombreCompleto ? 'is-invalid' : ''}`}
+                    name="nombreCompleto"
+                    value={formTarjeta.nombreCompleto}
+                    onChange={handleChangeTarjeta}
+                    placeholder="Juan Pérez"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.nombreCompleto && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.nombreCompleto}</div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>🔢</span>Número de tarjeta
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.numero ? 'is-invalid' : ''}`}
+                    name="numero"
+                    value={formTarjeta.numero}
+                    onChange={handleChangeTarjeta}
+                    placeholder="1234 5678 9012 3456"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.numero && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.numero}</div>
+                  )}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>📅</span>Vencimiento
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.fechaVencimiento ? 'is-invalid' : ''}`}
+                      name="fechaVencimiento"
+                      value={formTarjeta.fechaVencimiento}
+                      onChange={handleChangeTarjeta}
+                      placeholder="MM/AA"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.fechaVencimiento && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.fechaVencimiento}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>🔐</span>Código de seguridad
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.codigoSeguridad ? 'is-invalid' : ''}`}
+                      name="codigoSeguridad"
+                      value={formTarjeta.codigoSeguridad}
+                      onChange={handleChangeTarjeta}
+                      placeholder="123"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.codigoSeguridad && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.codigoSeguridad}</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>🆔</span>DNI del titular
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control ${erroresTarjeta.dniTitular ? 'is-invalid' : ''}`}
+                    name="dniTitular"
+                    value={formTarjeta.dniTitular}
+                    onChange={handleChangeTarjeta}
+                    placeholder="12345678"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                  />
+                  {erroresTarjeta.dniTitular && (
+                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.dniTitular}</div>
+                  )}
+                </div>
+              </div>
+              
+              {errorTarjetas && (
+                <div className="alert alert-danger mt-3" style={{ fontSize: '0.95em' }}>{errorTarjetas}</div>
+              )}
+              
+              {successTarjeta && (
+                <div className="alert alert-success mt-3" style={{ fontSize: '0.95em' }}>¡Tarjeta agregada exitosamente!</div>
+              )}
+              
+              <div className="modal-actions">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={loadingTarjeta}
+                  style={{ minWidth: 120, fontWeight: 600 }}
+                >
+                  {loadingTarjeta ? 'Guardando...' : 'Guardar tarjeta'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleCerrarModalTarjeta}
+                  disabled={loadingTarjeta}
+                  style={{ minWidth: 120, marginLeft: 12 }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -95,19 +95,18 @@ const MiCuenta = () => {
       errores.fechaVencimiento = 'La fecha de vencimiento es requerida';
     } else {
       const fecha = formTarjeta.fechaVencimiento;
-      const formato = /^(0[1-9]|1[0-2])\/([0-9]{2}|[0-9]{4})$/.test(fecha);
+      const formato = /^(0[1-9]|1[0-2])\/\d{2}$/.test(fecha);
       if (!formato) {
-        errores.fechaVencimiento = 'Formato: MM/AA o MM/AAAA';
+        errores.fechaVencimiento = 'Formato: MM/AA (ej: 04/27)';
       } else {
         const [mes, año] = fecha.split('/');
         const mesNum = parseInt(mes);
         const añoNum = parseInt(año);
-        const añoActual = new Date().getFullYear();
-        const añoCompleto = año.length === 2 ? 2000 + añoNum : añoNum;
+        const añoActual = new Date().getFullYear() % 100; // Solo los últimos 2 dígitos
         
         if (mesNum < 1 || mesNum > 12) {
           errores.fechaVencimiento = 'Mes inválido';
-        } else if (añoCompleto < añoActual) {
+        } else if (añoNum < añoActual) {
           errores.fechaVencimiento = 'La tarjeta ya venció';
         }
       }
@@ -116,8 +115,8 @@ const MiCuenta = () => {
     // CVV
     if (!formTarjeta.codigoSeguridad.trim()) {
       errores.codigoSeguridad = 'El código de seguridad es requerido';
-    } else if (!/^\d{3,4}$/.test(formTarjeta.codigoSeguridad)) {
-      errores.codigoSeguridad = 'Debe tener 3 o 4 dígitos';
+    } else if (!/^\d{3}$/.test(formTarjeta.codigoSeguridad)) {
+      errores.codigoSeguridad = 'Debe tener exactamente 3 dígitos';
     }
     
     // DNI
@@ -142,7 +141,7 @@ const MiCuenta = () => {
     
     // Formatear fecha de vencimiento
     if (name === 'fechaVencimiento') {
-      processedValue = value.replace(/\D/g, '').slice(0, 6);
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
       if (processedValue.length >= 2) {
         processedValue = processedValue.slice(0, 2) + '/' + processedValue.slice(2);
       }
@@ -150,7 +149,7 @@ const MiCuenta = () => {
     
     // Formatear CVV
     if (name === 'codigoSeguridad') {
-      processedValue = value.replace(/\D/g, '').slice(0, 4);
+      processedValue = value.replace(/\D/g, '').slice(0, 3);
     }
     
     // Formatear DNI
@@ -239,6 +238,38 @@ const MiCuenta = () => {
       dniTitular: ''
     });
     setErroresTarjeta({});
+  };
+
+  const handleEliminarTarjeta = async (id) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta tarjeta?')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`http://localhost:8080/tarjetas/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!res.ok) throw new Error('Error al eliminar la tarjeta');
+      
+      // Actualizar la lista de tarjetas
+      setTarjetas(prev => prev.filter(t => t.id !== id));
+      
+      // Si la tarjeta eliminada era la seleccionada, seleccionar otra
+      if (tarjetaActiva === id) {
+        const tarjetasRestantes = tarjetas.filter(t => t.id !== id);
+        if (tarjetasRestantes.length > 0) {
+          setTarjetaActiva(tarjetasRestantes[0].id);
+        } else {
+          setTarjetaActiva(0);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Error al eliminar tarjeta:', err);
+      alert('No se pudo eliminar la tarjeta');
+    }
   };
 
   const handlePuntitoClick = (index) => {
@@ -672,7 +703,7 @@ const MiCuenta = () => {
                         fontSize: '0.75em',
                         padding: '4px 8px'
                       }} 
-                      /*onClick={() => handleEliminarTarjeta(t.id)}*/
+                      onClick={() => handleEliminarTarjeta(t.id)}
                     >
                       Eliminar
                     </button>
