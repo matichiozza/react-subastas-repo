@@ -3,6 +3,12 @@ import { AuthContext } from '../context/AuthContext';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
+// Función para formatear montos con separadores de miles
+function formatearMonto(valor) {
+  if (!valor) return '0';
+  return parseFloat(valor).toLocaleString('es-AR');
+}
+
 const MisPublicaciones = () => {
   const { token, user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -98,7 +104,7 @@ const MisPublicaciones = () => {
                   <h6 className="fw-bold mb-1" style={{ color: '#1976d2', fontSize: '1.08em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
                   <div className="mb-1 text-truncate" style={{ fontSize: '0.97em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
                   <div className="mb-2 d-flex align-items-center gap-2" style={{ fontWeight: 500 }}>
-                    <span style={{ color: '#1565c0', fontSize: '1.05em' }}>Precio actual: ${pub.precioActual && pub.precioActual > 0 ? pub.precioActual : pub.precioInicial}</span>
+                    <span style={{ color: '#1565c0', fontSize: '1.05em' }}>Precio actual: ${formatearMonto(pub.precioActual && pub.precioActual > 0 ? pub.precioActual : pub.precioInicial)}</span>
                     <span className="badge bg-warning text-dark ms-auto" style={{ fontSize: '0.90em' }}>{pub.ofertasTotales || 0} ofertas</span>
                   </div>
                   <div className="d-flex gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>

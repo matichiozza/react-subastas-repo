@@ -32,6 +32,12 @@ const preguntas = [
   { q: '¿Puedo cancelar una oferta?', a: 'No, las ofertas son vinculantes. Asegúrate de estar seguro antes de ofertar.' },
 ];
 
+// Función para formatear montos con separadores de miles
+function formatearMonto(valor) {
+  if (!valor) return '0';
+  return parseFloat(valor).toLocaleString('es-AR');
+}
+
 const Home = () => {
   const { token } = useContext(AuthContext);
   const [publicaciones, setPublicaciones] = useState([]);
@@ -194,9 +200,9 @@ const Home = () => {
                     <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
                     {/* Precio y ofertas */}
                     <div className="d-flex align-items-center justify-content-between mb-1">
-                      <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
-                        {pub.precioActual && pub.precioActual > 0 ? `Actual: $${pub.precioActual}` : `Inicial: $${pub.precioInicial}`}
-                      </div>
+                                              <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
+                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${formatearMonto(pub.precioActual)}` : `Inicial: $${formatearMonto(pub.precioInicial)}`}
+                        </div>
                       <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
                     </div>
                     {/* Fecha de finalización */}

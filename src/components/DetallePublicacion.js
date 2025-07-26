@@ -11,6 +11,7 @@ const DetallePublicacion = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [oferta, setOferta] = useState('');
+  const [ofertaFormateada, setOfertaFormateada] = useState('');
   const [ofertando, setOfertando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [ofertas, setOfertas] = useState([]);
@@ -50,6 +51,8 @@ const DetallePublicacion = () => {
   
   // Estado para el valor de oferta en el modal
   const [ofertaModal, setOfertaModal] = useState('');
+  const [procesandoPago, setProcesandoPago] = useState(false);
+  const [pasoPago, setPasoPago] = useState(1); // 1: procesando, 2: confirmado
 
   useEffect(() => {
     const fetchPublicacion = async () => {
@@ -214,6 +217,7 @@ const DetallePublicacion = () => {
       const data = await res.json();
       setMensaje('¡Oferta realizada con éxito!');
       setOferta('');
+      setOfertaFormateada('');
       setPublicacion(data.publicacionActualizada);
       setOfertas(data.ofertas);
       setShowModal(false);
@@ -230,7 +234,82 @@ const DetallePublicacion = () => {
       setShowModal(false);
       setModalClosing(false);
       fetchingOfertaAnterior.current = false;
+      setProcesandoPago(false);
+      setPasoPago(1);
     }, 220); // igual a la duración de la animación
+  };
+
+  const handleOfertaChange = (e) => {
+    const valor = e.target.value;
+    // Remover todos los caracteres no numéricos
+    const soloNumeros = valor.replace(/\D/g, '');
+    
+    // Actualizar el valor numérico para cálculos
+    setOferta(soloNumeros);
+    
+    // Formatear para mostrar al usuario
+    if (soloNumeros) {
+      const formateado = parseFloat(soloNumeros).toLocaleString('es-AR');
+      setOfertaFormateada(formateado);
+    } else {
+      setOfertaFormateada('');
+    }
+  };
+
+  const handleConfirmarOferta = async () => {
+    if (!tarjetaSeleccionada) {
+      alert('Por favor selecciona una tarjeta para continuar');
+      return;
+    }
+
+    setProcesandoPago(true);
+    setPasoPago(1);
+
+    // Simular procesamiento de pago
+    setTimeout(async () => {
+      try {
+        const monto = parseFloat(ofertaModal);
+        if (isNaN(monto) || monto < siguienteOferta) {
+          setMensaje(`La oferta debe ser al menos $${siguienteOferta}`);
+          setProcesandoPago(false);
+          return;
+        }
+
+        const res = await fetch(`http://localhost:8080/publicaciones/ofertas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ publicacionId: publicacion.id, monto }),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || 'No se pudo realizar la oferta');
+        }
+
+        const data = await res.json();
+        
+        // Simular confirmación de pago
+        setPasoPago(2);
+        setTimeout(() => {
+          setMensaje('¡Oferta realizada con éxito!');
+          setOferta('');
+          setOfertaFormateada('');
+          setPublicacion(data.publicacionActualizada);
+          setOfertas(data.ofertas);
+          setShowModal(false);
+          setProcesandoPago(false);
+          setPasoPago(1);
+        }, 2000);
+
+      } catch (err) {
+        setMensaje(err.message);
+        setProcesandoPago(false);
+        setPasoPago(1);
+      }
+    }, 4000); // Simular 4 segundos de procesamiento
   };
 
   // Funciones para manejar tarjetas
@@ -558,14 +637,19 @@ const DetallePublicacion = () => {
               <span className={`badge ${publicacion.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.95em' }}>{publicacion.condicion || 'Condición'}</span>
             </div>
             <div className="mb-2">
-              <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.15em' }}>Precio actual: ${precioActual}</span>
-              <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${incremento}</span>
+              <div style={{ marginBottom: '4px' }}>
+                <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.15em' }}>Precio actual: ${formatearMonto(precioActual)}</span>
+                <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${formatearMonto(incremento)}</span>
+              </div>
+              <div style={{ color: '#666', fontSize: '0.95em' }}>
+                <span role="img" aria-label="base">📊</span> Precio base: ${formatearMonto(publicacion.precioInicial)}
+              </div>
             </div>
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
               <span role="img" aria-label="fin">⏰</span> Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
             </div>
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
-              <span role="img" aria-label="ofertas">💸</span> Ofertas totales: {publicacion.ofertasTotales || 0}
+              <span role="img" aria-label="ofertas">💸</span> Ofertas totales: {ofertas.length}
             </div>
             {/* Formulario de oferta */}
             {publicacion.estado === 'ACTIVO' ? (
@@ -573,13 +657,11 @@ const DetallePublicacion = () => {
                 <div className="input-group mb-2">
                   <span className="input-group-text">$</span>
                   <input
-                    type="number"
+                    type="text"
                     className="form-control"
-                    min={siguienteOferta}
-                    step={incremento}
-                    value={oferta}
-                    onChange={e => setOferta(e.target.value)}
-                    placeholder={`Mínimo $${siguienteOferta}`}
+                    value={ofertaFormateada}
+                    onChange={handleOfertaChange}
+                    placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
                     required
                     disabled={!user || ofertando}
                   />
@@ -624,7 +706,7 @@ const DetallePublicacion = () => {
                       >
                         <div className="d-flex justify-content-between align-items-center flex-wrap" style={{ rowGap: 6 }}>
                           <span className="fw-semibold" style={{ color: '#1976d2', fontSize: '1.04em', maxWidth: '60vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
-                          <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.13em', minWidth: 80, textAlign: 'right' }}>${of.monto}</span>
+                          <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.13em', minWidth: 80, textAlign: 'right' }}>${formatearMonto(of.monto)}</span>
                         </div>
                         <div className="mt-1" style={{ color: '#888', fontSize: '0.97em', letterSpacing: 0.2 }}>
                           {fecha} {hora && <span style={{ marginLeft: 10 }}>{hora}</span>}
@@ -770,8 +852,8 @@ const DetallePublicacion = () => {
             </div>
             {/* Acciones */}
             <div className="modal-actions">
-              <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={e => handleOfertar(e, true)} disabled={ofertando || !tarjetaSeleccionada}>Confirmar oferta</button>
-              <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando}>Cancelar</button>
+              <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={handleConfirmarOferta} disabled={ofertando || !tarjetaSeleccionada || procesandoPago}>Confirmar oferta</button>
+              <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando || procesandoPago}>Cancelar</button>
             </div>
           </div>
         </div>
@@ -909,6 +991,31 @@ const DetallePublicacion = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pantalla de procesamiento de pago */}
+      {procesandoPago && (
+        <div className="procesamiento-pago">
+          <div className="procesamiento-contenido">
+            <div className={`procesamiento-icono ${pasoPago === 1 ? 'procesando' : 'confirmado'}`}>
+              {pasoPago === 1 ? '💳' : '✅'}
+            </div>
+            <div className="procesamiento-titulo">
+              {pasoPago === 1 ? 'Procesando pago...' : '¡Pago confirmado!'}
+            </div>
+            <div className="procesamiento-subtitulo">
+              {pasoPago === 1 
+                ? 'Estamos procesando tu seña de $' + formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))
+                : 'Tu oferta ha sido registrada exitosamente'
+              }
+            </div>
+            {pasoPago === 1 && (
+              <div className="procesamiento-progreso">
+                <div className="procesamiento-barra"></div>
+              </div>
+            )}
           </div>
         </div>
       )}

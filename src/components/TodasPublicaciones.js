@@ -30,6 +30,12 @@ function normalizar(str) {
   return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// Función para formatear montos con separadores de miles
+function formatearMonto(valor) {
+  if (!valor) return '0';
+  return parseFloat(valor).toLocaleString('es-AR');
+}
+
 const TodasPublicaciones = () => {
   const { token } = useContext(AuthContext);
   const [publicaciones, setPublicaciones] = useState([]);
@@ -198,7 +204,7 @@ const TodasPublicaciones = () => {
                       {/* Precio y ofertas */}
                       <div className="d-flex align-items-center justify-content-between mb-1">
                         <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
-                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${pub.precioActual}` : `Inicial: $${pub.precioInicial}`}
+                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${formatearMonto(pub.precioActual)}` : `Inicial: $${formatearMonto(pub.precioInicial)}`}
                         </div>
                         <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
                       </div>
