@@ -13,7 +13,7 @@ const Navbar = () => {
 
   // LOGS DE DEPURACIÓN
   React.useEffect(() => {
-    console.log('Navbar: user =', user);
+  
   }, [user]);
 
   const handleLogout = () => {

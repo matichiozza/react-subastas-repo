@@ -55,6 +55,13 @@ const DetallePublicacion = () => {
   const [pasoPago, setPasoPago] = useState(1); // 1: procesando, 2: confirmado
   const [showModalBajarse, setShowModalBajarse] = useState(false);
   const [procesandoBajarse, setProcesandoBajarse] = useState(false);
+  
+  // Estado para la alerta personalizada
+  const [alertaPersonalizada, setAlertaPersonalizada] = useState({
+    visible: false,
+    mensaje: '',
+    tipo: 'error' // 'error' o 'warning'
+  });
 
   // Funciones para cargar datos
   const fetchPublicacion = async () => {
@@ -139,7 +146,6 @@ const DetallePublicacion = () => {
           setOfertaAnterior(null);
         }
       } catch (err) {
-        console.error('Error al cargar oferta anterior:', err);
         setOfertaAnterior(null);
       } finally {
         setLoadingOfertaAnterior(false);
@@ -194,10 +200,18 @@ const DetallePublicacion = () => {
   // Modificar handleOfertar para que solo envíe si viene del modal
   const handleOfertar = async (e, desdeModal = false) => {
     e.preventDefault();
+    
+    // Validación antes de mostrar el modal
     if (!desdeModal) {
+      const monto = parseFloat(oferta);
+      if (isNaN(monto) || monto < siguienteOferta) {
+        mostrarAlerta(`❌ La oferta debe ser al menos $${formatearMonto(siguienteOferta)}`, 'error');
+        return;
+      }
       setShowModal(true);
       return;
     }
+    
     setOfertando(true);
     setMensaje(null);
     try {
@@ -261,6 +275,39 @@ const DetallePublicacion = () => {
       setOfertaFormateada(formateado);
     } else {
       setOfertaFormateada('');
+    }
+  };
+
+  // Función para validar si el valor actual es válido
+  const esValorValido = () => {
+    const monto = parseFloat(oferta);
+    return !isNaN(monto) && monto >= siguienteOferta;
+  };
+
+  // Función para mostrar alerta personalizada
+  const mostrarAlerta = (mensaje, tipo = 'error') => {
+    setAlertaPersonalizada({
+      visible: true,
+      mensaje,
+      tipo
+    });
+    
+    // Auto-ocultar después de 8 segundos
+    setTimeout(() => {
+      cerrarAlerta();
+    }, 8000);
+  };
+
+  // Función para cerrar alerta con animación
+  const cerrarAlerta = () => {
+    const alertaElement = document.querySelector('.alerta-personalizada');
+    if (alertaElement) {
+      alertaElement.style.animation = 'fadeOut 0.4s ease-out forwards';
+      setTimeout(() => {
+        setAlertaPersonalizada(prev => ({ ...prev, visible: false }));
+      }, 400);
+    } else {
+      setAlertaPersonalizada(prev => ({ ...prev, visible: false }));
     }
   };
 
@@ -725,12 +772,16 @@ const DetallePublicacion = () => {
                           <span className="input-group-text">$</span>
                           <input
                             type="text"
-                            className="form-control"
+                            className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
                             value={ofertaFormateada}
                             onChange={handleOfertaChange}
                             placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
                             required
                             disabled={!user || ofertando}
+                            style={{
+                              borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
+                              boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
+                            }}
                           />
                           <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
                             <button
@@ -788,21 +839,56 @@ const DetallePublicacion = () => {
                         <div className="text-muted small" style={{ fontSize: '0.85em' }}>
                           💡 Solo pagarás la diferencia en seña
                         </div>
+                        {oferta && !esValorValido() && (
+                          <div className="text-danger small mt-2" style={{ fontSize: '0.85em', fontWeight: 500 }}>
+                            ❌ El valor debe ser al menos ${formatearMonto(siguienteOferta)}
+                          </div>
+                        )}
                         {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
                         {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
                       </form>
                     </div>
                     
                     {/* Opción para bajarse */}
-                    <div style={{ borderTop: '1px solid #ffeaa7', paddingTop: 12 }}>
+                    <div style={{ 
+                      borderTop: '1px solid #ffeaa7', 
+                      paddingTop: 16,
+                      marginTop: 8
+                    }}>
                       <button 
-                        className="btn btn-outline-danger w-100" 
+                        className="btn w-100" 
                         onClick={() => setShowModalBajarse(true)}
-                        style={{ fontWeight: 600, fontSize: '0.95em' }}
+                        style={{ 
+                          fontWeight: 600, 
+                          fontSize: '0.95em',
+                          background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                          border: 'none',
+                          color: 'white',
+                          padding: '12px 20px',
+                          borderRadius: '10px',
+                          boxShadow: '0 4px 12px rgba(220, 53, 69, 0.25)',
+                          transition: 'all 0.3s ease',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 16px rgba(220, 53, 69, 0.35)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.25)';
+                        }}
                       >
-                        🚪 Bajarse de la subasta
+                        <span style={{ marginRight: 8 }}>🚪</span>
+                        Bajarse de la subasta
                       </button>
-                      <div className="text-muted small mt-2" style={{ fontSize: '0.85em' }}>
+                      <div className="text-muted small mt-3" style={{ 
+                        fontSize: '0.85em',
+                        color: '#dc3545',
+                        fontWeight: 500,
+                        textAlign: 'center'
+                      }}>
                         ⚠️ Al bajarte perderás toda tu seña sin reembolso
                       </div>
                     </div>
@@ -813,12 +899,16 @@ const DetallePublicacion = () => {
                       <span className="input-group-text">$</span>
                       <input
                         type="text"
-                        className="form-control"
+                        className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
                         value={ofertaFormateada}
                         onChange={handleOfertaChange}
                         placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
                         required
                         disabled={!user || ofertando}
+                        style={{
+                          borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
+                          boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
+                        }}
                       />
                       <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
                         <button
@@ -1282,6 +1372,69 @@ const DetallePublicacion = () => {
           </div>
         </div>
       )}
+      
+      {/* Alerta personalizada */}
+      {alertaPersonalizada.visible && (
+        <div
+          className="alerta-personalizada"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            maxWidth: '90vw',
+            width: '400px',
+            background: alertaPersonalizada.tipo === 'error' 
+              ? 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)'
+              : 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)',
+            color: 'white',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+            border: 'none',
+            animation: 'fadeIn 0.6s ease-out',
+            fontWeight: 500,
+            fontSize: '0.95em',
+            lineHeight: 1.4,
+            whiteSpace: 'pre-line',
+            textAlign: 'center'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              {alertaPersonalizada.mensaje}
+            </div>
+            <button
+              onClick={cerrarAlerta}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1.2em',
+                cursor: 'pointer',
+                marginLeft: '12px',
+                padding: '0',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1357,6 +1510,28 @@ style.innerHTML = `
     display: flex !important;
     flex-direction: row !important;
     align-items: stretch !important;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.9);
+    }
   }
 `;
 document.head.appendChild(style);

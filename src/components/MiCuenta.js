@@ -267,7 +267,6 @@ const MiCuenta = () => {
       }
       
     } catch (err) {
-      console.error('Error al eliminar tarjeta:', err);
       alert('No se pudo eliminar la tarjeta');
     }
   };

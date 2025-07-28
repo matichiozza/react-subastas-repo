@@ -5,6 +5,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Obtener datos del usuario autenticado
   const fetchUser = async (jwt) => {
@@ -14,11 +15,17 @@ export const AuthProvider = ({ children }) => {
           Authorization: `Bearer ${jwt}`,
         },
       });
-      if (!response.ok) return setUser(null);
+      if (!response.ok) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
       setUser(data);
+      setLoading(false);
     } catch (error) {
       setUser(null);
+      setLoading(false);
     }
   };
 
@@ -27,6 +34,8 @@ export const AuthProvider = ({ children }) => {
     if (savedToken) {
       setToken(savedToken);
       fetchUser(savedToken);
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -85,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, register }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

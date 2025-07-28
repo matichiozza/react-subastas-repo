@@ -1,11 +1,12 @@
 import React, { useState, useContext, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const pasos = [
   { label: 'Datos Básicos', icon: '📝' },
   { label: 'Detalles', icon: '📄' },
   { label: 'Imagen y Precio', icon: '💰' },
-  { label: 'Confirmación', icon: '✅' },
+  { label: 'Confirmar', icon: '✅' },
 ];
 
 const categorias = [
@@ -32,8 +33,11 @@ const categorias = [
 ].sort((a, b) => a.localeCompare(b));
 
 const CrearPublicacion = ({ onPublicacionCreada }) => {
-  const { token } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  
+
   const [form, setForm] = useState({
     titulo: '',
     categoria: '',
@@ -48,7 +52,13 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [imagenesPreview, setImagenesPreview] = useState([]);
+  const [procesandoPublicacion, setProcesandoPublicacion] = useState(false);
+  const [pasoProcesamiento, setPasoProcesamiento] = useState(1); // 1: procesando, 2: confirmado
   const fileInputRef = useRef();
+
+
+
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -89,9 +99,11 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setProcesandoPublicacion(true);
+    setPasoProcesamiento(1);
     setError(null);
     setSuccess(false);
+    
     try {
       const formData = new FormData();
       // Construir el objeto de datos de la publicación (sin imágenes)
@@ -108,6 +120,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
       form.imagenes.forEach((img, idx) => {
         formData.append('imagenes', img);
       });
+      
       const res = await fetch('http://localhost:8080/publicaciones', {
         method: 'POST',
         headers: {
@@ -115,18 +128,33 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
         },
         body: formData,
       });
+      
       if (!res.ok) throw new Error('Error al crear la publicación');
+      
+      // Simular un pequeño delay para mostrar el procesamiento
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setPasoProcesamiento(2);
+      
+      // Simular un delay más largo para mostrar la confirmación
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
       setSuccess(true);
       setForm({
         titulo: '', categoria: '', condicion: '', descripcion: '', imagenes: [], precioInicial: '', incrementoMinimo: '', fechaFin: '',
       });
       setImagenesPreview([]);
       setStep(0);
+      setProcesandoPublicacion(false);
       if (onPublicacionCreada) onPublicacionCreada();
+      
+      // Redirigir al Home después de mostrar la confirmación
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
+      setProcesandoPublicacion(false);
     }
   };
 
@@ -142,16 +170,34 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
     <div className="container py-4">
       <div className="card shadow p-4 mx-auto" style={{ maxWidth: 520 }}>
         {/* Indicador de pasos */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex justify-content-between align-items-center mb-4" style={{ position: 'relative' }}>
           {pasos.map((p, idx) => (
             <div key={p.label} className="text-center flex-fill" style={{ opacity: idx <= step ? 1 : 0.4 }}>
               <div style={{ fontSize: '2em' }}>{p.icon}</div>
               <div style={{ fontWeight: 600, fontSize: '0.98em', color: idx === step ? '#1976d2' : '#888' }}>{p.label}</div>
-              {idx < pasos.length - 1 && <div style={{ height: 2, background: idx < step ? '#1976d2' : '#ececf3', margin: '0.5em 0' }} />}
+              {idx < pasos.length - 1 && <div style={{ height: 2, background: idx <= step ? '#1976d2' : '#ececf3', margin: '0.5em 0' }} />}
+              {/* Línea para el último paso cuando no estás en él */}
+              {idx === pasos.length - 1 && step < pasos.length - 1 && <div style={{ height: 2, background: '#ececf3', margin: '0.5em 0' }} />}
+              {/* Línea azul para el último paso cuando estás en él */}
+              {idx === pasos.length - 1 && step === pasos.length - 1 && <div style={{ height: 2, background: '#1976d2', margin: '0.5em 0' }} />}
             </div>
           ))}
+          {/* Línea adicional para el último paso cuando estás en él */}
+          {step === pasos.length - 1 && (
+            <div style={{ 
+              position: 'absolute', 
+              left: '50%', 
+              transform: 'translateX(-50%)', 
+              width: 'calc(100% - 2rem)', 
+              height: '2px', 
+              background: '#1976d2', 
+              marginTop: '2.5em',
+              zIndex: -1
+            }} />
+          )}
         </div>
         <form onSubmit={handleSubmit}>
+
           {/* Paso 1: Datos básicos */}
           {step === 0 && (
             <>
@@ -235,40 +281,209 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
               </div>
             </>
           )}
-          {/* Paso 4: Confirmación */}
+                    {/* Paso 4: Confirmación */}
           {step === 3 && (
-            <div className="mb-3">
-              <div className="alert alert-info mb-3">
-                <strong>Revisa tu publicación antes de confirmar:</strong>
+            <>
+
+              <div className="mb-3">
+                <div className="alert alert-info mb-3">
+                  <strong>Revisa tu publicación antes de confirmar:</strong>
+                </div>
+                <ul className="list-group mb-3">
+                  <li className="list-group-item"><strong>Título:</strong> {form.titulo}</li>
+                  <li className="list-group-item"><strong>Categoría:</strong> {form.categoria}</li>
+                  <li className="list-group-item"><strong>Condición:</strong> {form.condicion}</li>
+                  <li className="list-group-item"><strong>Descripción:</strong> {form.descripcion}</li>
+                  <li className="list-group-item"><strong>Imágenes:</strong> {form.imagenes.length} seleccionada(s)</li>
+                  <li className="list-group-item"><strong>Precio Inicial:</strong> ${form.precioInicial}</li>
+                  <li className="list-group-item"><strong>Incremento Mínimo:</strong> ${form.incrementoMinimo}</li>
+                  <li className="list-group-item"><strong>Fecha de Finalización:</strong> {form.fechaFin}</li>
+                </ul>
+                <div className="alert alert-warning">
+                  <span role="img" aria-label="alerta">⚠️</span> Una vez creada la publicación, no podrás modificar algunos datos clave.
+                </div>
               </div>
-              <ul className="list-group mb-3">
-                <li className="list-group-item"><strong>Título:</strong> {form.titulo}</li>
-                <li className="list-group-item"><strong>Categoría:</strong> {form.categoria}</li>
-                <li className="list-group-item"><strong>Condición:</strong> {form.condicion}</li>
-                <li className="list-group-item"><strong>Descripción:</strong> {form.descripcion}</li>
-                <li className="list-group-item"><strong>Imágenes:</strong> {form.imagenes.length} seleccionada(s)</li>
-                <li className="list-group-item"><strong>Precio Inicial:</strong> ${form.precioInicial}</li>
-                <li className="list-group-item"><strong>Incremento Mínimo:</strong> ${form.incrementoMinimo}</li>
-                <li className="list-group-item"><strong>Fecha de Finalización:</strong> {form.fechaFin}</li>
-              </ul>
-              <div className="alert alert-warning">
-                <span role="img" aria-label="alerta">⚠️</span> Una vez creada la publicación, no podrás modificar algunos datos clave.
+              
+                
+              
+              {/* Botón de confirmación */}
+              <div className="d-flex justify-content-between align-items-center">
+                <button 
+                  type="button" 
+                  className="btn" 
+                  onClick={prevStep}
+                  style={{
+                    background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
+                    border: 'none',
+                    padding: '12px 20px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(108, 117, 125, 0.25)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 16px rgba(108, 117, 125, 0.35)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(108, 117, 125, 0.25)';
+                  }}
+                >
+                  <span style={{ fontSize: '1.2em' }}>←</span>
+                  Anterior
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn" 
+                  disabled={procesandoPublicacion}
+                  style={{
+                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(40, 167, 69, 0.25)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!procesandoPublicacion) {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.35)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.25)';
+                  }}
+                >
+                  {procesandoPublicacion ? (
+                    <>
+                      <span style={{ fontSize: '1.2em' }}>🔄</span>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '1.2em' }}>✅</span>
+                      Confirmar y Publicar
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
+            </>
           )}
-          {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
-          {success && <div className="alert alert-success">¡Publicación creada con éxito!</div>}
-          <div className="d-flex justify-content-between mt-4">
-            {step > 0 && <button type="button" className="btn btn-outline-secondary" onClick={prevStep}>Anterior</button>}
-            {step < pasos.length - 1 && (
-              <button type="button" className="btn btn-primary ms-auto" onClick={nextStep} disabled={!validStep()}>Siguiente</button>
-            )}
-            {step === pasos.length - 1 && (
-              <button type="submit" className="btn btn-success ms-auto" disabled={loading}>{loading ? 'Creando...' : 'Confirmar y Publicar'}</button>
-            )}
-          </div>
+          
+          {/* Botones de navegación para otros pasos */}
+          {step !== 3 && (
+            <>
+              {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
+              {success && <div className="alert alert-success">¡Publicación creada con éxito!</div>}
+              <div className="d-flex justify-content-between mt-4">
+                {step > 0 && (
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    onClick={prevStep}
+                    style={{
+                      background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      fontWeight: 600,
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(108, 117, 125, 0.25)',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 6px 16px rgba(108, 117, 125, 0.35)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = '0 4px 12px rgba(108, 117, 125, 0.25)';
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2em' }}>←</span>
+                    Anterior
+                  </button>
+                )}
+                {step < pasos.length - 1 && (
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    onClick={nextStep} 
+                    disabled={!validStep()}
+                    style={{
+                      background: validStep() ? 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' : 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '10px',
+                      fontWeight: 600,
+                      color: 'white',
+                      boxShadow: validStep() ? '0 4px 12px rgba(25, 118, 210, 0.25)' : '0 4px 12px rgba(108, 117, 125, 0.25)',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      opacity: validStep() ? 1 : 0.6,
+                      cursor: validStep() ? 'pointer' : 'not-allowed'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (validStep()) {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 6px 16px rgba(25, 118, 210, 0.35)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = validStep() ? '0 4px 12px rgba(25, 118, 210, 0.25)' : '0 4px 12px rgba(108, 117, 125, 0.25)';
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2em' }}>→</span>
+                    Siguiente
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </form>
       </div>
+      
+      {/* Pantalla de procesamiento de publicación */}
+      {procesandoPublicacion && (
+        <div className="procesamiento-pago">
+          <div className="procesamiento-contenido">
+            <div className={`procesamiento-icono ${pasoProcesamiento === 1 ? 'procesando' : 'confirmado'}`}>
+              {pasoProcesamiento === 1 ? '📝' : '✅'}
+            </div>
+            <div className="procesamiento-titulo">
+              {pasoProcesamiento === 1 ? 'Creando publicación...' : '¡Publicación creada!'}
+            </div>
+            <div className="procesamiento-subtitulo">
+              {pasoProcesamiento === 1 
+                ? 'Estamos procesando tu publicación y subiendo las imágenes'
+                : 'Tu publicación ha sido creada exitosamente'
+              }
+            </div>
+            {pasoProcesamiento === 1 && (
+              <div className="procesamiento-progreso">
+                <div className="procesamiento-barra"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
