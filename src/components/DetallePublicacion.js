@@ -264,6 +264,21 @@ const DetallePublicacion = () => {
     }
   };
 
+  // Funciones para incrementar y decrementar el valor de la oferta
+  const incrementarOferta = () => {
+    const valorActual = parseFloat(oferta) || siguienteOferta;
+    const nuevoValor = valorActual + 1000; // Incremento de $1.000
+    setOferta(nuevoValor.toString());
+    setOfertaFormateada(nuevoValor.toLocaleString('es-AR'));
+  };
+
+  const decrementarOferta = () => {
+    const valorActual = parseFloat(oferta) || siguienteOferta;
+    const nuevoValor = Math.max(siguienteOferta, valorActual - 1000); // Decremento de $1.000, pero no menor al mínimo
+    setOferta(nuevoValor.toString());
+    setOfertaFormateada(nuevoValor.toLocaleString('es-AR'));
+  };
+
   const handleBajarseDeSubasta = async () => {
     if (!user?.id) return;
     
@@ -717,6 +732,55 @@ const DetallePublicacion = () => {
                             required
                             disabled={!user || ofertando}
                           />
+                          <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary"
+                              onClick={incrementarOferta}
+                              disabled={!user || ofertando}
+                              style={{ 
+                                borderTopRightRadius: 0, 
+                                borderBottomRightRadius: 0,
+                                padding: '0.375rem 0.25rem',
+                                fontSize: '0.75rem',
+                                color: '#6c757d',
+                                borderRight: 'none',
+                                minWidth: '28px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                lineHeight: '1',
+                                height: '100%',
+                                transform: 'none'
+                              }}
+                              title="Incrementar en $1.000"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary"
+                              onClick={decrementarOferta}
+                              disabled={!user || ofertando}
+                              style={{ 
+                                borderTopLeftRadius: 0, 
+                                borderBottomLeftRadius: 0,
+                                padding: '0.375rem 0.25rem',
+                                fontSize: '0.75rem',
+                                color: '#6c757d',
+                                minWidth: '28px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                lineHeight: '1',
+                                height: '100%',
+                                transform: 'none'
+                              }}
+                              title="Decrementar en $1.000"
+                            >
+                              ▼
+                            </button>
+                          </div>
                           <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
                             {ofertando ? 'Ofertando...' : '💰 Hacer nueva oferta'}
                           </button>
@@ -756,6 +820,55 @@ const DetallePublicacion = () => {
                         required
                         disabled={!user || ofertando}
                       />
+                      <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={incrementarOferta}
+                          disabled={!user || ofertando}
+                          style={{ 
+                            borderTopRightRadius: 0, 
+                            borderBottomRightRadius: 0,
+                            padding: '0.375rem 0.25rem',
+                            fontSize: '0.75rem',
+                            color: '#6c757d',
+                            borderRight: 'none',
+                            minWidth: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: '1',
+                            height: '100%',
+                            transform: 'none'
+                          }}
+                          title="Incrementar en $1.000"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={decrementarOferta}
+                          disabled={!user || ofertando}
+                          style={{ 
+                            borderTopLeftRadius: 0, 
+                            borderBottomLeftRadius: 0,
+                            padding: '0.375rem 0.25rem',
+                            fontSize: '0.75rem',
+                            color: '#6c757d',
+                            minWidth: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: '1',
+                            height: '100%',
+                            transform: 'none'
+                          }}
+                          title="Decrementar en $1.000"
+                        >
+                          ▼
+                        </button>
+                      </div>
                       <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
                         {ofertando ? 'Ofertando...' : 'Ofertar'}
                       </button>
@@ -1181,9 +1294,71 @@ function rectHeight(ref) {
   return ref.current ? ref.current.offsetHeight : 1;
 }
 
-// CSS para ocultar el cursor cuando la lupa está activa
+// CSS para ocultar el cursor cuando la lupa está activa y estilos para las flechas
 const style = document.createElement('style');
-style.innerHTML = `.lupa-activa { cursor: none !important; }`;
+style.innerHTML = `
+  .lupa-activa { cursor: none !important; }
+  
+  .input-group-append .btn {
+    padding: 0.375rem 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: 0;
+    transition: all 0.15s ease-in-out;
+    min-width: 28px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-color: #ced4da;
+    color: #6c757d;
+    position: relative;
+    vertical-align: middle;
+    font-weight: 600;
+    flex: 1;
+  }
+  
+  .input-group-append .btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+  }
+  
+  .input-group-append .btn:active {
+    background-color: #dee2e6;
+    border-color: #adb5bd;
+    transform: scale(0.95);
+  }
+  
+  .input-group-append .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f8f9fa;
+  }
+  
+  .input-group-append .btn:first-child {
+    border-right: 1px solid #ced4da;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  .input-group-append .btn:last-child {
+    border-left: 1px solid #ced4da;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .input-group-append {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+  }
+`;
 document.head.appendChild(style);
 
 export default DetallePublicacion; 
