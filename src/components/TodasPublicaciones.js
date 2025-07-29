@@ -512,11 +512,6 @@ const TodasPublicaciones = () => {
                   <small style={{ color: '#666', fontSize: '0.8em' }}>$0</small>
                   <small style={{ color: '#666', fontSize: '0.8em' }}>${formatearNumero(precioMaximo)}</small>
                 </div>
-                <div className="text-center mt-2">
-                  <small style={{ color: '#1976d2', fontSize: '0.8em', fontStyle: 'italic' }}>
-                    El filtro se aplica automáticamente
-                  </small>
-                </div>
               </div>
             </div>
 
@@ -583,7 +578,7 @@ const TodasPublicaciones = () => {
 
 
             {/* Botón limpiar filtros */}
-            {(filtros.precioMin || filtros.precioMax || filtros.condicion || precioRange[0] > 0 || precioRange[1] < precioMaximo) && (
+            {(Boolean(filtros.precioMin) || Boolean(filtros.precioMax) || Boolean(filtros.condicion) || precioRange[0] > 0 || (precioMaximo > 0 && precioRange[1] < precioMaximo)) && (
               <div className="card p-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <button
                   className="btn w-100"

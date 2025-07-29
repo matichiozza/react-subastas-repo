@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import MiCuenta from './components/MiCuenta';
 import MisPublicaciones from './components/MisPublicaciones';
+import MisOfertas from './components/MisOfertas';
 import CrearPublicacion from './components/CrearPublicacion';
 import TodasPublicaciones from './components/TodasPublicaciones';
 import Home from './components/Home';
@@ -26,6 +27,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/micuenta" element={<MiCuenta />} />
             <Route path="/mispublicaciones" element={<MisPublicaciones />} />
+            <Route path="/misofertas" element={<PrivateRoute><MisOfertas /></PrivateRoute>} />
             <Route path="/crear-publicacion" element={<PrivateRoute><CrearPublicacion /></PrivateRoute>} />
             <Route path="/publicaciones" element={<TodasPublicaciones />} />
             <Route path="/publicaciones/:id" element={<DetallePublicacion />} />
