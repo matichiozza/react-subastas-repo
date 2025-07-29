@@ -64,6 +64,18 @@ const TodasPublicaciones = () => {
     ordenarPor: 'fecha'
   });
 
+  // Estados para el slider de precio
+  const [precioRange, setPrecioRange] = useState([0, 100000]);
+  const [isSliderActive, setIsSliderActive] = useState(false);
+  
+  // Calcular el precio máximo de todas las publicaciones
+  const precioMaximo = publicaciones.length > 0 
+    ? Math.max(...publicaciones.map(pub => {
+        const precioActual = pub.precioActual > 0 ? pub.precioActual : pub.precioInicial;
+        return precioActual;
+      }))
+    : 100000;
+
   // Estado para controlar el despliegue de categorías
   const [categoriasDesplegadas, setCategoriasDesplegadas] = useState(false);
 
@@ -88,7 +100,25 @@ const TodasPublicaciones = () => {
       condicion: '',
       ordenarPor: 'fecha'
     });
+    setPrecioRange([0, precioMaximo]);
   };
+
+  // Función para manejar el cambio del slider de precio
+  const handlePrecioRangeChange = (values) => {
+    setPrecioRange(values);
+    setFiltros(prev => ({
+      ...prev,
+      precioMin: values[0].toString(),
+      precioMax: values[1].toString()
+    }));
+  };
+
+  // Función para manejar el arrastre del slider (solo para iniciar el arrastre)
+  const handleSliderMouseMove = (e) => {
+    // Esta función ya no se usa, la lógica está en el event listener global
+  };
+
+
 
   // Función para manejar cambio de precio con formato
   const handlePrecioChange = (campo, valor) => {
@@ -176,6 +206,73 @@ const TodasPublicaciones = () => {
     }
     // eslint-disable-next-line
   }, [busquedaParam]);
+
+  // Event listeners para el slider
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsSliderActive(false);
+    };
+
+    const handleGlobalMouseMove = (e) => {
+      if (!isSliderActive) return;
+      
+      // Obtener el elemento del slider
+      const sliderElement = document.querySelector('[data-slider="price-range"]');
+      if (!sliderElement) return;
+      
+      const rect = sliderElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      const value = Math.round((percentage / 100) * precioMaximo);
+      
+      // Determinar si estamos arrastrando el thumb mínimo o máximo
+      const currentMin = precioRange[0];
+      const currentMax = precioRange[1];
+      const minDistance = Math.abs(value - currentMin);
+      const maxDistance = Math.abs(value - currentMax);
+      
+      if (minDistance < maxDistance) {
+        // Arrastrar thumb mínimo
+        const newMin = Math.min(value, currentMax - 1000);
+        const newRange = [newMin, currentMax];
+        setPrecioRange(newRange);
+        // Aplicar filtros en tiempo real
+        setFiltros(prev => ({
+          ...prev,
+          precioMin: newMin.toString(),
+          precioMax: currentMax.toString()
+        }));
+      } else {
+        // Arrastrar thumb máximo
+        const newMax = Math.max(value, currentMin + 1000);
+        const newRange = [currentMin, newMax];
+        setPrecioRange(newRange);
+        // Aplicar filtros en tiempo real
+        setFiltros(prev => ({
+          ...prev,
+          precioMin: currentMin.toString(),
+          precioMax: newMax.toString()
+        }));
+      }
+    };
+
+    if (isSliderActive) {
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+    }
+
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [isSliderActive, precioRange, precioMaximo]);
+
+  // Actualizar el rango de precio cuando cambien las publicaciones
+  useEffect(() => {
+    if (publicaciones.length > 0) {
+      setPrecioRange([0, precioMaximo]);
+    }
+  }, [publicaciones, precioMaximo]);
 
   useEffect(() => {
     const fetchPublicaciones = async () => {
@@ -336,32 +433,90 @@ const TodasPublicaciones = () => {
               )}
             </div>
 
-            {/* Filtros de Precio */}
+            {/* Filtro de Precio con Slider */}
             <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
                 <span style={{ marginRight: 8 }}>💰</span>Rango de Precio
               </h6>
               <div className="mb-3">
-                <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio mínimo</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Ej: 1.000"
-                  value={formatearPrecioMostrar(filtros.precioMin)}
-                  onChange={(e) => handlePrecioChange('precioMin', e.target.value)}
-                  style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio máximo</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Ej: 50.000"
-                  value={formatearPrecioMostrar(filtros.precioMax)}
-                  onChange={(e) => handlePrecioChange('precioMax', e.target.value)}
-                  style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
-                />
+                <div className="d-flex justify-content-between mb-2">
+                  <span style={{ fontSize: '0.9em', color: '#666' }}>
+                    ${formatearNumero(precioRange[0])}
+                  </span>
+                  <span style={{ fontSize: '0.9em', color: '#666' }}>
+                    ${formatearNumero(precioRange[1])}
+                  </span>
+                </div>
+                <div 
+                  data-slider="price-range"
+                  style={{ position: 'relative', height: 40 }}
+                >
+                  {/* Track del slider */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    backgroundColor: '#e0e2e7',
+                    borderRadius: 2,
+                    transform: 'translateY(-50%)'
+                  }} />
+                  {/* Track activo */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: `${(precioRange[0] / precioMaximo) * 100}%`,
+                    right: `${100 - (precioRange[1] / precioMaximo) * 100}%`,
+                    height: 4,
+                    backgroundColor: '#1976d2',
+                    borderRadius: 2,
+                    transform: 'translateY(-50%)'
+                  }} />
+                  {/* Thumb mínimo */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: `${(precioRange[0] / precioMaximo) * 100}%`,
+                      width: 20,
+                      height: 20,
+                      backgroundColor: '#1976d2',
+                      borderRadius: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(25,118,210,0.3)',
+                      zIndex: 2
+                    }}
+                    onMouseDown={() => setIsSliderActive(true)}
+                  />
+                  {/* Thumb máximo */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: `${(precioRange[1] / precioMaximo) * 100}%`,
+                      width: 20,
+                      height: 20,
+                      backgroundColor: '#1976d2',
+                      borderRadius: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(25,118,210,0.3)',
+                      zIndex: 2
+                    }}
+                    onMouseDown={() => setIsSliderActive(true)}
+                  />
+                </div>
+                <div className="d-flex justify-content-between mt-2">
+                  <small style={{ color: '#666', fontSize: '0.8em' }}>$0</small>
+                  <small style={{ color: '#666', fontSize: '0.8em' }}>${formatearNumero(precioMaximo)}</small>
+                </div>
+                <div className="text-center mt-2">
+                  <small style={{ color: '#1976d2', fontSize: '0.8em', fontStyle: 'italic' }}>
+                    El filtro se aplica automáticamente
+                  </small>
+                </div>
               </div>
             </div>
 
@@ -428,7 +583,7 @@ const TodasPublicaciones = () => {
 
 
             {/* Botón limpiar filtros */}
-            {(filtros.precioMin || filtros.precioMax || filtros.condicion) && (
+            {(filtros.precioMin || filtros.precioMax || filtros.condicion || precioRange[0] > 0 || precioRange[1] < precioMaximo) && (
               <div className="card p-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <button
                   className="btn w-100"
@@ -539,11 +694,11 @@ const TodasPublicaciones = () => {
                     <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
                       {/* Imagen principal */}
                       {pub.imagenes && pub.imagenes.length > 0 ? (
-                        <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                           <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ) : (
-                        <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
+                        <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
                           <span role="img" aria-label="sin imagen">🖼️</span>
                         </div>
                       )}
@@ -552,7 +707,6 @@ const TodasPublicaciones = () => {
                         <div className="d-flex align-items-center mb-1 gap-2">
                           <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
                           <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
-                          {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
                         </div>
                         {/* Título */}
                         <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
