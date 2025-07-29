@@ -56,12 +56,70 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
   const [pasoProcesamiento, setPasoProcesamiento] = useState(1); // 1: procesando, 2: confirmado
   const fileInputRef = useRef();
 
+  // Función para obtener la fecha mínima (mañana)
+  const getFechaMinima = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+
+  // Función para validar fecha
+  const validarFecha = (fecha) => {
+    const fechaSeleccionada = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Resetear a inicio del día
+    return fechaSeleccionada > hoy;
+  };
+
+  // Función para formatear números con separadores de miles
+  const formatearNumero = (valor) => {
+    if (!valor) return '';
+    return valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  // Función para limpiar formato de números
+  const limpiarFormato = (valor) => {
+    return valor.toString().replace(/\./g, '');
+  };
+
+  // Función para manejar cambio de precio con formato
+  const handlePrecioChange = (campo, valor) => {
+    // Limpiar formato para obtener solo números
+    const valorLimpio = limpiarFormato(valor);
+    
+    // Solo permitir números
+    if (valorLimpio === '' || /^\d+$/.test(valorLimpio)) {
+      setForm(prev => ({
+        ...prev,
+        [campo]: valorLimpio
+      }));
+    }
+  };
+
+  // Función para formatear precio para mostrar
+  const formatearPrecioMostrar = (valor) => {
+    if (!valor) return '';
+    return formatearNumero(valor);
+  };
+
 
 
 
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Validación especial para fecha de finalización
+    if (name === 'fechaFin') {
+      if (value && !validarFecha(value)) {
+        setError('La fecha de finalización debe ser posterior al día actual');
+        return;
+      } else {
+        setError(null); // Limpiar error si la fecha es válida
+      }
+    }
+    
+    setForm({ ...form, [name]: value });
   };
 
   const handleImagenesChange = (e) => {
@@ -162,7 +220,10 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
   const validStep = () => {
     if (step === 0) return form.titulo && form.categoria;
     if (step === 1) return form.condicion && form.descripcion;
-    if (step === 2) return form.imagenes.length > 0 && form.precioInicial && form.incrementoMinimo && form.fechaFin;
+    if (step === 2) {
+      const fechaValida = form.fechaFin && validarFecha(form.fechaFin);
+      return form.imagenes.length > 0 && form.precioInicial && form.incrementoMinimo && form.fechaFin && fechaValida;
+    }
     return true;
   };
 
@@ -269,15 +330,47 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
               </div>
               <div className="mb-3">
                 <label className="form-label">Precio Inicial <span style={{ color: '#1976d2' }}>*</span></label>
-                <input type="number" name="precioInicial" className="form-control" placeholder="$0.00" value={form.precioInicial} onChange={handleChange} required min="0" step="0.01" />
+                <input 
+                  type="text" 
+                  name="precioInicial" 
+                  className="form-control" 
+                  placeholder="$1.000" 
+                  value={formatearPrecioMostrar(form.precioInicial)} 
+                  onChange={(e) => handlePrecioChange('precioInicial', e.target.value)} 
+                  required 
+                />
+                <small className="text-muted">Precio inicial de la subasta</small>
               </div>
               <div className="mb-3">
                 <label className="form-label">Incremento Mínimo <span style={{ color: '#1976d2' }}>*</span></label>
-                <input type="number" name="incrementoMinimo" className="form-control" placeholder="$100" value={form.incrementoMinimo} onChange={handleChange} required min="0" step="0.01" />
+                <input 
+                  type="text" 
+                  name="incrementoMinimo" 
+                  className="form-control" 
+                  placeholder="$100" 
+                  value={formatearPrecioMostrar(form.incrementoMinimo)} 
+                  onChange={(e) => handlePrecioChange('incrementoMinimo', e.target.value)} 
+                  required 
+                />
+                <small className="text-muted">Monto mínimo que debe incrementar cada oferta</small>
               </div>
               <div className="mb-3">
                 <label className="form-label">Fecha de Finalización <span style={{ color: '#1976d2' }}>*</span></label>
-                <input type="date" name="fechaFin" className="form-control" value={form.fechaFin} onChange={handleChange} required />
+                <input 
+                  type="date" 
+                  name="fechaFin" 
+                  className={`form-control ${form.fechaFin && !validarFecha(form.fechaFin) ? 'is-invalid' : ''}`}
+                  value={form.fechaFin} 
+                  onChange={handleChange} 
+                  min={getFechaMinima()}
+                  required 
+                />
+                <small className="text-muted">La fecha debe ser posterior al día actual.</small>
+                {form.fechaFin && !validarFecha(form.fechaFin) && (
+                  <div className="invalid-feedback d-block">
+                    La fecha de finalización debe ser posterior al día actual.
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -295,8 +388,8 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                   <li className="list-group-item"><strong>Condición:</strong> {form.condicion}</li>
                   <li className="list-group-item"><strong>Descripción:</strong> {form.descripcion}</li>
                   <li className="list-group-item"><strong>Imágenes:</strong> {form.imagenes.length} seleccionada(s)</li>
-                  <li className="list-group-item"><strong>Precio Inicial:</strong> ${form.precioInicial}</li>
-                  <li className="list-group-item"><strong>Incremento Mínimo:</strong> ${form.incrementoMinimo}</li>
+                  <li className="list-group-item"><strong>Precio Inicial:</strong> ${formatearPrecioMostrar(form.precioInicial)}</li>
+                  <li className="list-group-item"><strong>Incremento Mínimo:</strong> ${formatearPrecioMostrar(form.incrementoMinimo)}</li>
                   <li className="list-group-item"><strong>Fecha de Finalización:</strong> {form.fechaFin}</li>
                 </ul>
                 <div className="alert alert-warning">

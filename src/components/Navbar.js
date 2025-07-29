@@ -1,20 +1,50 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { BsPersonCircle } from 'react-icons/bs';
+import { FaExclamationTriangle } from 'react-icons/fa';
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sancionesInfo, setSancionesInfo] = useState(null);
   const menuRef = useRef();
 
-  // LOGS DE DEPURACIÓN
-  React.useEffect(() => {
-  
-  }, [user]);
+  // Obtener información de sanciones del usuario
+  useEffect(() => {
+    const fetchSanciones = async () => {
+      if (token && user) {
+        try {
+          const res = await fetch('http://localhost:8080/publicaciones/usuario/sanciones', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            setSancionesInfo(data);
+          } else if (res.status === 401 && data.cuentaEliminada) {
+            // Cuenta eliminada automáticamente
+            alert('Tu cuenta ha sido eliminada por tener 0 sanciones disponibles.');
+            logout();
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('Error al obtener sanciones:', error);
+        }
+      } else {
+        // Limpiar sanciones cuando no hay usuario
+        setSancionesInfo(null);
+      }
+    };
+
+    fetchSanciones();
+  }, [token, user, logout]);
 
   const handleLogout = () => {
     logout();
@@ -155,7 +185,7 @@ const Navbar = () => {
                 </button>
               </li>
               {/* Botón de cuenta, igual para logueado y no logueado */}
-              <li className="nav-item mb-2 mb-lg-0">
+              <li className="nav-item mb-2 mb-lg-0" style={{ position: 'relative' }}>
                 <button
                   className="btn btn-light d-flex align-items-center justify-content-center mx-auto"
                   style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
@@ -172,6 +202,38 @@ const Navbar = () => {
                 >
                   <BsPersonCircle size={26} color="#2196f3" />
                 </button>
+                
+                {/* Indicador de sanción */}
+                {sancionesInfo && sancionesInfo.sancionesDisponibles === 1 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      background: '#ff9800',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: 24,
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 8px rgba(255, 152, 0, 0.3)',
+                      cursor: 'pointer',
+                      zIndex: 1001
+                    }}
+                    title="⚠️ Última sanción disponible. La próxima cancelación resultará en la baja de tu cuenta."
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      alert('⚠️ ADVERTENCIA: Tienes 1 sanción disponible. Si cancelas otra publicación con ofertas activas, tu cuenta será dada de baja permanentemente.');
+                    }}
+                  >
+                    <FaExclamationTriangle size={12} />
+                  </div>
+                )}
                 {/* Menú desplegable solo si está logueado */}
                 {user && menuOpen && (
                   <div ref={menuRef} style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(25,118,210,0.08)', zIndex: 1000 }}>
@@ -233,15 +295,49 @@ const Navbar = () => {
               <Link to="/micuenta" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mi cuenta</Link>
               <Link to="/mispublicaciones" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis publicaciones</Link>
               <button className="btn btn-outline-danger mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>Cerrar sesión</button>
-              <button
-                className="btn btn-light d-flex align-items-center justify-content-center mx-auto mt-2"
-                style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                onClick={() => { setMenuOpen(open => !open); }}
-                type="button"
-                aria-label="Cuenta"
-              >
-                <BsPersonCircle size={26} color="#2196f3" />
-              </button>
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                <button
+                  className="btn btn-light d-flex align-items-center justify-content-center mx-auto mt-2"
+                  style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                  onClick={() => { setMenuOpen(open => !open); }}
+                  type="button"
+                  aria-label="Cuenta"
+                >
+                  <BsPersonCircle size={26} color="#2196f3" />
+                </button>
+                
+                {/* Indicador de sanción en móvil */}
+                {sancionesInfo && sancionesInfo.sancionesDisponibles === 1 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      background: '#ff9800',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: 24,
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 8px rgba(255, 152, 0, 0.3)',
+                      cursor: 'pointer',
+                      zIndex: 1001
+                    }}
+                    title="⚠️ Última sanción disponible. La próxima cancelación resultará en la baja de tu cuenta."
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      alert('⚠️ ADVERTENCIA: Tienes 1 sanción disponible. Si cancelas otra publicación con ofertas activas, tu cuenta será dada de baja permanentemente.');
+                    }}
+                  >
+                    <FaExclamationTriangle size={12} />
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <button

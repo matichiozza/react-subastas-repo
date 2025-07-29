@@ -63,6 +63,59 @@ const Home = () => {
       }
     };
     fetchPublicaciones();
+
+    // WebSocket para actualizaciones en tiempo real
+    let socket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+    
+    const connectWebSocket = () => {
+      try {
+        socket = new WebSocket('ws://localhost:8080/ws');
+        
+        socket.onopen = () => {
+          reconnectAttempts = 0;
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'oferta_actualizada') {
+              setPublicaciones(prev => 
+                prev.map(pub => 
+                  pub.id === data.publicacion.id 
+                    ? { ...pub, ofertasTotales: data.publicacion.ofertasTotales, precioActual: data.publicacion.precioActual }
+                    : pub
+                )
+              );
+            }
+          } catch (error) {
+            console.error('Error al procesar mensaje WebSocket:', error);
+          }
+        };
+
+        socket.onerror = () => {
+          // Silenciar errores de WebSocket
+        };
+
+        socket.onclose = (event) => {
+          if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            setTimeout(connectWebSocket, 2000);
+          }
+        };
+      } catch (error) {
+        // Silenciar errores de conexión
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (socket) {
+        socket.close(1000);
+      }
+    };
   }, [token]);
 
   // Subastas destacadas: las 6 más recientes
