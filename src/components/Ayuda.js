@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import Footer from './Footer';
 
 const Ayuda = () => {
   const [activeSection, setActiveSection] = useState('general');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const sections = [
     { id: 'general', title: 'General', icon: '🏠' },
@@ -124,204 +126,240 @@ const Ayuda = () => {
     ]
   };
 
+  // Función para filtrar FAQs basado en el término de búsqueda
+  const filteredFaqs = (sectionId) => {
+    if (!searchTerm.trim()) return faqs[sectionId];
+    
+    return faqs[sectionId].filter(faq => 
+      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Función para obtener todos los resultados de búsqueda de todas las secciones
+  const getAllSearchResults = () => {
+    if (!searchTerm.trim()) return null;
+    
+    const results = [];
+    Object.keys(faqs).forEach(sectionId => {
+      const sectionResults = faqs[sectionId].filter(faq => 
+        faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (sectionResults.length > 0) {
+        const section = sections.find(s => s.id === sectionId);
+        results.push({
+          sectionId,
+          sectionTitle: section.title,
+          sectionIcon: section.icon,
+          faqs: sectionResults
+        });
+      }
+    });
+    
+    return results;
+  };
+
   return (
-    <div className="container py-5" style={{ marginTop: '80px' }}>
-      {/* Header */}
-      <div className="row mb-5">
-        <div className="col-12 text-center">
-          <h1 className="display-4 fw-bold mb-3" style={{ color: '#1976d2' }}>
-            <span role="img" aria-label="ayuda" style={{ marginRight: '15px' }}>❓</span>
-            Centro de Ayuda
-          </h1>
-          <p className="lead text-muted mb-4">
-            Encuentra respuestas a todas tus preguntas sobre SubastasCorp
-          </p>
-          <div className="d-flex justify-content-center">
-            <div className="input-group" style={{ maxWidth: '500px' }}>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Buscar en la ayuda..."
-                style={{ borderRadius: '25px 0 0 25px', border: '2px solid #e9ecef' }}
-              />
-              <button className="btn btn-primary" style={{ borderRadius: '0 25px 25px 0', border: '2px solid #1976d2' }}>
-                <span role="img" aria-label="buscar">🔍</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="row">
-        {/* Sidebar de navegación */}
-        <div className="col-lg-3 mb-4">
-          <div className="card border-0 shadow-sm" style={{ borderRadius: '15px' }}>
-            <div className="card-body p-4">
-              <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Categorías</h5>
-              <div className="d-flex flex-column gap-2">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    className={`btn text-start d-flex align-items-center gap-3 ${
-                      activeSection === section.id ? 'btn-primary' : 'btn-light'
-                    }`}
-                    style={{
-                      borderRadius: '10px',
-                      border: 'none',
-                      padding: '12px 16px',
-                      fontSize: '0.95em',
-                      fontWeight: activeSection === section.id ? '600' : '500',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onClick={() => setActiveSection(section.id)}
-                  >
-                    <span style={{ fontSize: '1.2em' }}>{section.icon}</span>
-                    {section.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Información de contacto rápida */}
-          <div className="card border-0 shadow-sm mt-4" style={{ borderRadius: '15px', background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', color: 'white' }}>
-            <div className="card-body p-4">
-              <h6 className="fw-bold mb-3">¿No encuentras lo que buscas?</h6>
-              <p className="small mb-3">Nuestro equipo está aquí para ayudarte</p>
-              <div className="d-flex flex-column gap-2">
-                <div className="d-flex align-items-center gap-2">
-                  <span role="img" aria-label="email">📧</span>
-                  <small>soporte@subastascorp.com</small>
-                </div>
-                <div className="d-flex align-items-center gap-2">
-                  <span role="img" aria-label="phone">📞</span>
-                  <small>+1 (555) 123-4567</small>
-                </div>
-                <div className="d-flex align-items-center gap-2">
-                  <span role="img" aria-label="clock">⏰</span>
-                  <small>Lun-Vie 9AM-6PM</small>
-                </div>
+    <div>
+      <div className="container py-5" style={{ marginTop: '80px' }}>
+        {/* Header */}
+        <div className="row mb-5">
+          <div className="col-12 text-center">
+            <h1 className="display-4 fw-bold mb-3" style={{ color: '#1976d2' }}>
+              Centro de Ayuda
+            </h1>
+            <p className="lead text-muted mb-4" style={{ color: '#666' }}>
+              Encuentra respuestas a todas tus preguntas sobre SubastasCorp
+            </p>
+            <div className="d-flex justify-content-center">
+              <div className="input-group" style={{ maxWidth: '500px' }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Buscar en la ayuda..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ 
+                    borderRadius: '12px 0 0 12px', 
+                    border: '1px solid #e0e0e0',
+                    padding: '12px 16px',
+                    fontSize: '16px'
+                  }}
+                />
+                <button className="btn" style={{ 
+                  borderRadius: '0 12px 12px 0', 
+                  border: '1px solid #e0e0e0',
+                  background: '#1976d2',
+                  color: 'white',
+                  padding: '12px 20px'
+                }}>
+                  <span role="img" aria-label="buscar">🔍</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Contenido principal */}
-        <div className="col-lg-9">
-          <div className="card border-0 shadow-sm" style={{ borderRadius: '15px' }}>
-            <div className="card-body p-4">
-              <div className="d-flex align-items-center mb-4">
-                <span style={{ fontSize: '2em', marginRight: '15px' }}>
-                  {sections.find(s => s.id === activeSection)?.icon}
-                </span>
-                <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
-                  {sections.find(s => s.id === activeSection)?.title}
-                </h3>
-              </div>
-
-              <div className="accordion" id="faqAccordion">
-                {faqs[activeSection].map((faq, index) => (
-                  <div className="accordion-item border-0 mb-3" key={index} style={{ borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                    <h2 className="accordion-header" id={`heading${index}`}>
-                      <button
-                        className="accordion-button collapsed fw-semibold"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target={`#collapse${index}`}
-                        aria-expanded="false"
-                        aria-controls={`collapse${index}`}
-                        style={{
-                          borderRadius: '10px',
-                          border: 'none',
-                          background: '#f8f9fa',
-                          color: '#212529',
-                          fontSize: '1em',
-                          padding: '20px'
-                        }}
-                      >
-                        {faq.question}
-                      </button>
-                    </h2>
-                    <div
-                      id={`collapse${index}`}
-                      className="accordion-collapse collapse"
-                      aria-labelledby={`heading${index}`}
-                      data-bs-parent="#faqAccordion"
+        <div className="row">
+          {/* Sidebar de navegación */}
+          <div className="col-lg-3 mb-3">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+              <div className="card-body p-4">
+                <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Categorías</h5>
+                <div className="d-flex flex-column gap-2">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      className="btn text-start d-flex align-items-center gap-3"
+                      style={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        fontWeight: activeSection === section.id ? '600' : '400',
+                        background: activeSection === section.id ? '#1976d2' : '#f8f9fa',
+                        color: activeSection === section.id ? 'white' : '#666',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onClick={() => setActiveSection(section.id)}
                     >
-                      <div className="accordion-body" style={{ padding: '20px', color: '#6c757d', lineHeight: '1.6' }}>
-                        {faq.answer}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sección de artículos relacionados */}
-              <div className="mt-5">
-                <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Artículos relacionados</h5>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '10px' }}>
-                      <div className="card-body p-3">
-                        <div className="d-flex align-items-center mb-2">
-                          <span role="img" aria-label="guia" style={{ fontSize: '1.5em', marginRight: '10px' }}>📖</span>
-                          <h6 className="fw-bold mb-0">Guía para principiantes</h6>
-                        </div>
-                        <p className="small text-muted mb-2">Todo lo que necesitas saber para empezar</p>
-                        <Link to="/guia-principiantes" className="btn btn-sm btn-outline-primary" style={{ borderRadius: '8px' }}>
-                          Leer más
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '10px' }}>
-                      <div className="card-body p-3">
-                        <div className="d-flex align-items-center mb-2">
-                          <span role="img" aria-label="video" style={{ fontSize: '1.5em', marginRight: '10px' }}>🎥</span>
-                          <h6 className="fw-bold mb-0">Tutoriales en video</h6>
-                        </div>
-                        <p className="small text-muted mb-2">Aprende paso a paso con nuestros videos</p>
-                        <Link to="/tutoriales" className="btn btn-sm btn-outline-primary" style={{ borderRadius: '8px' }}>
-                          Ver videos
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+                      <span style={{ fontSize: '16px' }}>{section.icon}</span>
+                      {section.title}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Sección de contacto */}
-      <div className="row mt-5">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm" style={{ borderRadius: '15px', background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)' }}>
-            <div className="card-body p-5 text-center">
-              <h4 className="fw-bold mb-3" style={{ color: '#1976d2' }}>
-                <span role="img" aria-label="contacto" style={{ marginRight: '10px' }}>💬</span>
-                ¿Necesitas ayuda personalizada?
-              </h4>
-              <p className="lead text-muted mb-4">
-                Nuestro equipo de soporte está disponible para ayudarte con cualquier consulta
-              </p>
-              <div className="d-flex justify-content-center gap-3 flex-wrap">
-                <button className="btn btn-primary btn-lg" style={{ borderRadius: '25px', padding: '12px 30px' }}>
-                  <span role="img" aria-label="chat">💬</span> Chat en vivo
-                </button>
-                <button className="btn btn-outline-primary btn-lg" style={{ borderRadius: '25px', padding: '12px 30px' }}>
-                  <span role="img" aria-label="email">📧</span> Enviar email
-                </button>
-                <button className="btn btn-outline-primary btn-lg" style={{ borderRadius: '25px', padding: '12px 30px' }}>
-                  <span role="img" aria-label="phone">📞</span> Llamar ahora
-                </button>
+          {/* Contenido principal */}
+          <div className="col-lg-9">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+              <div className="card-body p-4">
+                {searchTerm.trim() ? (
+                  // Mostrar resultados de búsqueda global
+                  <div>
+                    <div className="d-flex align-items-center mb-4">
+                      <span style={{ fontSize: '24px', marginRight: '12px' }}>🔍</span>
+                      <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
+                        Resultados de búsqueda para "{searchTerm}"
+                      </h3>
+                    </div>
+                    
+                    {getAllSearchResults().length > 0 ? (
+                      <div>
+                        {getAllSearchResults().map((result, resultIndex) => (
+                          <div key={resultIndex} className="mb-4">
+                            <div className="d-flex align-items-center mb-3">
+                              <span style={{ fontSize: '20px', marginRight: '8px' }}>{result.sectionIcon}</span>
+                              <h5 className="fw-bold mb-0" style={{ color: '#666' }}>{result.sectionTitle}</h5>
+                            </div>
+                            <div className="accordion" id={`searchAccordion${resultIndex}`}>
+                              {result.faqs.map((faq, faqIndex) => (
+                                <div className="accordion-item border-0 mb-2" key={faqIndex} style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                                  <h2 className="accordion-header" id={`searchHeading${resultIndex}_${faqIndex}`}>
+                                    <button
+                                      className="accordion-button collapsed fw-semibold"
+                                      type="button"
+                                      data-bs-toggle="collapse"
+                                      data-bs-target={`#searchCollapse${resultIndex}_${faqIndex}`}
+                                      aria-expanded="false"
+                                      aria-controls={`searchCollapse${resultIndex}_${faqIndex}`}
+                                      style={{
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: '#ffffff',
+                                        color: '#1976d2',
+                                        fontSize: '16px',
+                                        padding: '16px 20px'
+                                      }}
+                                    >
+                                      {faq.question}
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id={`searchCollapse${resultIndex}_${faqIndex}`}
+                                    className="accordion-collapse collapse"
+                                    aria-labelledby={`searchHeading${resultIndex}_${faqIndex}`}
+                                    data-bs-parent={`#searchAccordion${resultIndex}`}
+                                  >
+                                    <div className="accordion-body" style={{ padding: '20px', color: '#666', lineHeight: '1.6' }}>
+                                      {faq.answer}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-5">
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                        <h4 className="fw-bold mb-2" style={{ color: '#666' }}>No se encontraron resultados</h4>
+                        <p className="text-muted">Intenta con otros términos de búsqueda</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Mostrar sección activa
+                  <>
+                    <div className="d-flex align-items-center mb-4">
+                      <span style={{ fontSize: '24px', marginRight: '12px' }}>
+                        {sections.find(s => s.id === activeSection)?.icon}
+                      </span>
+                      <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
+                        {sections.find(s => s.id === activeSection)?.title}
+                      </h3>
+                    </div>
+
+                    <div className="accordion" id="faqAccordion">
+                      {filteredFaqs(activeSection).map((faq, index) => (
+                        <div className="accordion-item border-0 mb-3" key={index} style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+                          <h2 className="accordion-header" id={`heading${index}`}>
+                            <button
+                              className="accordion-button collapsed fw-semibold"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              data-bs-target={`#collapse${index}`}
+                              aria-expanded="false"
+                              aria-controls={`collapse${index}`}
+                              style={{
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#ffffff',
+                                color: '#1976d2',
+                                fontSize: '16px',
+                                padding: '16px 20px'
+                              }}
+                            >
+                              {faq.question}
+                            </button>
+                          </h2>
+                          <div
+                            id={`collapse${index}`}
+                            className="accordion-collapse collapse"
+                            aria-labelledby={`heading${index}`}
+                            data-bs-parent="#faqAccordion"
+                          >
+                            <div className="accordion-body" style={{ padding: '20px', color: '#666', lineHeight: '1.6' }}>
+                              {faq.answer}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

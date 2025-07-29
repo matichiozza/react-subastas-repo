@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Footer from './Footer';
 
 const categorias = [
   { nombre: 'Accesorios', emoji: '👜' },
@@ -265,341 +266,338 @@ const TodasPublicaciones = () => {
   publicacionesFiltradas = aplicarFiltros(publicacionesFiltradas);
 
   return (
-    <div className="container py-4">
-      <div className="row">
-        {/* Filtros laterales */}
-        <div className="col-lg-3 mb-4">
-          {/* Filtros de Categorías */}
-          <div className="mt-0 card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <div 
-              className="d-flex align-items-center justify-content-between mb-3" 
-              style={{ cursor: 'pointer' }}
-              onClick={() => setCategoriasDesplegadas(!categoriasDesplegadas)}
-            >
-              <div>
-                <h6 style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em', margin: 0 }}>
-                  <span style={{ marginRight: 8 }}>📂</span>Categorías
-                </h6>
-                {!categoriasDesplegadas && categoriaSeleccionada && (
-                  <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: 2 }}>
-                    Seleccionada: {categoriaSeleccionada}
-                  </small>
-                )}
-              </div>
-              <span style={{ 
-                fontSize: '1.2em', 
-                transition: 'transform 0.3s ease',
-                transform: categoriasDesplegadas ? 'rotate(180deg)' : 'rotate(0deg)'
-              }}>
-                ▼
-              </span>
-            </div>
-            {categoriasDesplegadas && (
-              <ul className="list-unstyled mb-0" style={{ maxHeight: 300, overflowY: 'auto' }}>
-                <li className={`d-flex align-items-center mb-2 p-2 rounded${categoriaSeleccionada === '' ? ' fw-bold' : ''}`} 
-                    style={{ fontSize: '1.05em', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: categoriaSeleccionada === '' ? '#e3f2fd' : 'transparent' }} 
-                    onClick={() => {
-                      setCategoriaSeleccionada('');
-                      const params = new URLSearchParams(location.search);
-                      if (params.has('busqueda')) {
-                        params.delete('busqueda');
-                        navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
-                      }
-                    }}>
-                  <span style={{ marginRight: 8 }}>🔎</span>
-                  <span>Todas las categorías</span>
-                </li>
-                {categorias.map(cat => (
-                  <li
-                    key={cat.nombre}
-                    className={`d-flex align-items-center mb-2 p-2 rounded${categoriaSeleccionada === cat.nombre ? ' fw-bold' : ''}`}
-                    style={{ 
-                      fontSize: '1.05em', 
-                      cursor: 'pointer', 
-                      transition: 'all 0.2s',
-                      backgroundColor: categoriaSeleccionada === cat.nombre ? '#e3f2fd' : 'transparent'
-                    }}
-                    onClick={() => {
-                      setCategoriaSeleccionada(cat.nombre);
-                      const params = new URLSearchParams(location.search);
-                      params.set('busqueda', cat.nombre);
-                      navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
-                    }}
-                  >
-                    <span style={{ marginRight: 8 }}>{cat.emoji}</span>
-                    <span>{cat.nombre}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Filtros de Precio */}
-          <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
-              <span style={{ marginRight: 8 }}>💰</span>Rango de Precio
-            </h6>
-            <div className="mb-3">
-              <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio mínimo</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Ej: 1.000"
-                value={formatearPrecioMostrar(filtros.precioMin)}
-                onChange={(e) => handlePrecioChange('precioMin', e.target.value)}
-                style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio máximo</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Ej: 50.000"
-                value={formatearPrecioMostrar(filtros.precioMax)}
-                onChange={(e) => handlePrecioChange('precioMax', e.target.value)}
-                style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
-              />
-            </div>
-          </div>
-
-          {/* Filtros de Condición */}
-          <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
-              <span style={{ marginRight: 8 }}>🏷️</span>Condición
-            </h6>
-            <div className="d-flex flex-column gap-2">
+    <div>
+      <div className="container py-4">
+        <div className="row">
+          {/* Filtros laterales */}
+          <div className="col-lg-3 mb-4">
+            {/* Filtros de Categorías */}
+            <div className="mt-0 card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <div 
-                className={`p-3 rounded border ${filtros.condicion === '' ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}
-                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
-                onClick={() => handleFiltroChange('condicion', '')}
+                className="d-flex align-items-center justify-content-between mb-3" 
+                style={{ cursor: 'pointer' }}
+                onClick={() => setCategoriasDesplegadas(!categoriasDesplegadas)}
               >
-                <div className="d-flex align-items-center">
-                  <div className={`me-3 ${filtros.condicion === '' ? 'text-primary' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
-                    {filtros.condicion === '' ? '●' : '○'}
-                  </div>
-                  <div>
-                    <div className="fw-semibold" style={{ fontSize: '1em' }}>Todas las condiciones</div>
-                    <small className="text-muted">Mostrar productos nuevos y usados</small>
-                  </div>
+                <div>
+                  <h6 style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em', margin: 0 }}>
+                    <span style={{ marginRight: 8 }}>📂</span>Categorías
+                  </h6>
+                  {!categoriasDesplegadas && categoriaSeleccionada && (
+                    <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: 2 }}>
+                      Seleccionada: {categoriaSeleccionada}
+                    </small>
+                  )}
                 </div>
-              </div>
-              
-              <div 
-                className={`p-3 rounded border ${filtros.condicion === 'Nuevo' ? 'border-success bg-success bg-opacity-10' : 'border-light'}`}
-                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
-                onClick={() => handleFiltroChange('condicion', 'Nuevo')}
-              >
-                <div className="d-flex align-items-center">
-                  <div className={`me-3 ${filtros.condicion === 'Nuevo' ? 'text-success' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
-                    {filtros.condicion === 'Nuevo' ? '●' : '○'}
-                  </div>
-                  <div>
-                    <div className="fw-semibold" style={{ fontSize: '1em' }}>
-                      <span style={{ marginRight: 6 }}>🆕</span>Nuevo
-                    </div>
-                    <small className="text-muted">Solo productos sin usar</small>
-                  </div>
-                </div>
-              </div>
-              
-              <div 
-                className={`p-3 rounded border ${filtros.condicion === 'Usado' ? 'border-warning bg-warning bg-opacity-10' : 'border-light'}`}
-                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
-                onClick={() => handleFiltroChange('condicion', 'Usado')}
-              >
-                <div className="d-flex align-items-center">
-                  <div className={`me-3 ${filtros.condicion === 'Usado' ? 'text-warning' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
-                    {filtros.condicion === 'Usado' ? '●' : '○'}
-                  </div>
-                  <div>
-                    <div className="fw-semibold" style={{ fontSize: '1em' }}>
-                      <span style={{ marginRight: 6 }}>🔄</span>Usado
-                    </div>
-                    <small className="text-muted">Solo productos de segunda mano</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-
-          {/* Botón limpiar filtros */}
-          {(filtros.precioMin || filtros.precioMax || filtros.condicion) && (
-            <div className="card p-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-              <button
-                className="btn w-100"
-                onClick={limpiarFiltros}
-                style={{
-                  background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: '0.95em',
-                  padding: '10px 16px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-1px)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(231,76,60,0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
-                }}
-              >
-                <span style={{ marginRight: 6 }}>🗑️</span>Limpiar filtros
-              </button>
-            </div>
-          )}
-        </div>
-        {/* Publicaciones */}
-        <div className="col-lg-9">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h4 className="mb-0">Publicaciones</h4>
-              <small className="text-muted">
-                Mostrando {publicacionesFiltradas.length} de {publicaciones.length} publicaciones
-                {(categoriaSeleccionada || filtros.precioMin || filtros.precioMax || filtros.condicion) && (
-                  <span style={{ color: '#1976d2', fontWeight: 600, marginLeft: 8 }}>
-                    (filtradas)
-                  </span>
-                )}
-              </small>
-            </div>
-            <div className="d-flex align-items-center gap-3">
-              {/* Ordenamiento */}
-              <div style={{ minWidth: 200 }}>
-                <select
-                  className="form-select"
-                  value={filtros.ordenarPor}
-                  onChange={(e) => handleFiltroChange('ordenarPor', e.target.value)}
-                  style={{ 
-                    borderRadius: 8, 
-                    border: '1px solid #e0e2e7', 
-                    fontSize: '0.95em',
-                    padding: '8px 12px',
-                    background: '#fff',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                  }}
-                >
-                  <option value="fecha">Más recientes</option>
-                  <option value="precio_asc">Precio: menor a mayor</option>
-                  <option value="precio_desc">Precio: mayor a menor</option>
-                  <option value="ofertas">Más ofertas</option>
-                </select>
-              </div>
-              {/* Filtro de categoría activo */}
-              {categoriaSeleccionada && (
-                <span style={{ color: '#1976d2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  Filtrando por: <span style={{ background: '#e3f2fd', color: '#1976d2', borderRadius: 8, padding: '2px 10px', fontWeight: 700, fontSize: '1em', marginLeft: 4 }}>{categoriaSeleccionada}</span>
-                  <button
-                    className="btn btn-sm ms-2"
-                    style={{
-                      background: '#e74c3c',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 8,
-                      fontWeight: 600,
-                      fontSize: '0.98em',
-                      padding: '4px 14px',
-                      boxShadow: '0 2px 8px rgba(231,76,60,0.08)',
-                      transition: 'background 0.18s',
-                      marginLeft: 8,
-                    }}
-                    onClick={() => {
-                      setCategoriaSeleccionada('');
-                      const params = new URLSearchParams(location.search);
-                      if (params.has('busqueda')) {
-                        params.delete('busqueda');
-                        navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
-                      }
-                    }}
-                    onMouseOver={e => e.currentTarget.style.background = '#c0392b'}
-                    onMouseOut={e => e.currentTarget.style.background = '#e74c3c'}
-                  >
-                    <span style={{ fontWeight: 700, fontSize: '1.1em', marginRight: 2 }}>×</span> Quitar filtro
-                  </button>
+                <span style={{ 
+                  fontSize: '1.2em', 
+                  transition: 'transform 0.3s ease',
+                  transform: categoriasDesplegadas ? 'rotate(180deg)' : 'rotate(0deg)'
+                }}>
+                  ▼
                 </span>
+              </div>
+              {categoriasDesplegadas && (
+                <ul className="list-unstyled mb-0" style={{ maxHeight: 300, overflowY: 'auto' }}>
+                  <li className={`d-flex align-items-center mb-2 p-2 rounded${categoriaSeleccionada === '' ? ' fw-bold' : ''}`} 
+                      style={{ fontSize: '1.05em', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: categoriaSeleccionada === '' ? '#e3f2fd' : 'transparent' }} 
+                      onClick={() => {
+                        setCategoriaSeleccionada('');
+                        const params = new URLSearchParams(location.search);
+                        if (params.has('busqueda')) {
+                          params.delete('busqueda');
+                          navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+                        }
+                      }}>
+                    <span style={{ marginRight: 8 }}>🔎</span>
+                    <span>Todas las categorías</span>
+                  </li>
+                  {categorias.map(cat => (
+                    <li
+                      key={cat.nombre}
+                      className={`d-flex align-items-center mb-2 p-2 rounded${categoriaSeleccionada === cat.nombre ? ' fw-bold' : ''}`}
+                      style={{ 
+                        fontSize: '1.05em', 
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s',
+                        backgroundColor: categoriaSeleccionada === cat.nombre ? '#e3f2fd' : 'transparent'
+                      }}
+                      onClick={() => {
+                        setCategoriaSeleccionada(cat.nombre);
+                        const params = new URLSearchParams(location.search);
+                        params.set('busqueda', cat.nombre);
+                        navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
+                      }}
+                    >
+                      <span style={{ marginRight: 8 }}>{cat.emoji}</span>
+                      <span>{cat.nombre}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          </div>
-          {loading ? (
-            <div>Cargando...</div>
-          ) : publicacionesFiltradas.length === 0 ? (
-            <div className="alert alert-info">No hay publicaciones para esta categoría.</div>
-          ) : (
-            <div className="row g-4">
-              {publicacionesFiltradas.slice(0, 8).map((pub, idx) => (
-                <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={pub.id || idx}>
-                  <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
-                    {/* Imagen principal */}
-                    {pub.imagenes && pub.imagenes.length > 0 ? (
-                      <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ) : (
-                      <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
-                        <span role="img" aria-label="sin imagen">🖼️</span>
-                      </div>
-                    )}
-                    <div className="p-2 d-flex flex-column justify-content-between h-100">
-                      {/* Categoría y condición */}
-                      <div className="d-flex align-items-center mb-1 gap-2">
-                        <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
-                        <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
-                        {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
-                      </div>
-                      {/* Título */}
-                      <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
-                      {/* Descripción corta */}
-                      <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
-                      {/* Precio y ofertas */}
-                      <div className="d-flex align-items-center justify-content-between mb-1">
-                        <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
-                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${formatearMonto(pub.precioActual)}` : `Inicial: $${formatearMonto(pub.precioInicial)}`}
-                        </div>
-                        <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
-                      </div>
-                      {/* Fecha de finalización */}
-                      <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
-                        <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
-                      </div>
-                      {/* Usuario */}
-                      <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
-                        {pub.usuario?.fotoPerfil ? (
-                          <img src={`http://localhost:8080${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
-                        ) : (
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
-                            <span role="img" aria-label="user">👤</span>
-                          </div>
-                        )}
-                        <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
-                          <span className="fw-semibold">{pub.usuario?.nombre || pub.usuario?.username || 'Usuario'}</span>
-                          <span style={{ color: '#888', fontSize: '0.85em' }}>{[pub.usuario?.ciudad, pub.usuario?.pais].filter(Boolean).join(', ')}</span>
-                        </div>
-                      </div>
-                      {/* Botón de ver detalles */}
-                      <div className="d-grid mt-2">
-                        <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#1976d2', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
-                      </div>
+
+            {/* Filtros de Precio */}
+            <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
+                <span style={{ marginRight: 8 }}>💰</span>Rango de Precio
+              </h6>
+              <div className="mb-3">
+                <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio mínimo</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Ej: 1.000"
+                  value={formatearPrecioMostrar(filtros.precioMin)}
+                  onChange={(e) => handlePrecioChange('precioMin', e.target.value)}
+                  style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label" style={{ fontSize: '0.95em', fontWeight: 600, color: '#555' }}>Precio máximo</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Ej: 50.000"
+                  value={formatearPrecioMostrar(filtros.precioMax)}
+                  onChange={(e) => handlePrecioChange('precioMax', e.target.value)}
+                  style={{ borderRadius: 8, border: '1px solid #e0e2e7', fontSize: '0.95em' }}
+                />
+              </div>
+            </div>
+
+            {/* Filtros de Condición */}
+            <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
+                <span style={{ marginRight: 8 }}>🏷️</span>Condición
+              </h6>
+              <div className="d-flex flex-column gap-2">
+                <div 
+                  className={`p-3 rounded border ${filtros.condicion === '' ? 'border-primary bg-primary bg-opacity-10' : 'border-light'}`}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => handleFiltroChange('condicion', '')}
+                >
+                  <div className="d-flex align-items-center">
+                    <div className={`me-3 ${filtros.condicion === '' ? 'text-primary' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
+                      {filtros.condicion === '' ? '●' : '○'}
+                    </div>
+                    <div>
+                      <div className="fw-semibold" style={{ fontSize: '1em' }}>Todas las condiciones</div>
+                      <small className="text-muted">Mostrar productos nuevos y usados</small>
                     </div>
                   </div>
                 </div>
-              ))}
+                
+                <div 
+                  className={`p-3 rounded border ${filtros.condicion === 'Nuevo' ? 'border-success bg-success bg-opacity-10' : 'border-light'}`}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => handleFiltroChange('condicion', 'Nuevo')}
+                >
+                  <div className="d-flex align-items-center">
+                    <div className={`me-3 ${filtros.condicion === 'Nuevo' ? 'text-success' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
+                      {filtros.condicion === 'Nuevo' ? '●' : '○'}
+                    </div>
+                    <div>
+                      <div className="fw-semibold" style={{ fontSize: '1em' }}>
+                        <span style={{ marginRight: 6 }}>🆕</span>Nuevo
+                      </div>
+                      <small className="text-muted">Solo productos sin usar</small>
+                    </div>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded border ${filtros.condicion === 'Usado' ? 'border-warning bg-warning bg-opacity-10' : 'border-light'}`}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => handleFiltroChange('condicion', 'Usado')}
+                >
+                  <div className="d-flex align-items-center">
+                    <div className={`me-3 ${filtros.condicion === 'Usado' ? 'text-warning' : 'text-muted'}`} style={{ fontSize: '1.2em' }}>
+                      {filtros.condicion === 'Usado' ? '●' : '○'}
+                    </div>
+                    <div>
+                      <div className="fw-semibold" style={{ fontSize: '1em' }}>
+                        <span style={{ marginRight: 6 }}>🔄</span>Usado
+                      </div>
+                      <small className="text-muted">Solo productos de segunda mano</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
+
+
+
+            {/* Botón limpiar filtros */}
+            {(filtros.precioMin || filtros.precioMax || filtros.condicion) && (
+              <div className="card p-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <button
+                  className="btn w-100"
+                  onClick={limpiarFiltros}
+                  style={{
+                    background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    fontSize: '0.95em',
+                    padding: '10px 16px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(231,76,60,0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <span style={{ marginRight: 6 }}>🗑️</span>Limpiar filtros
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Publicaciones */}
+          <div className="col-lg-9">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h4 className="mb-0">Publicaciones</h4>
+                <small className="text-muted">
+                  Mostrando {publicacionesFiltradas.length} de {publicaciones.length} publicaciones
+                  {(categoriaSeleccionada || filtros.precioMin || filtros.precioMax || filtros.condicion) && (
+                    <span style={{ color: '#1976d2', fontWeight: 600, marginLeft: 8 }}>
+                      (filtradas)
+                    </span>
+                  )}
+                </small>
+              </div>
+              <div className="d-flex align-items-center gap-3">
+                {/* Ordenamiento */}
+                <div style={{ minWidth: 200 }}>
+                  <select
+                    className="form-select"
+                    value={filtros.ordenarPor}
+                    onChange={(e) => handleFiltroChange('ordenarPor', e.target.value)}
+                    style={{ 
+                      borderRadius: 8, 
+                      border: '1px solid #e0e2e7', 
+                      fontSize: '0.95em',
+                      padding: '8px 12px',
+                      background: '#fff',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    <option value="fecha">Más recientes</option>
+                    <option value="precio_asc">Precio: menor a mayor</option>
+                    <option value="precio_desc">Precio: mayor a menor</option>
+                    <option value="ofertas">Más ofertas</option>
+                  </select>
+                </div>
+                {/* Filtro de categoría activo */}
+                {categoriaSeleccionada && (
+                  <span style={{ color: '#1976d2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    Filtrando por: <span style={{ background: '#e3f2fd', color: '#1976d2', borderRadius: 8, padding: '2px 10px', fontWeight: 700, fontSize: '1em', marginLeft: 4 }}>{categoriaSeleccionada}</span>
+                    <button
+                      className="btn btn-sm ms-2"
+                      style={{
+                        background: '#e74c3c',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        fontSize: '0.98em',
+                        padding: '4px 14px',
+                        boxShadow: '0 2px 8px rgba(231,76,60,0.08)',
+                        transition: 'background 0.18s',
+                        marginLeft: 8,
+                      }}
+                      onClick={() => {
+                        setCategoriaSeleccionada('');
+                        const params = new URLSearchParams(location.search);
+                        if (params.has('busqueda')) {
+                          params.delete('busqueda');
+                          navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+                        }
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = '#c0392b'}
+                      onMouseOut={e => e.currentTarget.style.background = '#e74c3c'}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: '1.1em', marginRight: 2 }}>×</span> Quitar filtro
+                    </button>
+                  </span>
+                )}
+              </div>
+            </div>
+            {loading ? (
+              <div>Cargando...</div>
+            ) : publicacionesFiltradas.length === 0 ? (
+              <div className="alert alert-info">No hay publicaciones para esta categoría.</div>
+            ) : (
+              <div className="row g-4">
+                {publicacionesFiltradas.slice(0, 8).map((pub, idx) => (
+                  <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={pub.id || idx}>
+                    <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
+                      {/* Imagen principal */}
+                      {pub.imagenes && pub.imagenes.length > 0 ? (
+                        <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                          <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ) : (
+                        <div style={{ height: 120, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
+                          <span role="img" aria-label="sin imagen">🖼️</span>
+                        </div>
+                      )}
+                      <div className="p-2 d-flex flex-column justify-content-between h-100">
+                        {/* Categoría y condición */}
+                        <div className="d-flex align-items-center mb-1 gap-2">
+                          <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
+                          <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
+                          {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
+                        </div>
+                        {/* Título */}
+                        <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
+                        {/* Descripción corta */}
+                        <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
+                        {/* Precio y ofertas */}
+                        <div className="d-flex align-items-center justify-content-between mb-1">
+                          <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
+                            {pub.precioActual && pub.precioActual > 0 ? `Actual: $${formatearMonto(pub.precioActual)}` : `Inicial: $${formatearMonto(pub.precioInicial)}`}
+                          </div>
+                          <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
+                        </div>
+                        {/* Fecha de finalización */}
+                        <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
+                          <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
+                        </div>
+                        {/* Usuario */}
+                        <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
+                          {pub.usuario?.fotoPerfil ? (
+                            <img src={`http://localhost:8080${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                          ) : (
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
+                              <span role="img" aria-label="user">👤</span>
+                            </div>
+                          )}
+                          <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
+                            <span className="fw-semibold">{pub.usuario?.nombre || pub.usuario?.username || 'Usuario'}</span>
+                            <span style={{ color: '#888', fontSize: '0.85em' }}>{[pub.usuario?.ciudad, pub.usuario?.pais].filter(Boolean).join(', ')}</span>
+                          </div>
+                        </div>
+                        {/* Botón de ver detalles */}
+                        <div className="d-grid mt-2">
+                          <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#1976d2', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      {/* Info proyecto */}
-      <div className="row mt-5 mb-2">
-        <div className="col-12 col-lg-10 mx-auto text-center">
-          <h5 className="mb-3" style={{ color: '#1976d2', fontWeight: 700 }}>¿Qué es SubastasCorp?</h5>
-          <p className="lead">SubastasCorp es una plataforma moderna y profesional para gestionar subastas online. Regístrate, publica tus productos, haz ofertas y encuentra oportunidades únicas. ¡Disfruta de una experiencia segura y fácil de usar!</p>
-        </div>
-      </div>
+      
+      <Footer />
     </div>
   );
 };

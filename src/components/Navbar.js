@@ -101,7 +101,7 @@ const Navbar = () => {
         </div>
         {/* Columna 2: Buscador centrado solo en desktop */}
         <div className="d-none d-lg-flex" style={{ flex: '1 1 0', justifyContent: 'center', minWidth: 0 }}>
-          <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 340 }}>
+          <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 500 }}>
             <input
               className="form-control me-2"
               type="search"
@@ -131,7 +131,7 @@ const Navbar = () => {
             <ul className="navbar-nav align-items-lg-center gap-2 mb-0 flex-lg-row flex-column text-center" style={{ fontWeight: 500, fontSize: '0.89em' }}>
               {/* Buscador en mobile */}
               <li className="nav-item d-lg-none mb-2">
-                <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 340, margin: '0 auto' }}>
+                <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
                   <input
                     className="form-control me-2"
                     type="search"
@@ -164,20 +164,6 @@ const Navbar = () => {
                 <button
                   className="nav-link btn"
                   style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
-                  onClick={handleVender}
-                  type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                >
-                  Vender
-                </button>
-              </li>
-              <li className="nav-item mb-2 mb-lg-0">
-                <button
-                  className="nav-link btn"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
                   onClick={handleComprar}
                   type="button"
                   onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
@@ -186,6 +172,20 @@ const Navbar = () => {
                   onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                 >
                   Comprar
+                </button>
+              </li>
+              <li className="nav-item mb-2 mb-lg-0">
+                <button
+                  className="nav-link btn"
+                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  onClick={handleVender}
+                  type="button"
+                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                >
+                  Vender
                 </button>
               </li>
               <li className="nav-item mb-2 mb-lg-0">
@@ -285,7 +285,7 @@ const Navbar = () => {
           gap: '1.1em',
           alignItems: 'stretch',
         }}>
-          <form className="d-flex w-100 mb-2" onSubmit={handleBuscar} style={{ maxWidth: 340, margin: '0 auto' }}>
+          <form className="d-flex w-100 mb-2" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
             <input
               className="form-control me-2"
               type="search"
@@ -302,11 +302,11 @@ const Navbar = () => {
           <Link className="nav-link py-2" to="/" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="inicio">🏠</span> Inicio
           </Link>
-          <Link className="nav-link py-2" to="/crear-publicacion" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
-            <span role="img" aria-label="vender">📤</span> Vender
-          </Link>
           <Link className="nav-link py-2" to="/publicaciones" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="comprar">🛒</span> Comprar
+          </Link>
+          <Link className="nav-link py-2" to="/crear-publicacion" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+            <span role="img" aria-label="vender">📤</span> Vender
           </Link>
           <Link className="nav-link py-2" to="/ayuda" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="ayuda">❓</span> Ayuda

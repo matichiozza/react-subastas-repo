@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import Footer from './Footer';
 
 const categorias = [
   { nombre: 'Computación', icono: '🖥️', color: '#1976d2', grad: 'linear-gradient(135deg, #1976d2 60%, #64b5f6 100%)' },
@@ -26,10 +27,6 @@ const preguntas = [
   { q: '¿Cómo participo en una subasta?', a: 'Solo debes registrarte, buscar un producto y hacer tu oferta.' },
   { q: '¿Es seguro pagar por la plataforma?', a: 'Sí, usamos métodos de pago protegidos y cifrado de datos.' },
   { q: '¿Puedo vender cualquier cosa?', a: 'Sí, siempre que cumpla con nuestras políticas y leyes vigentes.' },
-  { q: '¿Qué pasa si no recibo mi producto?', a: 'Tenemos un sistema de garantías y reembolsos para proteger a los compradores.' },
-  { q: '¿Cómo funciona el sistema de ofertas?', a: 'Puedes hacer ofertas en cualquier momento hasta que termine la subasta. La oferta más alta gana.' },
-  { q: '¿Hay comisiones por vender?', a: 'Sí, aplicamos una pequeña comisión del 5% sobre el precio final de venta.' },
-  { q: '¿Puedo cancelar una oferta?', a: 'No, las ofertas son vinculantes. Asegúrate de estar seguro antes de ofertar.' },
 ];
 
 // Función para formatear montos con separadores de miles
@@ -118,16 +115,18 @@ const Home = () => {
     };
   }, [token]);
 
-  // Subastas destacadas: las 6 más recientes
-  const subastasDestacadas = publicaciones.slice(0, 6);
+  // Subastas destacadas: las 3 con más ofertas
+  const subastasDestacadas = publicaciones
+    .sort((a, b) => (b.ofertasTotales || 0) - (a.ofertasTotales || 0))
+    .slice(0, 3);
 
   return (
     <div style={{ background: '#f7f8fa' }}>
       {/* HERO PRINCIPAL */}
-      <section style={{ background: 'linear-gradient(90deg, #1976d2 60%, #5a48f6 100%)', color: '#fff', padding: '4.5em 0 3.5em 0', position: 'relative' }}>
-        <div className="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
-          <div style={{ maxWidth: 520 }}>
-            <h1 style={{ fontWeight: 800, fontSize: '2.7em', lineHeight: 1.1, marginBottom: 18 }}>¡Descubre, oferta y gana en <span style={{ color: '#ffe082' }}>SubastasCorp</span>!</h1>
+      <section style={{ background: 'linear-gradient(90deg, #1976d2 60%, #5a48f6 100%)', color: '#fff', padding: '6em 0 5em 0', position: 'relative' }}>
+        <div className="container text-center">
+          <div style={{ maxWidth: 720, margin: '0 auto', marginTop: '-2em' }}>
+            <h1 style={{ fontWeight: 800, fontSize: '2.7em', lineHeight: 1.1, marginBottom: 18 }}>¡Descubre, oferta y gana en <span style={{ fontWeight: 700, color: '#fff' }}>Subastas</span><span style={{ color: '#ffd54f', fontWeight: 400 }}>Corp</span>!</h1>
             <p style={{ fontSize: '1.25em', color: '#e3e3e3', marginBottom: 28 }}>La plataforma más moderna y segura para comprar y vender en subastas online.</p>
             <button 
               className="btn btn-lg fw-bold" 
@@ -158,9 +157,6 @@ const Home = () => {
             >
               <span style={{ position: 'relative', zIndex: 2 }}>VER SUBASTAS</span>
             </button>
-          </div>
-          <div className="d-none d-md-block" style={{ flex: 1, textAlign: 'center' }}>
-            <img src="https://images.unsplash.com/photo-1515168833906-d2a3b82b3029?auto=format&fit=crop&w=600&q=80" alt="Hero" style={{ maxWidth: 340, borderRadius: 24, boxShadow: '0 8px 32px rgba(25,118,210,0.18)' }} />
           </div>
         </div>
       </section>
@@ -434,7 +430,10 @@ const Home = () => {
 
       {/* PREGUNTAS FRECUENTES */}
       <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>Preguntas frecuentes</h3>
+        <div className="text-center mb-4">
+          <h3 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Preguntas frecuentes</h3>
+          <p className="text-muted" style={{ fontSize: '1.1em' }}>Las dudas más comunes de nuestros usuarios</p>
+        </div>
         <div className="accordion" id="faqAccordion">
           {preguntas.map((p, idx) => (
             <div className="accordion-item mb-2" key={p.q} style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 12px rgba(25,118,210,0.04)' }}>
@@ -455,40 +454,51 @@ const Home = () => {
             </div>
           ))}
         </div>
+        
+        {/* Acceso directo a Ayuda */}
+        <div className="text-center mt-4">
+          <div className="card border-0" style={{ 
+            background: '#e3f2fd', 
+            borderRadius: 12, 
+            padding: '1.8rem',
+            border: '1px solid #bbdefb',
+            boxShadow: '0 2px 8px rgba(25,118,210,0.08)'
+          }}>
+            <div>
+              <h6 className="fw-semibold mb-2" style={{ color: '#1976d2' }}>
+                ¿Necesitas más información?
+              </h6>
+              <p className="mb-3" style={{ fontSize: '1em', color: '#666' }}>
+                Tenemos una sección completa de ayuda con todas las preguntas y respuestas
+              </p>
+              <a 
+                href="/ayuda"
+                className="d-inline-flex align-items-center text-decoration-none px-3 py-2 rounded"
+                style={{ 
+                  background: '#1976d2',
+                  color: '#fff',
+                  fontSize: '0.95em',
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#1565c0';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#1976d2';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                Ver Ayuda
+              </a>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* FOOTER AMPLIADO */}
-      <footer style={{ background: '#1976d2', color: '#fff', padding: '2.5em 0 1.2em 0', marginTop: 40 }}>
-        <div className="container">
-          <div className="row mb-3">
-            <div className="col-md-4 mb-3 mb-md-0">
-              <h5 className="fw-bold mb-2">SubastasCorp</h5>
-              <div style={{ color: '#e3e3e3', fontSize: '1.05em' }}>La mejor plataforma para comprar y vender en subastas online.</div>
-            </div>
-            <div className="col-md-4 mb-3 mb-md-0">
-              <h6 className="fw-bold mb-2">Enlaces útiles</h6>
-              <ul className="list-unstyled" style={{ color: '#fff' }}>
-                <li><a href="/publicaciones" style={{ color: '#fff', textDecoration: 'underline' }}>Ver subastas</a></li>
-                <li><a href="/crear-publicacion" style={{ color: '#fff', textDecoration: 'underline' }}>Vender</a></li>
-                <li><a href="/micuenta" style={{ color: '#fff', textDecoration: 'underline' }}>Mi cuenta</a></li>
-              </ul>
-            </div>
-            <div className="col-md-4">
-              <h6 className="fw-bold mb-2">Contacto</h6>
-              <div>Email: contacto@subastascorp.com</div>
-              <div>Tel: +54 11 1234-5678</div>
-              <div className="mt-2">
-                <a href="#" style={{ color: '#fff', fontSize: 22, marginRight: 12 }}><span role="img" aria-label="facebook">📘</span></a>
-                <a href="#" style={{ color: '#fff', fontSize: 22, marginRight: 12 }}><span role="img" aria-label="twitter">🐦</span></a>
-                <a href="#" style={{ color: '#fff', fontSize: 22 }}><span role="img" aria-label="instagram">📸</span></a>
-              </div>
-            </div>
-          </div>
-          <div className="text-center mt-3" style={{ color: '#e3e3e3', fontSize: '0.98em' }}>
-            © {new Date().getFullYear()} SubastasCorp. Todos los derechos reservados.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

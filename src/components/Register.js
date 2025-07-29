@@ -84,7 +84,7 @@ const Register = () => {
     e.preventDefault();
     const success = await register(formData);
     if (success) {
-      navigate('/micuenta');
+      navigate('/');
     } else {
       setError('No se pudo registrar. Intente con otro usuario o correo.');
     }
