@@ -8,6 +8,7 @@ import MisPublicaciones from './components/MisPublicaciones';
 import CrearPublicacion from './components/CrearPublicacion';
 import TodasPublicaciones from './components/TodasPublicaciones';
 import Home from './components/Home';
+import Ayuda from './components/Ayuda';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
@@ -28,6 +29,7 @@ function App() {
             <Route path="/crear-publicacion" element={<PrivateRoute><CrearPublicacion /></PrivateRoute>} />
             <Route path="/publicaciones" element={<TodasPublicaciones />} />
             <Route path="/publicaciones/:id" element={<DetallePublicacion />} />
+            <Route path="/ayuda" element={<Ayuda />} />
             {/* Agrega aquí más rutas si es necesario */}
           </Routes>
         </Router>

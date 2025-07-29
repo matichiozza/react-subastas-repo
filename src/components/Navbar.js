@@ -61,6 +61,10 @@ const Navbar = () => {
   };
 
   // Funciones de navegación unificadas
+  const handleInicio = () => {
+    navigate('/');
+    setMobileMenuOpen(false);
+  };
   const handleVender = () => {
     if (user) navigate('/crear-publicacion');
     else navigate('/login');
@@ -70,8 +74,8 @@ const Navbar = () => {
     navigate('/publicaciones');
     setMobileMenuOpen(false);
   };
-  const handleCategorias = () => {
-    navigate('/categorias');
+  const handleAyuda = () => {
+    navigate('/ayuda');
     setMobileMenuOpen(false);
   };
 
@@ -146,6 +150,20 @@ const Navbar = () => {
                 <button
                   className="nav-link btn"
                   style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  onClick={handleInicio}
+                  type="button"
+                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                >
+                  Inicio
+                </button>
+              </li>
+              <li className="nav-item mb-2 mb-lg-0">
+                <button
+                  className="nav-link btn"
+                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
                   onClick={handleVender}
                   type="button"
                   onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
@@ -174,14 +192,14 @@ const Navbar = () => {
                 <button
                   className="nav-link btn"
                   style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
-                  onClick={handleCategorias}
+                  onClick={handleAyuda}
                   type="button"
                   onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
                   onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                   onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
                   onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
                 >
-                  Categorías
+                  Ayuda
                 </button>
               </li>
               {/* Botón de cuenta, igual para logueado y no logueado */}
@@ -281,14 +299,17 @@ const Navbar = () => {
               <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
             </button>
           </form>
+          <Link className="nav-link py-2" to="/" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+            <span role="img" aria-label="inicio">🏠</span> Inicio
+          </Link>
           <Link className="nav-link py-2" to="/crear-publicacion" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="vender">📤</span> Vender
           </Link>
           <Link className="nav-link py-2" to="/publicaciones" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="comprar">🛒</span> Comprar
           </Link>
-          <Link className="nav-link py-2" to="/categorias" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
-            <span role="img" aria-label="categorias">📂</span> Categorías
+          <Link className="nav-link py-2" to="/ayuda" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+            <span role="img" aria-label="ayuda">❓</span> Ayuda
           </Link>
           {user ? (
             <>
