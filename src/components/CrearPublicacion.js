@@ -1,7 +1,8 @@
-import React, { useState, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
+import API_BASE_URL from '../config/api';
 
 const pasos = [
   { label: 'Datos Básicos', icon: '📝' },
@@ -180,7 +181,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
         formData.append('imagenes', img);
       });
       
-      const res = await fetch('http://localhost:8080/publicaciones', {
+              const res = await fetch(`${API_BASE_URL}/publicaciones`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

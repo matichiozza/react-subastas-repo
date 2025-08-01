@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
+import API_BASE_URL from "../config/api";
 
 export const AuthContext = createContext();
 
@@ -10,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   // Obtener datos del usuario autenticado
   const fetchUser = async (jwt) => {
     try {
-      const response = await fetch("http://localhost:8080/auth/me", {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
         },
@@ -42,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   // Nuevo login: hace petición al backend
   const login = async (username, password) => {
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   // Nueva función para registrar usuario
   const register = async (formData) => {
     try {
-      const response = await fetch("http://localhost:8080/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

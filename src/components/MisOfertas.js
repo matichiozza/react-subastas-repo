@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
+import API_BASE_URL from '../config/api';
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -45,7 +46,7 @@ const MisOfertas = () => {
 
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:8080/ofertas/mis-ofertas', {
+        const res = await fetch(`${API_BASE_URL}/ofertas/mis-ofertas`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',

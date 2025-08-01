@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import API_BASE_URL from '../config/api';
 
 const DetallePublicacion = () => {
   const { id } = useParams();
@@ -68,7 +69,7 @@ const DetallePublicacion = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:8080/publicaciones/${id}`, {
+              const res = await fetch(`${API_BASE_URL}/publicaciones/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json().catch(() => null);
@@ -83,7 +84,7 @@ const DetallePublicacion = () => {
 
   const fetchOfertas = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas`, {
+              const res = await fetch(`${API_BASE_URL}/publicaciones/${id}/ofertas`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json().catch(() => null);
@@ -105,7 +106,7 @@ const DetallePublicacion = () => {
       setLoadingTarjetas(true);
       setErrorTarjetas(null);
       try {
-        const res = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+        const res = await fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error('Error al cargar las tarjetas');
@@ -133,7 +134,7 @@ const DetallePublicacion = () => {
       fetchingOfertaAnterior.current = true;
       setLoadingOfertaAnterior(true);
       try {
-        const res = await fetch(`http://localhost:8080/publicaciones/${id}/ofertas/usuario/${user.id}`, {
+        const res = await fetch(`${API_BASE_URL}/publicaciones/${id}/ofertas/usuario/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -221,7 +222,7 @@ const DetallePublicacion = () => {
         setOfertando(false);
         return;
       }
-      const res = await fetch(`http://localhost:8080/publicaciones/ofertas`, {
+              const res = await fetch(`${API_BASE_URL}/publicaciones/ofertas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -331,7 +332,7 @@ const DetallePublicacion = () => {
     
     setProcesandoBajarse(true);
     try {
-      const res = await fetch(`http://localhost:8080/publicaciones/${publicacion.id}/ofertas/usuario/${user.id}`, {
+              const res = await fetch(`${API_BASE_URL}/publicaciones/${publicacion.id}/ofertas/usuario/${user.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -375,7 +376,7 @@ const DetallePublicacion = () => {
           return;
         }
 
-        const res = await fetch(`http://localhost:8080/publicaciones/ofertas`, {
+        const res = await fetch(`${API_BASE_URL}/publicaciones/ofertas`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -514,7 +515,7 @@ const DetallePublicacion = () => {
     setLoadingTarjeta(true);
     setErrorTarjetas(null);
     try {
-      const res = await fetch('http://localhost:8080/tarjetas', {
+              const res = await fetch(`${API_BASE_URL}/tarjetas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -675,7 +676,7 @@ const DetallePublicacion = () => {
                 className={zoom.visible && zoomEnabled ? 'lupa-activa' : ''}
               >
                 <img
-                  src={`http://localhost:8080${publicacion.imagenes[imgSeleccionada]}`}
+                  src={`${API_BASE_URL}${publicacion.imagenes[imgSeleccionada]}`}
                   alt={`Imagen ${imgSeleccionada + 1}`}
                   className="img-fluid"
                   style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 12, maxWidth: '100%', display: 'block' }}
@@ -693,7 +694,7 @@ const DetallePublicacion = () => {
                       borderRadius: '50%',
                       border: '2.5px solid #1976d2',
                       boxShadow: '0 4px 16px rgba(25,118,210,0.18)',
-                      backgroundImage: `url(http://localhost:8080${publicacion.imagenes[imgSeleccionada]})`,
+                      backgroundImage: `url(${API_BASE_URL}${publicacion.imagenes[imgSeleccionada]})`,
                       backgroundRepeat: 'no-repeat',
                       backgroundSize: '320% 320%',
                       backgroundPosition: `${((zoom.x / rectWidth(imgContainerRef)) * 100).toFixed(2)}% ${((zoom.y / rectHeight(imgContainerRef)) * 100).toFixed(2)}%`,

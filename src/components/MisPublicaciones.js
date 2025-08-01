@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import CancelarPublicacion from './CancelarPublicacion';
 import Footer from './Footer';
+import API_BASE_URL from '../config/api';
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -27,7 +28,7 @@ const MisPublicaciones = () => {
       setError(null);
       try {
         // Obtener publicaciones
-        const resPublicaciones = await fetch('http://localhost:8080/publicaciones/mias', {
+        const resPublicaciones = await fetch(`${API_BASE_URL}/publicaciones/mias`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,7 +38,7 @@ const MisPublicaciones = () => {
         setPublicaciones(dataPublicaciones.reverse());
 
         // Obtener información de sanciones
-        const resSanciones = await fetch('http://localhost:8080/publicaciones/usuario/sanciones', {
+        const resSanciones = await fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -131,7 +132,7 @@ const MisPublicaciones = () => {
     
     // Verificar si la cuenta fue eliminada después de la cancelación
     try {
-      const resSanciones = await fetch('http://localhost:8080/publicaciones/usuario/sanciones', {
+      const resSanciones = await fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

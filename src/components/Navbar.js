@@ -1,8 +1,9 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import API_BASE_URL from '../config/api';
 
 const Navbar = () => {
   const { user, logout, token } = useContext(AuthContext);
@@ -18,7 +19,7 @@ const Navbar = () => {
     const fetchSanciones = async () => {
       if (token && user) {
         try {
-          const res = await fetch('http://localhost:8080/publicaciones/usuario/sanciones', {
+          const res = await fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

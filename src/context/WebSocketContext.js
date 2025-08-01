@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { AuthContext } from './AuthContext';
+import API_BASE_URL from '../config/api';
 
 const WebSocketContext = createContext();
 
@@ -18,7 +20,7 @@ export const WebSocketProvider = ({ children }) => {
 
   const connectWebSocket = () => {
     try {
-      const ws = new WebSocket('ws://localhost:8080/ws');
+      const ws = new WebSocket(`${API_BASE_URL.replace('http://', 'ws://')}/ws`);
       
       ws.onopen = () => {
         setIsConnected(true);

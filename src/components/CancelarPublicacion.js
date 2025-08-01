@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaTimes, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 
 const motivosCancelacion = [
   { value: 'PRODUCTO_NO_DISPONIBLE', label: 'Producto no disponible' },
@@ -33,7 +34,7 @@ const CancelarPublicacion = ({ publicacion, onClose, onCancelacionExitosa }) => 
     setError(null);
 
     try {
-      const res = await fetch(`http://localhost:8080/publicaciones/${publicacion.id}/cancelar`, {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/${publicacion.id}/cancelar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +65,7 @@ const CancelarPublicacion = ({ publicacion, onClose, onCancelacionExitosa }) => 
 
       // Verificar sanciones después de la cancelación exitosa
       try {
-        const resSanciones = await fetch('http://localhost:8080/publicaciones/usuario/sanciones', {
+        const resSanciones = await fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

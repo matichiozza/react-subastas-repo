@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from './Footer';
+import API_BASE_URL from '../config/api';
 
 const categorias = [
   { nombre: 'Accesorios', emoji: '👜' },
@@ -278,7 +279,7 @@ const TodasPublicaciones = () => {
     const fetchPublicaciones = async () => {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:8080/publicaciones', {
+        const res = await fetch(`${API_BASE_URL}/publicaciones`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error();
@@ -299,7 +300,7 @@ const TodasPublicaciones = () => {
     
     const connectWebSocket = () => {
       try {
-        socket = new WebSocket('ws://localhost:8080/ws');
+        socket = new WebSocket(`${API_BASE_URL.replace('http://', 'ws://')}/ws`);
         
         socket.onopen = () => {
           reconnectAttempts = 0;
@@ -690,7 +691,7 @@ const TodasPublicaciones = () => {
                       {/* Imagen principal */}
                       {pub.imagenes && pub.imagenes.length > 0 ? (
                         <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={`${API_BASE_URL}${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ) : (
                         <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
@@ -721,7 +722,7 @@ const TodasPublicaciones = () => {
                         {/* Usuario */}
                         <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
                           {pub.usuario?.fotoPerfil ? (
-                            <img src={`http://localhost:8080${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                            <img src={`${API_BASE_URL}${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
                           ) : (
                             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
                               <span role="img" aria-label="user">👤</span>

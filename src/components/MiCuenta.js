@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
+import API_BASE_URL from '../config/api';
 
 // Icono personalizado para el marcador
 const markerIcon = new L.Icon({
@@ -176,7 +177,7 @@ const MiCuenta = () => {
     setSuccessTarjeta(false);
     
     try {
-      const res = await fetch('http://localhost:8080/tarjetas', {
+              const res = await fetch(`${API_BASE_URL}/tarjetas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +209,7 @@ const MiCuenta = () => {
       setShowModalTarjeta(false);
       
       // Recargar tarjetas
-      const tarjetasRes = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+              const tarjetasRes = await fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (tarjetasRes.ok) {
@@ -247,7 +248,7 @@ const MiCuenta = () => {
     }
     
     try {
-      const res = await fetch(`http://localhost:8080/tarjetas/${id}`, {
+              const res = await fetch(`${API_BASE_URL}/tarjetas/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -299,7 +300,7 @@ const MiCuenta = () => {
     if (!user || !user.id) return;
     setLoadingTarjetas(true);
     setErrorTarjetas(null);
-    fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+            fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(res => {
@@ -372,7 +373,7 @@ const MiCuenta = () => {
     try {
       const formData = new FormData();
       formData.append('fotoPerfil', fotoFile);
-      const res = await fetch('http://localhost:8080/usuarios/foto-perfil', {
+              const res = await fetch(`${API_BASE_URL}/usuarios/foto-perfil`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -393,7 +394,7 @@ const MiCuenta = () => {
     setError(null);
     setSuccess(false);
     try {
-      const res = await fetch('http://localhost:8080/usuarios/mis-datos', {
+              const res = await fetch(`${API_BASE_URL}/usuarios/mis-datos`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
