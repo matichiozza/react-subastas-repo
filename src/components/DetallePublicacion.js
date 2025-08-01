@@ -463,7 +463,7 @@ const DetallePublicacion = () => {
     // DNI
     if (!formTarjeta.dniTitular.trim()) {
       errores.dniTitular = 'El DNI es requerido';
-    } else if (!/^\d{7,8}$/.test(formTarjeta.dniTitular)) {
+    } else if (!/^\d{7,8}$/.test(formTarjeta.dniTitular.replace(/\./g, ''))) {
       errores.dniTitular = 'Debe tener 7 u 8 dígitos';
     }
     
@@ -477,7 +477,10 @@ const DetallePublicacion = () => {
     
     // Formatear número de tarjeta
     if (name === 'numero') {
-      processedValue = value.replace(/\D/g, '').slice(0, 16);
+      // Remover todos los caracteres no numéricos y limitar a 16 dígitos
+      const numeros = value.replace(/\D/g, '').slice(0, 16);
+      // Formatear con espacios cada 4 dígitos
+      processedValue = numeros.replace(/(\d{4})(?=\d)/g, '$1 ');
     }
     
     // Formatear fecha de vencimiento
@@ -495,7 +498,9 @@ const DetallePublicacion = () => {
     
     // Formatear DNI
     if (name === 'dniTitular') {
-      processedValue = value.replace(/\D/g, '').slice(0, 8);
+      const numeros = value.replace(/\D/g, '').slice(0, 8);
+      // Formatear con puntos cada 3 dígitos desde la derecha
+      processedValue = numeros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
     
     setFormTarjeta(prev => ({ ...prev, [name]: processedValue }));
@@ -523,6 +528,8 @@ const DetallePublicacion = () => {
         },
         body: JSON.stringify({
           ...formTarjeta,
+          numero: formTarjeta.numero.replace(/\s/g, ''), // Remover espacios antes de enviar
+          dniTitular: formTarjeta.dniTitular.replace(/\./g, ''), // Remover puntos antes de enviar
           usuario: { id: user.id }
         }),
       });
