@@ -29,7 +29,7 @@ function FlyToLocation({ lat, lng }) {
 }
 
 const Ajustes = () => {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('perfil');
   
@@ -85,6 +85,13 @@ const Ajustes = () => {
   const [loadingTarjeta, setLoadingTarjeta] = useState(false);
   const [successTarjeta, setSuccessTarjeta] = useState(false);
   const [errorTarjetas, setErrorTarjetas] = useState(null);
+
+  // Estados para CBU
+  const [showModalCbu, setShowModalCbu] = useState(false);
+  const [cbuInput, setCbuInput] = useState('');
+  const [loadingCbu, setLoadingCbu] = useState(false);
+  const [errorCbu, setErrorCbu] = useState(null);
+  const [successCbu, setSuccessCbu] = useState(false);
 
   useEffect(() => {
     if (user === null) return;
@@ -164,6 +171,7 @@ const Ajustes = () => {
   const handleFotoChange = async e => {
     const file = e.target.files[0];
     if (file) {
+      console.log('Archivo seleccionado:', file.name, file.type, file.size);
       setFotoFile(file);
       setFotoPreview(URL.createObjectURL(file));
       setSuccess(false);
@@ -174,16 +182,40 @@ const Ajustes = () => {
       try {
         const formData = new FormData();
         formData.append('fotoPerfil', file);
+        console.log('Enviando archivo al servidor...');
         const res = await fetch('http://localhost:8080/usuarios/foto-perfil', {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
-        if (!res.ok) throw new Error('Error al subir la foto');
+        console.log('Respuesta del servidor:', res.status, res.statusText);
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Error del servidor:', errorText);
+          throw new Error(`Error al subir la foto: ${res.status} ${res.statusText}`);
+        }
+        
+        // Obtener el usuario actualizado del response
+        const updatedUser = await res.json();
+        console.log('Usuario actualizado:', updatedUser);
+        
+        // Actualizar el estado global del usuario
+        updateUser(updatedUser);
+        
+        // Actualizar el preview con la nueva URL
+        setFotoPreview(`http://localhost:8080${updatedUser.fotoPerfil}`);
+        
         setSuccess(true);
         setFotoFile(null);
       } catch (err) {
-        setError('No se pudo subir la foto.');
+        console.error('Error en handleFotoChange:', err);
+        setError(`No se pudo subir la foto: ${err.message}`);
+        // Revertir el preview en caso de error
+        if (user?.fotoPerfil) {
+          setFotoPreview(`http://localhost:8080${user.fotoPerfil}`);
+        } else {
+          setFotoPreview(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -205,6 +237,13 @@ const Ajustes = () => {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Error al guardar los datos');
+      
+      // Obtener el usuario actualizado del response
+      const updatedUser = await res.json();
+      
+      // Actualizar el estado global del usuario
+      updateUser(updatedUser);
+      
       setSuccess(true);
     } catch (err) {
       setError('No se pudo guardar los datos.');
@@ -461,6 +500,80 @@ const Ajustes = () => {
     }
   };
 
+  // Handlers para CBU
+  const handleCbuChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Solo números
+    if (value.length <= 22) {
+      setCbuInput(value);
+    }
+  };
+
+  const handleAgregarCbu = async (e) => {
+    e.preventDefault();
+    if (cbuInput.length !== 22) {
+      setErrorCbu('El CBU debe tener exactamente 22 dígitos');
+      return;
+    }
+
+    try {
+      setLoadingCbu(true);
+      setErrorCbu(null);
+      
+      const res = await fetch('http://localhost:8080/usuarios/cbu', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ cbu: cbuInput })
+      });
+
+      if (res.ok) {
+        const usuarioActualizado = await res.json();
+        updateUser(usuarioActualizado);
+        setSuccessCbu(true);
+        setCbuInput('');
+        setShowModalCbu(false);
+        setTimeout(() => setSuccessCbu(false), 3000);
+      } else {
+        const errorData = await res.text();
+        setErrorCbu(errorData || 'Error al agregar el CBU');
+      }
+    } catch (err) {
+      setErrorCbu('Error de conexión');
+    } finally {
+      setLoadingCbu(false);
+    }
+  };
+
+  const handleEliminarCbu = async () => {
+    try {
+      setLoadingCbu(true);
+      setErrorCbu(null);
+      
+      const res = await fetch('http://localhost:8080/usuarios/cbu', {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      if (res.ok) {
+        const usuarioActualizado = await res.json();
+        updateUser(usuarioActualizado);
+        setSuccessCbu(true);
+        setTimeout(() => setSuccessCbu(false), 3000);
+      } else {
+        const errorData = await res.text();
+        setErrorCbu(errorData || 'Error al eliminar el CBU');
+      }
+    } catch (err) {
+      setErrorCbu('Error de conexión');
+    } finally {
+      setLoadingCbu(false);
+    }
+  };
+
   const tabs = [
     { id: 'perfil', label: 'Perfil', icon: '👤' },
     { id: 'notificaciones', label: 'Notificaciones', icon: '🔔' },
@@ -695,28 +808,38 @@ const Ajustes = () => {
                   <p>Cargando tarjetas...</p>
                 </div>
               ) : tarjetas.length > 0 ? (
-                <div className="cards-container">
-                  {tarjetas.map((tarjeta, index) => (
-                    <div key={tarjeta.id} className="card-item">
-                      <div className="card-info">
-                        <div className="card-number">
-                          •••• •••• •••• {tarjeta.numero.slice(-4)}
+                <>
+                  <div className="cards-wrapper">
+                    <div className="cards-container">
+                      {tarjetas.map((tarjeta, index) => (
+                        <div key={tarjeta.id} className="card-item">
+                          <div className="card-info">
+                            <div className="card-number">
+                              •••• •••• •••• {tarjeta.numero.slice(-4)}
+                            </div>
+                            <div className="card-details">
+                              <span className="card-name">{tarjeta.nombreCompleto}</span>
+                              <span className="card-expiry">{tarjeta.fechaVencimiento}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="delete-card-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEliminarTarjeta(tarjeta.id);
+                            }}
+                            title="Eliminar tarjeta"
+                          >
+                            🗑️
+                          </button>
                         </div>
-                        <div className="card-details">
-                          <span className="card-name">{tarjeta.nombreCompleto}</span>
-                          <span className="card-expiry">Vence: {tarjeta.fechaVencimiento}</span>
-                        </div>
-                      </div>
-                      <button 
-                        className="delete-card-btn"
-                        onClick={() => handleEliminarTarjeta(tarjeta.id)}
-                        title="Eliminar tarjeta"
-                      >
-                        🗑️
-                      </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    <div className="cards-scroll-indicator">
+                      ← Desliza para ver más tarjetas →
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="empty-state">
                   <div className="empty-icon">💳</div>
@@ -728,9 +851,32 @@ const Ajustes = () => {
               <div className="cbu-section">
                 <h4>Información bancaria</h4>
                 <p>Agrega tu CBU/CVU para recibir señas y pagos finales</p>
-                <button className="add-cbu-btn">
-                  + Agregar CBU/CVU
-                </button>
+                
+                {user.cbu ? (
+                  <div className="cbu-display">
+                    <div className="cbu-info">
+                      <span className="cbu-label">CBU:</span>
+                      <span className="cbu-value">{user.cbu}</span>
+                    </div>
+                    <button 
+                      className="remove-cbu-btn"
+                      onClick={handleEliminarCbu}
+                      disabled={loadingCbu}
+                    >
+                      {loadingCbu ? 'Eliminando...' : '🗑️ Eliminar'}
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    className="add-cbu-btn"
+                    onClick={() => setShowModalCbu(true)}
+                  >
+                    + Agregar CBU/CVU
+                  </button>
+                )}
+                
+                {errorCbu && <div className="alert alert-danger">{errorCbu}</div>}
+                {successCbu && <div className="alert alert-success">¡CBU actualizado correctamente!</div>}
               </div>
 
               <div className="transactions-section">
@@ -934,6 +1080,53 @@ const Ajustes = () => {
                     {loadingTarjeta ? 'Guardando...' : 'Guardar tarjeta'}
                   </button>
                   <button type="button" className="btn btn-secondary" onClick={() => setShowModalTarjeta(false)} disabled={loadingTarjeta} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para agregar CBU */}
+        {showModalCbu && (
+          <div className="modal-overlay" onClick={() => setShowModalCbu(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Agregar CBU/CVU</h2>
+                <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Ingresa tu Clave Bancaria Uniforme para recibir pagos</p>
+              </div>
+              
+              <form onSubmit={handleAgregarCbu}>
+                <div style={{ marginBottom: 24 }}>
+                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <span style={{ marginRight: 8 }}>🏦</span>CBU/CVU
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={cbuInput}
+                    onChange={handleCbuChange}
+                    placeholder="1234567890123456789012"
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    maxLength={22}
+                  />
+                  <small style={{ color: '#666', marginTop: 4, display: 'block' }}>
+                    El CBU debe tener exactamente 22 dígitos numéricos
+                  </small>
+                </div>
+                
+                {errorCbu && (
+                  <div className="alert alert-danger" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
+                    <span style={{ marginRight: 8 }}>⚠️</span>{errorCbu}
+                  </div>
+                )}
+                
+                <div className="modal-actions" style={{ marginTop: 32 }}>
+                  <button type="submit" className="btn btn-primary" disabled={loadingCbu} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
+                    {loadingCbu ? 'Guardando...' : 'Guardar CBU'}
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModalCbu(false)} disabled={loadingCbu} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
                     Cancelar
                   </button>
                 </div>

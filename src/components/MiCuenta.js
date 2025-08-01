@@ -36,7 +36,7 @@ function FlyToLocation({ lat, lng }) {
 }
 
 const MiCuenta = () => {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [form, setForm] = useState(user ? {
     nombre: user.nombre || '',
@@ -383,10 +383,26 @@ const MiCuenta = () => {
         body: formData,
       });
       if (!res.ok) throw new Error('Error al subir la foto');
+      
+      // Obtener el usuario actualizado del response
+      const updatedUser = await res.json();
+      
+      // Actualizar el estado global del usuario
+      updateUser(updatedUser);
+      
+      // Actualizar el preview con la nueva URL
+      setFotoPreview(`http://localhost:8080${updatedUser.fotoPerfil}`);
+      
       setSuccess(true);
       setFotoFile(null);
     } catch (err) {
       setError('No se pudo subir la foto.');
+      // Revertir el preview en caso de error
+      if (user?.fotoPerfil) {
+        setFotoPreview(`http://localhost:8080${user.fotoPerfil}`);
+      } else {
+        setFotoPreview(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -407,6 +423,13 @@ const MiCuenta = () => {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Error al guardar los datos');
+      
+      // Obtener el usuario actualizado del response
+      const updatedUser = await res.json();
+      
+      // Actualizar el estado global del usuario
+      updateUser(updatedUser);
+      
       setSuccess(true);
     } catch (err) {
       setError('No se pudo guardar los datos.');
@@ -495,6 +518,10 @@ const MiCuenta = () => {
               <div className="col-12">
                 <label className="form-label fw-bold">Usuario</label>
                 <input className="form-control" value={user.username} disabled style={{ background: '#f7f8fa', color: '#888' }} />
+              </div>
+              <div className="col-12">
+                <label className="form-label fw-bold">DNI</label>
+                <input className="form-control" value={user.dni || 'No especificado'} disabled style={{ background: '#f7f8fa', color: '#888' }} />
               </div>
               {/* Campo de nombre editable */}
               <div className="col-12">

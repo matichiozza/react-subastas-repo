@@ -31,6 +31,7 @@ const Register = () => {
     username: '',
     password: '',
     nombre: '',
+    dni: '',
     direccion: '',
     latitud: '',
     longitud: ''
@@ -41,31 +42,61 @@ const Register = () => {
   const [direccionQuery, setDireccionQuery] = useState('');
   const [sugerencias, setSugerencias] = useState([]);
   const [showSugerencias, setShowSugerencias] = useState(false);
+  const [searching, setSearching] = useState(false);
   const sugerenciasRef = useRef();
+  const searchTimeoutRef = useRef();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let processedValue = value;
+    
+    // Formatear DNI con puntos cada 3 dígitos desde la derecha
+    if (name === 'dni') {
+      const numeros = value.replace(/\D/g, '').slice(0, 8);
+      processedValue = numeros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    
+    setFormData({ ...formData, [name]: processedValue });
   };
 
-  // Autocomplete de dirección con Nominatim
+  // Autocomplete de dirección optimizado con debounce
   const handleDireccionInput = async (e) => {
     const value = e.target.value;
     setDireccionQuery(value);
     setFormData({ ...formData, direccion: value });
-    if (value.length < 4) {
+    
+    // Limpiar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Reducir el mínimo de caracteres para mostrar sugerencias
+    if (value.length < 3) {
       setSugerencias([]);
       setShowSugerencias(false);
       return;
     }
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&addressdetails=1&limit=5`);
-      const data = await res.json();
-      setSugerencias(data);
+    
+    // Mostrar sugerencias inmediatamente si ya tenemos datos similares
+    if (sugerencias.length > 0 && value.length >= 3) {
       setShowSugerencias(true);
-    } catch {
-      setSugerencias([]);
-      setShowSugerencias(false);
     }
+    
+    // Debounce: esperar 300ms antes de hacer la búsqueda
+    searchTimeoutRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&addressdetails=1&limit=5&countrycodes=ar&bounded=1`);
+        const data = await res.json();
+        setSugerencias(data);
+        setShowSugerencias(true);
+      } catch {
+        setSugerencias([]);
+        setShowSugerencias(false);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
   };
 
   const handleSugerenciaClick = (sug) => {
@@ -82,7 +113,12 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await register(formData);
+    // Remover puntos del DNI antes de enviar
+    const dataToSend = {
+      ...formData,
+      dni: formData.dni.replace(/\./g, '')
+    };
+    const success = await register(dataToSend);
     if (success) {
       navigate('/');
     } else {
@@ -132,7 +168,18 @@ const Register = () => {
                 style={{ background: '#f7f8fa' }}
               />
             </div>
-            {/* Campo de dirección con autocomplete */}
+            <div className="col-12">
+              <label className="form-label fw-bold">DNI</label>
+              <input 
+                type="text" 
+                name="dni" 
+                className="form-control" 
+                value={formData.dni} 
+                onChange={handleChange} 
+                style={{ background: '#f7f8fa' }}
+              />
+            </div>
+            {/* Campo de dirección con autocomplete optimizado */}
             <div className="col-12 position-relative mb-3">
               <label className="form-label fw-bold">Dirección</label>
               <input
@@ -147,18 +194,29 @@ const Register = () => {
                 onFocus={() => { if (sugerencias.length > 0) setShowSugerencias(true); }}
                 onBlur={() => setTimeout(() => setShowSugerencias(false), 150)}
               />
-              {showSugerencias && sugerencias.length > 0 && (
+              {showSugerencias && (
                 <ul className="list-group position-absolute w-100" style={{ zIndex: 2000, top: '100%', left: 0, maxHeight: 180, overflowY: 'auto' }} ref={sugerenciasRef}>
-                  {sugerencias.map(sug => (
-                    <li
-                      key={sug.place_id}
-                      className="list-group-item list-group-item-action"
-                      style={{ cursor: 'pointer', fontSize: '0.98em' }}
-                      onMouseDown={() => handleSugerenciaClick(sug)}
-                    >
-                      {sug.display_name}
+                  {searching ? (
+                    <li className="list-group-item list-group-item-action">
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Buscando direcciones...
                     </li>
-                  ))}
+                  ) : sugerencias.length > 0 ? (
+                    sugerencias.map(sug => (
+                      <li
+                        key={sug.place_id}
+                        className="list-group-item list-group-item-action"
+                        style={{ cursor: 'pointer', fontSize: '0.98em' }}
+                        onMouseDown={() => handleSugerenciaClick(sug)}
+                      >
+                        {sug.display_name}
+                      </li>
+                    ))
+                  ) : direccionQuery.length >= 3 && (
+                    <li className="list-group-item list-group-item-action">
+                      No se encontraron direcciones
+                    </li>
+                  )}
                 </ul>
               )}
             </div>
