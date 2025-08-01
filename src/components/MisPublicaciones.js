@@ -62,7 +62,7 @@ const MisPublicaciones = () => {
     
     const connectWebSocket = () => {
       try {
-        socket = new WebSocket('ws://localhost:8080/ws');
+        socket = new WebSocket(`${API_BASE_URL.replace('http://', 'ws://')}/ws`);
         
         socket.onopen = () => {
           reconnectAttempts = 0;
