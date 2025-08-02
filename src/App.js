@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
-import MiCuenta from './components/MiCuenta';
 import Ajustes from './components/Ajustes';
 import MisPublicaciones from './components/MisPublicaciones';
 import MisOfertas from './components/MisOfertas';
@@ -26,7 +25,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/micuenta" element={<MiCuenta />} />
             <Route path="/ajustes" element={<PrivateRoute><Ajustes /></PrivateRoute>} />
             <Route path="/mispublicaciones" element={<MisPublicaciones />} />
             <Route path="/misofertas" element={<PrivateRoute><MisOfertas /></PrivateRoute>} />

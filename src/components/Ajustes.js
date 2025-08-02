@@ -58,6 +58,7 @@ const Ajustes = () => {
 
   // Estados para notificaciones
   const [notificaciones, setNotificaciones] = useState({
+    todas: true,
     nuevasOfertas: true,
     superadoEnSubasta: true,
     ganeSubasta: true,
@@ -71,6 +72,8 @@ const Ajustes = () => {
   // Estados para cuenta
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   
   // Estados para el modal de tarjeta
   const [showModalTarjeta, setShowModalTarjeta] = useState(false);
@@ -310,10 +313,35 @@ const Ajustes = () => {
   };
 
   const handleNotificacionChange = (key) => {
-    setNotificaciones(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    if (key === 'todas') {
+      const newValue = !notificaciones.todas;
+      setNotificaciones(prev => ({
+        ...prev,
+        todas: newValue,
+        nuevasOfertas: newValue,
+        superadoEnSubasta: newValue,
+        ganeSubasta: newValue,
+        actividadPublicaciones: newValue
+      }));
+    } else {
+      setNotificaciones(prev => {
+        const newState = {
+          ...prev,
+          [key]: !prev[key]
+        };
+        
+        // Verificar si todas las notificaciones individuales están activadas
+        const todasActivas = newState.nuevasOfertas && 
+                           newState.superadoEnSubasta && 
+                           newState.ganeSubasta && 
+                           newState.actividadPublicaciones;
+        
+        return {
+          ...newState,
+          todas: todasActivas
+        };
+      });
+    }
   };
 
   const handleEliminarTarjeta = async (id) => {
@@ -574,6 +602,40 @@ const Ajustes = () => {
     }
   };
 
+  const handleEliminarCuenta = async () => {
+    if (deleteConfirmation !== 'ELIMINAR') {
+      setDeleteError('Debes escribir "ELIMINAR" para confirmar la eliminación');
+      return;
+    }
+
+    setLoadingDelete(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch(`http://localhost:8080/usuarios/eliminar-cuenta`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Cerrar sesión y redirigir al login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      } else {
+        const errorData = await response.text();
+        setDeleteError(errorData || 'Error al eliminar la cuenta');
+      }
+    } catch (error) {
+      setDeleteError('Error de conexión');
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
+
   const tabs = [
     { id: 'perfil', label: 'Perfil', icon: '👤' },
     { id: 'notificaciones', label: 'Notificaciones', icon: '🔔' },
@@ -727,6 +789,21 @@ const Ajustes = () => {
               </p>
               
               <div className="notifications-list">
+                <div className="notification-item" style={{ borderBottom: '2px solid #e0e2e7', paddingBottom: '20px', marginBottom: '20px' }}>
+                  <div className="notification-info">
+                    <h4>Activar todas las notificaciones</h4>
+                    <p>Activa o desactiva todas las notificaciones de una vez</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={notificaciones.todas}
+                      onChange={() => handleNotificacionChange('todas')}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
                 <div className="notification-item">
                   <div className="notification-info">
                     <h4>Nuevas ofertas en subastas que sigo</h4>
@@ -894,12 +971,12 @@ const Ajustes = () => {
         return (
           <div className="tab-content">
             <div className="account-section">
-              <div className="danger-zone">
-                <h3>Zona de peligro</h3>
-                <p>Estas acciones son irreversibles</p>
-                
-                <div className="danger-item">
-                  <div className="danger-info">
+              <h3>Gestión de cuenta</h3>
+              <p>Administra tu cuenta y configuraciones de seguridad</p>
+              
+              <div className="account-actions">
+                <div className="account-item">
+                  <div className="account-info">
                     <h4>Cambiar contraseña</h4>
                     <p>Actualiza tu contraseña para mantener tu cuenta segura</p>
                   </div>
@@ -908,14 +985,20 @@ const Ajustes = () => {
                   </button>
                 </div>
 
-                <div className="danger-item">
-                  <div className="danger-info">
+                <div className="account-item">
+                  <div className="account-info">
                     <h4>Eliminar cuenta</h4>
                     <p>Elimina permanentemente tu cuenta y todos tus datos</p>
                   </div>
                   <button 
                     className="delete-account-btn"
                     onClick={() => setShowDeleteModal(true)}
+                    style={{
+                      backgroundColor: '#dc3545',
+                      borderColor: '#dc3545',
+                      color: 'white',
+                      fontWeight: 600
+                    }}
                   >
                     Eliminar cuenta
                   </button>
@@ -1131,6 +1214,91 @@ const Ajustes = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para eliminar cuenta */}
+        {showDeleteModal && (
+          <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>⚠️ Eliminar cuenta</h2>
+                <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>
+                  Esta acción es irreversible. Todos tus datos serán eliminados permanentemente.
+                </p>
+              </div>
+              
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ 
+                  background: '#fff3cd', 
+                  border: '1px solid #ffeaa7', 
+                  borderRadius: 10, 
+                  padding: 16, 
+                  marginBottom: 16 
+                }}>
+                  <h4 style={{ color: '#856404', margin: '0 0 8px 0', fontSize: '1.1em' }}>⚠️ Advertencia importante</h4>
+                  <ul style={{ color: '#856404', margin: 0, paddingLeft: 20 }}>
+                    <li>Se eliminarán todas tus publicaciones y ofertas</li>
+                    <li>Se perderán todos tus datos personales</li>
+                    <li>No podrás recuperar tu cuenta</li>
+                    <li>Si tienes subastas activas, no podrás eliminar tu cuenta</li>
+                  </ul>
+                </div>
+                
+                <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                  <span style={{ marginRight: 8 }}>✍️</span>Confirmación
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="Escribe 'ELIMINAR' para confirmar"
+                  style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                />
+                <small style={{ color: '#666', marginTop: 4, display: 'block' }}>
+                  Debes escribir exactamente "ELIMINAR" para proceder
+                </small>
+              </div>
+              
+              {deleteError && (
+                <div className="alert alert-danger" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
+                  <span style={{ marginRight: 8 }}>⚠️</span>{deleteError}
+                </div>
+              )}
+              
+              <div className="modal-actions" style={{ marginTop: 32 }}>
+                <button 
+                  type="button" 
+                  className="btn btn-danger" 
+                  onClick={handleEliminarCuenta}
+                  disabled={loadingDelete || deleteConfirmation !== 'ELIMINAR'}
+                  style={{ 
+                    minWidth: 140, 
+                    padding: '12px 24px', 
+                    fontSize: '1.08em', 
+                    fontWeight: 600,
+                    backgroundColor: '#dc3545',
+                    borderColor: '#dc3545'
+                  }}
+                >
+                  {loadingDelete ? 'Eliminando...' : 'Eliminar cuenta'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmation('');
+                    setDeleteError(null);
+                  }}
+                  disabled={loadingDelete}
+                  style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         )}

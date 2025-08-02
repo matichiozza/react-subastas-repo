@@ -178,71 +178,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Mi cuenta */}
-          <div className="col-lg-2 col-md-6 mb-4 mb-lg-0">
-            <h6 className="fw-bold mb-3" style={{ color: '#fff', fontSize: '1.1em' }}>
-              <span style={{ marginRight: 8 }}>👤</span>Mi Cuenta
-            </h6>
-            <ul className="list-unstyled">
-              <li className="mb-2">
-                <a href="/micuenta" style={{ 
-                  color: '#e8eaf6', 
-                  textDecoration: 'none',
-                  fontSize: '0.95em',
-                  transition: 'all 0.2s ease',
-                  display: 'inline-block'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#fff';
-                  e.currentTarget.style.transform = 'translateX(5px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#e8eaf6';
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}>
-                  ⚙️ Configuración
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="/mispublicaciones" style={{ 
-                  color: '#e8eaf6', 
-                  textDecoration: 'none',
-                  fontSize: '0.95em',
-                  transition: 'all 0.2s ease',
-                  display: 'inline-block'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#fff';
-                  e.currentTarget.style.transform = 'translateX(5px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#e8eaf6';
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}>
-                  📋 Mis publicaciones
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="/login" style={{ 
-                  color: '#e8eaf6', 
-                  textDecoration: 'none',
-                  fontSize: '0.95em',
-                  transition: 'all 0.2s ease',
-                  display: 'inline-block'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#fff';
-                  e.currentTarget.style.transform = 'translateX(5px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#e8eaf6';
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }}>
-                  🔐 Iniciar sesión
-                </a>
-              </li>
-            </ul>
-          </div>
+
 
           {/* Contacto */}
           <div className="col-lg-4">

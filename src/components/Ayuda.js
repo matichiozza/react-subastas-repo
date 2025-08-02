@@ -163,9 +163,9 @@ const Ayuda = () => {
 
   return (
     <div>
-      <div className="container py-5" style={{ marginTop: '80px' }}>
+             <div className="container py-4" style={{ marginTop: '60px' }}>
         {/* Header */}
-        <div className="row mb-5">
+                 <div className="row mb-4">
           <div className="col-12 text-center">
             <h1 className="display-4 fw-bold mb-3" style={{ color: '#1976d2' }}>
               Centro de Ayuda
@@ -203,36 +203,36 @@ const Ayuda = () => {
         </div>
 
         <div className="row">
-          {/* Sidebar de navegación */}
-          <div className="col-lg-3 mb-3">
-            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px' }}>
-              <div className="card-body p-4">
-                <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Categorías</h5>
-                <div className="d-flex flex-column gap-2">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      className="btn text-start d-flex align-items-center gap-3"
-                      style={{
-                        borderRadius: '8px',
-                        border: 'none',
-                        padding: '12px 16px',
-                        fontSize: '14px',
-                        fontWeight: activeSection === section.id ? '600' : '400',
-                        background: activeSection === section.id ? '#1976d2' : '#f8f9fa',
-                        color: activeSection === section.id ? 'white' : '#666',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onClick={() => setActiveSection(section.id)}
-                    >
-                      <span style={{ fontSize: '16px' }}>{section.icon}</span>
-                      {section.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+                     {/* Sidebar de navegación */}
+           <div className="col-lg-3 mb-3">
+             <div className="card border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+               <div className="card-body p-0">
+                 <h5 className="fw-bold mb-3" style={{ color: '#1976d2', padding: '0 1rem', marginTop: '1rem' }}>Categorías</h5>
+                 <div className="d-flex flex-column gap-2" style={{ padding: '0 1rem 1rem 1rem' }}>
+                   {sections.map((section) => (
+                     <button
+                       key={section.id}
+                       className="btn text-start d-flex align-items-center gap-2"
+                       style={{
+                         borderRadius: '8px',
+                         border: 'none',
+                         padding: '12px 16px',
+                         fontSize: '14px',
+                         fontWeight: activeSection === section.id ? '600' : '400',
+                         background: activeSection === section.id ? '#1976d2' : '#f8f9fa',
+                         color: activeSection === section.id ? 'white' : '#666',
+                         transition: 'all 0.2s ease'
+                       }}
+                       onClick={() => setActiveSection(section.id)}
+                     >
+                       <span style={{ fontSize: '16px' }}>{section.icon}</span>
+                       {section.title}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+             </div>
+           </div>
 
           {/* Contenido principal */}
           <div className="col-lg-9">
@@ -241,21 +241,21 @@ const Ayuda = () => {
                 {searchTerm.trim() ? (
                   // Mostrar resultados de búsqueda global
                   <div>
-                    <div className="d-flex align-items-center mb-4">
-                      <span style={{ fontSize: '24px', marginRight: '12px' }}>🔍</span>
-                      <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
-                        Resultados de búsqueda para "{searchTerm}"
-                      </h3>
-                    </div>
+                                         <div className="d-flex align-items-center mb-4">
+                       <span style={{ fontSize: '24px', marginRight: '12px' }}>🔍</span>
+                       <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
+                         Resultados de búsqueda para "{searchTerm}"
+                       </h3>
+                     </div>
                     
                     {getAllSearchResults().length > 0 ? (
                       <div>
-                        {getAllSearchResults().map((result, resultIndex) => (
-                          <div key={resultIndex} className="mb-4">
-                            <div className="d-flex align-items-center mb-3">
-                              <span style={{ fontSize: '20px', marginRight: '8px' }}>{result.sectionIcon}</span>
-                              <h5 className="fw-bold mb-0" style={{ color: '#666' }}>{result.sectionTitle}</h5>
-                            </div>
+                                                 {getAllSearchResults().map((result, resultIndex) => (
+                           <div key={resultIndex} className="mb-4">
+                             <div className="d-flex align-items-center mb-3">
+                               <span style={{ fontSize: '20px', marginRight: '8px' }}>{result.sectionIcon}</span>
+                               <h5 className="fw-bold mb-0" style={{ color: '#666' }}>{result.sectionTitle}</h5>
+                             </div>
                             <div className="accordion" id={`searchAccordion${resultIndex}`}>
                               {result.faqs.map((faq, faqIndex) => (
                                 <div className="accordion-item border-0 mb-2" key={faqIndex} style={{ borderRadius: '8px', border: '1px solid #e0e0e0' }}>
