@@ -165,7 +165,7 @@ const Home = () => {
       {/* BÚSQUEDA RÁPIDA */}
       <section className="container" style={{ marginTop: -38, marginBottom: 32, zIndex: 2, position: 'relative' }}>
         <form className="shadow p-3 bg-white rounded-4 d-flex align-items-center gap-2" style={{ maxWidth: 520, margin: '0 auto', boxShadow: '0 2px 12px rgba(25,118,210,0.08)' }} onSubmit={e => { e.preventDefault(); navigate(`/publicaciones?busqueda=${encodeURIComponent(busqueda)}`); }}>
-          <input className="form-control border-0" style={{ fontSize: '1.1em', borderRadius: 12, background: '#f7f8fa' }} type="search" placeholder="Buscar productos, categorías..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+          <input className="form-control border-0" style={{ fontSize: '1.1em', borderRadius: 12, background: '#f7f8fa' }} type="search" placeholder="Buscar productos..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
           <button className="btn btn-primary px-4 py-2 fw-bold" style={{ borderRadius: 12 }} type="submit">Buscar</button>
         </form>
       </section>

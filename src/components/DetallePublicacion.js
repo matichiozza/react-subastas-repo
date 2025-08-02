@@ -1560,86 +1560,7 @@ const DetallePublicacion = () => {
                      draggable={false}
                    />
               
-              {/* Flechas de navegación si hay más de una imagen */}
-              {publicacion.imagenes && publicacion.imagenes.length > 1 && (
-                <>
-                  {/* Flecha izquierda */}
-                  <button
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           prevImage();
-                         }}
-                         style={{
-                           position: 'absolute',
-                           left: '20px',
-                           top: '50%',
-                           transform: 'translateY(-50%)',
-                           background: 'rgba(255,255,255,0.15)',
-                           backdropFilter: 'blur(10px)',
-                           border: '1px solid rgba(255,255,255,0.2)',
-                           color: 'white',
-                           fontSize: '24px',
-                           width: '60px',
-                           height: '60px',
-                           borderRadius: '50%',
-                           cursor: 'pointer',
-                           display: 'flex',
-                           alignItems: 'center',
-                           justifyContent: 'center',
-                           transition: 'all 0.3s ease',
-                           zIndex: 10000
-                         }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'rgba(255,255,255,0.25)';
-                      e.target.style.transform = 'translateY(-50%) scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'rgba(255,255,255,0.15)';
-                      e.target.style.transform = 'translateY(-50%) scale(1)';
-                    }}
-                  >
-                    ‹
-                  </button>
-                  
-                                         {/* Flecha derecha */}
-                       <button
-                           onClick={(e) => {
-                           e.stopPropagation();
-                           nextImage();
-                         }}
-                         style={{
-                           position: 'absolute',
-                           right: '20px',
-                           top: '50%',
-                           transform: 'translateY(-50%)',
-                           background: 'rgba(255,255,255,0.15)',
-                           backdropFilter: 'blur(10px)',
-                           border: '1px solid rgba(255,255,255,0.2)',
-                           color: 'white',
-                           fontSize: '24px',
-                           width: '60px',
-                           height: '60px',
-                           borderRadius: '50%',
-                           cursor: 'pointer',
-                           display: 'flex',
-                           alignItems: 'center',
-                           justifyContent: 'center',
-                           transition: 'all 0.3s ease',
-                           zIndex: 10000
-                         }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'rgba(255,255,255,0.25)';
-                      e.target.style.transform = 'translateY(-50%) scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'rgba(255,255,255,0.15)';
-                      e.target.style.transform = 'translateY(-50%) scale(1)';
-                    }}
-                  >
-                    ›
-                  </button>
-                </>
-              )}
+
             </div>
             
             {/* Contador de imágenes mejorado */}
@@ -1662,26 +1583,7 @@ const DetallePublicacion = () => {
               </div>
             )}
 
-            {/* Indicador de zoom */}
-            {isZoomed && (
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(0,0,0,0.8)',
-                backdropFilter: 'blur(10px)',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                zIndex: 10002
-              }}>
-                🔍 Haz clic para salir del zoom • Mueve el puntero para desplazar la imagen
-              </div>
-            )}
+
             
             {/* Miniaturas en la parte inferior */}
             {publicacion.imagenes && publicacion.imagenes.length > 1 && (
