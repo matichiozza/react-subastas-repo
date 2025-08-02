@@ -23,7 +23,6 @@ const DetallePublicacion = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
-  const [isPanMode, setIsPanMode] = useState(false);
   const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
   
   // Funciones para el carrusel de imágenes
@@ -34,7 +33,6 @@ const DetallePublicacion = () => {
       );
       setIsZoomed(false);
       setZoomPosition({ x: 0, y: 0 });
-      setIsPanMode(false);
     }
   };
   
@@ -45,7 +43,6 @@ const DetallePublicacion = () => {
       );
       setIsZoomed(false);
       setZoomPosition({ x: 0, y: 0 });
-      setIsPanMode(false);
     }
   };
 
@@ -53,38 +50,32 @@ const DetallePublicacion = () => {
   const handleImageClick = (e) => {
     e.stopPropagation();
     if (isZoomed) {
-      if (isPanMode) {
-        // Si está en modo pan, desactivar el modo pan
-        setIsPanMode(false);
-      } else {
-        // Si está zoomed pero no en modo pan, activar el modo pan
-        setIsPanMode(true);
-        setLastMousePosition({ x: e.clientX, y: e.clientY });
-      }
+      // Si está zoomed, volver al estado original
+      setIsZoomed(false);
+      setZoomPosition({ x: 0, y: 0 });
     } else {
-      // Activar zoom
+      // Activar zoom sutil
       setIsZoomed(true);
-      setIsPanMode(false);
+      setZoomPosition({ x: 0, y: 0 });
     }
   };
 
   const handleMouseMove = (e) => {
-    if (isZoomed && isPanMode) {
+    if (isZoomed) {
       e.preventDefault();
-      const deltaX = e.clientX - lastMousePosition.x;
-      const deltaY = e.clientY - lastMousePosition.y;
+      const deltaX = e.movementX || 0;
+      const deltaY = e.movementY || 0;
       
       setZoomPosition(prev => ({
         x: prev.x + deltaX,
         y: prev.y + deltaY
       }));
-      
-      setLastMousePosition({ x: e.clientX, y: e.clientY });
     }
   };
 
   const handleMouseEnter = (e) => {
     if (isZoomed) {
+      // Inicializar posición cuando entra al área zoomed
       setLastMousePosition({ x: e.clientX, y: e.clientY });
     }
   };
@@ -93,7 +84,6 @@ const DetallePublicacion = () => {
     e.stopPropagation();
     setIsZoomed(false);
     setZoomPosition({ x: 0, y: 0 });
-    setIsPanMode(false);
   };
 
   const handleModalClick = (e) => {
@@ -102,7 +92,6 @@ const DetallePublicacion = () => {
       setShowImageModal(false);
       setIsZoomed(false);
       setZoomPosition({ x: 0, y: 0 });
-      setIsPanMode(false);
     }
   };
   
@@ -116,7 +105,6 @@ const DetallePublicacion = () => {
           setShowImageModal(false);
           setIsZoomed(false);
           setZoomPosition({ x: 0, y: 0 });
-          setIsPanMode(false);
           break;
         case 'ArrowRight':
           e.preventDefault();
@@ -1505,7 +1493,6 @@ const DetallePublicacion = () => {
                 setShowImageModal(false);
                 setIsZoomed(false);
                 setZoomPosition({ x: 0, y: 0 });
-                setIsPanMode(false);
               }}
               style={{
                 position: 'absolute',
@@ -1557,10 +1544,10 @@ const DetallePublicacion = () => {
                        objectFit: isZoomed ? 'contain' : 'contain',
                        borderRadius: '12px',
                        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-                       transition: isZoomed ? 'none' : 'all 0.3s ease',
-                       cursor: isZoomed ? (isPanMode ? 'move' : 'pointer') : 'zoom-in',
-                       transform: isZoomed 
-                         ? `scale(1.8) translate(${zoomPosition.x}px, ${zoomPosition.y}px)` 
+                       transition: 'all 0.3s ease',
+                       cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                                                transform: isZoomed 
+                           ? `scale(1.3) translate(${zoomPosition.x}px, ${zoomPosition.y}px)`  
                          : 'scale(1)',
                        transformOrigin: 'center center',
                        zIndex: isZoomed ? 10001 : 'auto',
@@ -1692,7 +1679,7 @@ const DetallePublicacion = () => {
                 border: '1px solid rgba(255,255,255,0.2)',
                 zIndex: 10002
               }}>
-                🔍 {isPanMode ? 'Modo movimiento activo • Haz clic para desactivar' : 'Haz clic para activar el movimiento • Doble clic para salir del zoom'}
+                🔍 Haz clic para salir del zoom • Mueve el puntero para desplazar la imagen
               </div>
             )}
             
@@ -1724,7 +1711,6 @@ const DetallePublicacion = () => {
                            setSelectedImageIndex(idx);
                            setIsZoomed(false);
                            setZoomPosition({ x: 0, y: 0 });
-                           setIsPanMode(false);
                          }}
                          style={{
                            width: '70px',
