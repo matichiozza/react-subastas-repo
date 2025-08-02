@@ -928,6 +928,8 @@ input:focus, select:focus, textarea:focus {
 .publicacion-preview {
   display: flex;
   flex-direction: column;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .preview-imagenes {
@@ -996,6 +998,8 @@ input:focus, select:focus, textarea:focus {
 
 .preview-info {
   padding: 2rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .preview-categoria {
@@ -1042,6 +1046,12 @@ input:focus, select:focus, textarea:focus {
   line-height: 1.6;
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
 }
 
 .preview-precios {

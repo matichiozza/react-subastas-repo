@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import API_BASE_URL from '../config/api';
+import Footer from './Footer';
 
 const DetallePublicacion = () => {
   const { id } = useParams();
@@ -703,7 +704,8 @@ const DetallePublicacion = () => {
   }
 
   return (
-    <div className="container py-4">
+    <>
+      <div className="container py-4">
       {/* Breadcrumb */}
       <div className="mb-2">{breadcrumb}</div>
       <div className="row">
@@ -793,7 +795,7 @@ const DetallePublicacion = () => {
           </div>
           {/* Descripción en tarjeta sutil */}
           <div style={{ border: '1px solid #ececf3', borderRadius: 12, background: '#fff', padding: '1.1em 1.3em', marginTop: 8, marginBottom: 0 }}>
-            <div style={{ fontSize: '1.05em', color: '#444', lineHeight: 1.7, fontWeight: 400 }}>{publicacion.descripcion}</div>
+            <div style={{ fontSize: '1.05em', color: '#444', lineHeight: 1.7, fontWeight: 400, whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{publicacion.descripcion}</div>
           </div>
         </div>
         {/* Datos y formulario + historial de ofertas */}
@@ -1702,7 +1704,12 @@ const DetallePublicacion = () => {
           </div>
         </div>
       )}
+      
     </div>
+    
+    {/* Footer */}
+    <Footer />
+  </>
   );
 };
 
