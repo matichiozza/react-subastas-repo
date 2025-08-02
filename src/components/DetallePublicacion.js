@@ -19,9 +19,121 @@ const DetallePublicacion = () => {
   const [imgSeleccionada, setImgSeleccionada] = useState(0);
   const navigate = useNavigate();
   const stompClientRef = useRef(null);
-  const [zoom, setZoom] = useState({ visible: false, x: 0, y: 0 });
-  const [zoomEnabled, setZoomEnabled] = useState(false);
-  const imgContainerRef = useRef(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [isPanMode, setIsPanMode] = useState(false);
+  const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
+  
+  // Funciones para el carrusel de imágenes
+  const nextImage = () => {
+    if (publicacion && publicacion.imagenes) {
+      setSelectedImageIndex((prev) => 
+        prev === publicacion.imagenes.length - 1 ? 0 : prev + 1
+      );
+      setIsZoomed(false);
+      setZoomPosition({ x: 0, y: 0 });
+      setIsPanMode(false);
+    }
+  };
+  
+  const prevImage = () => {
+    if (publicacion && publicacion.imagenes) {
+      setSelectedImageIndex((prev) => 
+        prev === 0 ? publicacion.imagenes.length - 1 : prev - 1
+      );
+      setIsZoomed(false);
+      setZoomPosition({ x: 0, y: 0 });
+      setIsPanMode(false);
+    }
+  };
+
+  // Funciones para el zoom y movimiento
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    if (isZoomed) {
+      if (isPanMode) {
+        // Si está en modo pan, desactivar el modo pan
+        setIsPanMode(false);
+      } else {
+        // Si está zoomed pero no en modo pan, activar el modo pan
+        setIsPanMode(true);
+        setLastMousePosition({ x: e.clientX, y: e.clientY });
+      }
+    } else {
+      // Activar zoom
+      setIsZoomed(true);
+      setIsPanMode(false);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isZoomed && isPanMode) {
+      e.preventDefault();
+      const deltaX = e.clientX - lastMousePosition.x;
+      const deltaY = e.clientY - lastMousePosition.y;
+      
+      setZoomPosition(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastMousePosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseEnter = (e) => {
+    if (isZoomed) {
+      setLastMousePosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    setIsZoomed(false);
+    setZoomPosition({ x: 0, y: 0 });
+    setIsPanMode(false);
+  };
+
+  const handleModalClick = (e) => {
+    // Si se hace clic en el overlay (no en la imagen), cerrar el modal
+    if (e.target === e.currentTarget) {
+      setShowImageModal(false);
+      setIsZoomed(false);
+      setZoomPosition({ x: 0, y: 0 });
+      setIsPanMode(false);
+    }
+  };
+  
+  // Navegación con teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!showImageModal) return;
+      
+      switch (e.key) {
+        case 'Escape':
+          setShowImageModal(false);
+          setIsZoomed(false);
+          setZoomPosition({ x: 0, y: 0 });
+          setIsPanMode(false);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          nextImage();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          prevImage();
+          break;
+        default:
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showImageModal, selectedImageIndex, publicacion]);
   // Estado para el modal y método de pago
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
@@ -633,83 +745,57 @@ const DetallePublicacion = () => {
           <div
             className="card p-3 mb-3 mt-0 position-relative"
             style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
-            ref={imgContainerRef}
           >
-            {/* Icono de lupa en la esquina superior derecha */}
-            <button
-              type="button"
-              aria-label={zoomEnabled ? 'Desactivar lupa' : 'Activar lupa'}
-              onClick={() => {
-                setZoomEnabled(z => !z);
-                setZoom(z => ({ ...z, visible: false }));
-              }}
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 16,
-                zIndex: 99,
-                background: zoomEnabled ? 'rgba(25,118,210,0.95)' : 'rgba(255,255,255,0.92)',
-                color: zoomEnabled ? '#fff' : '#1976d2',
-                border: '2px solid #1976d2',
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(25,118,210,0.18)',
-                cursor: 'pointer',
-                transition: 'background 0.2s, color 0.2s',
-                fontSize: 16,
-              }}
-            >
-              {zoomEnabled ? (
-                <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>×</span>
-              ) : (
-                <span style={{ fontSize: 16, lineHeight: 1 }}>🔍</span>
-              )}
-            </button>
             {publicacion.imagenes && publicacion.imagenes.length > 0 ? (
               <div
-                style={{ position: 'relative', display: 'inline-block' }}
-                onMouseMove={e => {
-                  if (!zoomEnabled) return;
-                  const rect = imgContainerRef.current.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
-                  const y = e.clientY - rect.top;
-                  setZoom({ visible: true, x, y });
+                style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+                onClick={() => {
+                  setSelectedImageIndex(imgSeleccionada);
+                  setShowImageModal(true);
                 }}
-                onMouseLeave={() => setZoom(z => ({ ...z, visible: false }))}
-                className={zoom.visible && zoomEnabled ? 'lupa-activa' : ''}
               >
                 <img
                   src={`${API_BASE_URL}${publicacion.imagenes[imgSeleccionada]}`}
                   alt={`Imagen ${imgSeleccionada + 1}`}
                   className="img-fluid"
-                  style={{ maxHeight: 340, objectFit: 'contain', borderRadius: 12, maxWidth: '100%', display: 'block' }}
+                  style={{ 
+                    maxHeight: 340, 
+                    objectFit: 'contain', 
+                    borderRadius: 12, 
+                    maxWidth: '100%', 
+                    display: 'block',
+                    transition: 'transform 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'scale(1.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1)';
+                  }}
                 />
-                {/* Lupa de zoom */}
-                {zoomEnabled && zoom.visible && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      pointerEvents: 'none',
-                      left: zoom.x - 90,
-                      top: zoom.y - 90,
-                      width: 180,
-                      height: 180,
-                      borderRadius: '50%',
-                      border: '2.5px solid #1976d2',
-                      boxShadow: '0 4px 16px rgba(25,118,210,0.18)',
-                      backgroundImage: `url(${API_BASE_URL}${publicacion.imagenes[imgSeleccionada]})`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: '320% 320%',
-                      backgroundPosition: `${((zoom.x / rectWidth(imgContainerRef)) * 100).toFixed(2)}% ${((zoom.y / rectHeight(imgContainerRef)) * 100).toFixed(2)}%`,
-                      zIndex: 10,
-                      borderColor: '#1976d2',
-                    }}
-                  />
-                )}
+                {/* Overlay con icono de zoom */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.6)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: 48,
+                    height: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    transition: 'opacity 0.2s ease',
+                    pointerEvents: 'none',
+                  }}
+                  className="zoom-overlay"
+                >
+                  🔍
+                </div>
               </div>
             ) : (
               <div className="d-flex align-items-center justify-content-center" style={{ height: 220, color: '#bbb', fontSize: 48 }}>
@@ -1381,6 +1467,291 @@ const DetallePublicacion = () => {
         </div>
       )}
       
+      {/* Modal de imagen mejorado */}
+      {showImageModal && (
+        <div 
+          className="modal-overlay" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '10px'
+          }}
+          onClick={handleModalClick}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              width: '95vw',
+              height: '95vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Botón de cerrar moderno */}
+            <button
+              onClick={() => {
+                setShowImageModal(false);
+                setIsZoomed(false);
+                setZoomPosition({ x: 0, y: 0 });
+                setIsPanMode(false);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                color: 'white',
+                fontSize: '20px',
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                zIndex: 10000
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(0,0,0,0.5)';
+                e.target.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(0,0,0,0.3)';
+                e.target.style.transform = 'scale(1)';
+              }}
+            >
+              ✕
+            </button>
+            
+            {/* Contenedor principal de la imagen */}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+                   {/* Imagen principal con zoom y movimiento */}
+                   <img
+                     src={`${API_BASE_URL}${publicacion.imagenes[selectedImageIndex]}`}
+                     alt={`Imagen ${selectedImageIndex + 1}`}
+                     style={{
+                       maxWidth: isZoomed ? '100%' : '95%',
+                       height: isZoomed ? '100%' : '600px',
+                       objectFit: isZoomed ? 'contain' : 'contain',
+                       borderRadius: '12px',
+                       boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                       transition: isZoomed ? 'none' : 'all 0.3s ease',
+                       cursor: isZoomed ? (isPanMode ? 'move' : 'pointer') : 'zoom-in',
+                       transform: isZoomed 
+                         ? `scale(1.8) translate(${zoomPosition.x}px, ${zoomPosition.y}px)` 
+                         : 'scale(1)',
+                       transformOrigin: 'center center',
+                       zIndex: isZoomed ? 10001 : 'auto',
+                       userSelect: 'none'
+                     }}
+                     onClick={handleImageClick}
+                     onDoubleClick={handleDoubleClick}
+                     onMouseMove={handleMouseMove}
+                     onMouseEnter={handleMouseEnter}
+                     draggable={false}
+                   />
+              
+              {/* Flechas de navegación si hay más de una imagen */}
+              {publicacion.imagenes && publicacion.imagenes.length > 1 && (
+                <>
+                  {/* Flecha izquierda */}
+                  <button
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           prevImage();
+                         }}
+                         style={{
+                           position: 'absolute',
+                           left: '20px',
+                           top: '50%',
+                           transform: 'translateY(-50%)',
+                           background: 'rgba(255,255,255,0.15)',
+                           backdropFilter: 'blur(10px)',
+                           border: '1px solid rgba(255,255,255,0.2)',
+                           color: 'white',
+                           fontSize: '24px',
+                           width: '60px',
+                           height: '60px',
+                           borderRadius: '50%',
+                           cursor: 'pointer',
+                           display: 'flex',
+                           alignItems: 'center',
+                           justifyContent: 'center',
+                           transition: 'all 0.3s ease',
+                           zIndex: 10000
+                         }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.25)';
+                      e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.15)';
+                      e.target.style.transform = 'translateY(-50%) scale(1)';
+                    }}
+                  >
+                    ‹
+                  </button>
+                  
+                                         {/* Flecha derecha */}
+                       <button
+                           onClick={(e) => {
+                           e.stopPropagation();
+                           nextImage();
+                         }}
+                         style={{
+                           position: 'absolute',
+                           right: '20px',
+                           top: '50%',
+                           transform: 'translateY(-50%)',
+                           background: 'rgba(255,255,255,0.15)',
+                           backdropFilter: 'blur(10px)',
+                           border: '1px solid rgba(255,255,255,0.2)',
+                           color: 'white',
+                           fontSize: '24px',
+                           width: '60px',
+                           height: '60px',
+                           borderRadius: '50%',
+                           cursor: 'pointer',
+                           display: 'flex',
+                           alignItems: 'center',
+                           justifyContent: 'center',
+                           transition: 'all 0.3s ease',
+                           zIndex: 10000
+                         }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.25)';
+                      e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.15)';
+                      e.target.style.transform = 'translateY(-50%) scale(1)';
+                    }}
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+            </div>
+            
+            {/* Contador de imágenes mejorado */}
+            {publicacion.imagenes && publicacion.imagenes.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0,0,0,0.7)',
+                backdropFilter: 'blur(10px)',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '500',
+                padding: '12px 24px',
+                borderRadius: '25px',
+                border: '1px solid rgba(255,255,255,0.2)'
+              }}>
+                {selectedImageIndex + 1} de {publicacion.imagenes.length}
+              </div>
+            )}
+
+            {/* Indicador de zoom */}
+            {isZoomed && (
+              <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0,0,0,0.8)',
+                backdropFilter: 'blur(10px)',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                zIndex: 10002
+              }}>
+                🔍 {isPanMode ? 'Modo movimiento activo • Haz clic para desactivar' : 'Haz clic para activar el movimiento • Doble clic para salir del zoom'}
+              </div>
+            )}
+            
+            {/* Miniaturas en la parte inferior */}
+            {publicacion.imagenes && publicacion.imagenes.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '80px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '12px',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                maxWidth: '80%',
+                padding: '15px',
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                {publicacion.imagenes.map((img, idx) => (
+                  <img
+                    key={img}
+                    src={`${API_BASE_URL}${img}`}
+                    alt={`Miniatura ${idx + 1}`}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setSelectedImageIndex(idx);
+                           setIsZoomed(false);
+                           setZoomPosition({ x: 0, y: 0 });
+                           setIsPanMode(false);
+                         }}
+                         style={{
+                           width: '70px',
+                           height: '70px',
+                           objectFit: 'cover',
+                           borderRadius: '8px',
+                           border: selectedImageIndex === idx ? '3px solid #1976d2' : '2px solid rgba(255,255,255,0.3)',
+                           cursor: 'pointer',
+                           transition: 'all 0.3s ease',
+                           opacity: selectedImageIndex === idx ? 1 : 0.7
+                         }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'scale(1.15)';
+                      e.target.style.opacity = '1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1)';
+                      e.target.style.opacity = selectedImageIndex === idx ? 1 : 0.7;
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Alerta personalizada */}
       {alertaPersonalizada.visible && (
         <div
@@ -1447,18 +1818,33 @@ const DetallePublicacion = () => {
   );
 };
 
-// Helpers para obtener el tamaño del contenedor de la imagen
-function rectWidth(ref) {
-  return ref.current ? ref.current.offsetWidth : 1;
-}
-function rectHeight(ref) {
-  return ref.current ? ref.current.offsetHeight : 1;
-}
-
-// CSS para ocultar el cursor cuando la lupa está activa y estilos para las flechas
+// CSS para el overlay de zoom y estilos para las flechas
 const style = document.createElement('style');
 style.innerHTML = `
-  .lupa-activa { cursor: none !important; }
+  .zoom-overlay {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .card:hover .zoom-overlay {
+    opacity: 1;
+  }
+  
+  /* Estilos para el zoom y movimiento */
+  .modal-overlay {
+    cursor: default;
+  }
+  
+  .modal-overlay img {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  .modal-overlay img:active {
+    cursor: grabbing;
+  }
   
   .input-group-append .btn {
     padding: 0.375rem 0.25rem;

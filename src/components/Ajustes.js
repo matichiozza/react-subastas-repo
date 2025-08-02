@@ -96,6 +96,17 @@ const Ajustes = () => {
   const [errorCbu, setErrorCbu] = useState(null);
   const [successCbu, setSuccessCbu] = useState(false);
 
+  // Estados para cambiar contraseña
+  const [showModalPassword, setShowModalPassword] = useState(false);
+  const [formPassword, setFormPassword] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [loadingPassword, setLoadingPassword] = useState(false);
+  const [errorPassword, setErrorPassword] = useState(null);
+  const [successPassword, setSuccessPassword] = useState(false);
+
   useEffect(() => {
     if (user === null) return;
     if (!user || !user.username) {
@@ -636,6 +647,86 @@ const Ajustes = () => {
     }
   };
 
+  // Handlers para cambiar contraseña
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setFormPassword(prev => ({ ...prev, [name]: value }));
+    setErrorPassword(null);
+    setSuccessPassword(false);
+  };
+
+  const validarPassword = () => {
+    if (!formPassword.currentPassword.trim()) {
+      setErrorPassword('La contraseña actual es requerida');
+      return false;
+    }
+    
+    if (!formPassword.newPassword.trim()) {
+      setErrorPassword('La nueva contraseña es requerida');
+      return false;
+    }
+    
+    if (formPassword.newPassword.length < 6) {
+      setErrorPassword('La nueva contraseña debe tener al menos 6 caracteres');
+      return false;
+    }
+    
+    if (formPassword.newPassword !== formPassword.confirmPassword) {
+      setErrorPassword('Las contraseñas nuevas no coinciden');
+      return false;
+    }
+    
+    if (formPassword.currentPassword === formPassword.newPassword) {
+      setErrorPassword('La nueva contraseña debe ser diferente a la actual');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSubmitPassword = async (e) => {
+    e.preventDefault();
+    if (!validarPassword()) return;
+    
+    setLoadingPassword(true);
+    setErrorPassword(null);
+    setSuccessPassword(false);
+    
+    try {
+      const response = await fetch('http://localhost:8080/usuarios/cambiar-contrasena', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          contrasenaActual: formPassword.currentPassword,
+          nuevaContrasena: formPassword.newPassword
+        })
+      });
+
+      if (response.ok) {
+        setSuccessPassword(true);
+        setFormPassword({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => {
+          setShowModalPassword(false);
+          setSuccessPassword(false);
+        }, 2000);
+      } else {
+        const errorData = await response.text();
+        setErrorPassword(errorData || 'Error al cambiar la contraseña');
+      }
+    } catch (error) {
+      setErrorPassword('Error de conexión');
+    } finally {
+      setLoadingPassword(false);
+    }
+  };
+
   const tabs = [
     { id: 'perfil', label: 'Perfil', icon: '👤' },
     { id: 'notificaciones', label: 'Notificaciones', icon: '🔔' },
@@ -980,7 +1071,10 @@ const Ajustes = () => {
                     <h4>Cambiar contraseña</h4>
                     <p>Actualiza tu contraseña para mantener tu cuenta segura</p>
                   </div>
-                  <button className="change-password-btn">
+                  <button 
+                    className="change-password-btn"
+                    onClick={() => setShowModalPassword(true)}
+                  >
                     Cambiar contraseña
                   </button>
                 </div>
@@ -1299,6 +1393,108 @@ const Ajustes = () => {
                   Cancelar
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para cambiar contraseña */}
+        {showModalPassword && (
+          <div className="modal-overlay" onClick={() => setShowModalPassword(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>🔒 Cambiar contraseña</h2>
+                <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Ingresa tu contraseña actual y la nueva contraseña</p>
+              </div>
+              
+              <form onSubmit={handleSubmitPassword}>
+                <div style={{ display: 'grid', gap: 20 }}>
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>🔑</span>Contraseña actual
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="currentPassword"
+                      value={formPassword.currentPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Ingresa tu contraseña actual"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>🆕</span>Nueva contraseña
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="newPassword"
+                      value={formPassword.newPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Ingresa tu nueva contraseña"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                      required
+                    />
+                    <small style={{ color: '#666', marginTop: 4, display: 'block' }}>
+                      Mínimo 6 caracteres
+                    </small>
+                  </div>
+                  
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>✅</span>Confirmar nueva contraseña
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="confirmPassword"
+                      value={formPassword.confirmPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Confirma tu nueva contraseña"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                {errorPassword && (
+                  <div className="alert alert-danger mt-4" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
+                    <span style={{ marginRight: 8 }}>⚠️</span>{errorPassword}
+                  </div>
+                )}
+                {successPassword && (
+                  <div className="alert alert-success mt-4" style={{ borderRadius: 10, border: 'none', background: '#d4edda', color: '#155724' }}>
+                    <span style={{ marginRight: 8 }}>✅</span>¡Contraseña cambiada exitosamente!
+                  </div>
+                )}
+                
+                <div className="modal-actions" style={{ marginTop: 32 }}>
+                  <button type="submit" className="btn btn-primary" disabled={loadingPassword} style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}>
+                    {loadingPassword ? 'Cambiando...' : 'Cambiar contraseña'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                      setShowModalPassword(false);
+                      setFormPassword({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      });
+                      setErrorPassword(null);
+                      setSuccessPassword(false);
+                    }} 
+                    disabled={loadingPassword} 
+                    style={{ minWidth: 140, padding: '12px 24px', fontSize: '1.08em', fontWeight: 600 }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

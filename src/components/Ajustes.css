@@ -71,6 +71,8 @@
   position: relative;
   flex: 1;
   max-width: 200px;
+  height: 60px; /* Altura fija para evitar desplazamiento */
+  border-bottom: 3px solid transparent; /* Borde transparente para mantener altura */
 }
 
 .tab-button:hover {
@@ -99,18 +101,7 @@
 }
 
 .tab-content {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  /* Animación removida para evitar transiciones problemáticas */
 }
 
 /* Sección de Perfil */
