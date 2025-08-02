@@ -30,6 +30,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para actualizar el usuario desde otros componentes
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (savedToken) {
@@ -95,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
