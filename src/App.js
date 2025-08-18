@@ -14,6 +14,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 import DetallePublicacion from './components/DetallePublicacion';
+import Chat from './components/Chat';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/crear-publicacion" element={<PrivateRoute><CrearPublicacion /></PrivateRoute>} />
             <Route path="/publicaciones" element={<TodasPublicaciones />} />
             <Route path="/publicaciones/:id" element={<DetallePublicacion />} />
+            <Route path="/chat/:chatId" element={<PrivateRoute><Chat /></PrivateRoute>} />
             <Route path="/ayuda" element={<Ayuda />} />
             {/* Agrega aquí más rutas si es necesario */}
           </Routes>

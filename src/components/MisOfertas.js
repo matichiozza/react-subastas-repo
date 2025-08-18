@@ -294,6 +294,41 @@ const MisOfertas = () => {
                               </small>
                             </div>
                             
+                            {/* Indicador si ganó la subasta */}
+                            {oferta.publicacion?.estado === 'FINALIZADO' && oferta.publicacion?.ganador?.id === user?.id && (
+                              <div className="mb-3">
+                                <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize: '0.85em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
+                                  <div style={{ fontWeight: 600, color: '#155724', marginBottom: '4px' }}>
+                                    🎉 ¡Ganaste esta subasta!
+                                  </div>
+                                  <div style={{ color: '#155724', fontSize: '0.8em', marginBottom: '8px' }}>
+                                    Precio final: ${formatearMonto(oferta.publicacion.precioActual)}
+                                  </div>
+                                  <button
+                                    className="btn btn-primary btn-sm w-100"
+                                    style={{ fontSize: '0.75em', padding: '0.25rem 0.75rem', borderRadius: 6 }}
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(`${API_BASE_URL}/chats/publicacion/${oferta.publicacion.id}`, {
+                                          headers: { Authorization: `Bearer ${token}` }
+                                        });
+                                        if (res.ok) {
+                                          const chat = await res.json();
+                                          navigate(`/chat/${chat.id}`);
+                                        } else {
+                                          alert('No se pudo acceder al chat');
+                                        }
+                                      } catch (err) {
+                                        alert('Error al abrir chat: ' + err.message);
+                                      }
+                                    }}
+                                  >
+                                    💬 Chat con vendedor
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            
                             {/* Botones */}
                             <div className="d-flex gap-2">
                               <button 

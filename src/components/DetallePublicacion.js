@@ -9,6 +9,7 @@ import Footer from './Footer';
 const DetallePublicacion = () => {
   const { id } = useParams();
   const { token, user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +19,6 @@ const DetallePublicacion = () => {
   const [mensaje, setMensaje] = useState(null);
   const [ofertas, setOfertas] = useState([]);
   const [imgSeleccionada, setImgSeleccionada] = useState(0);
-  const navigate = useNavigate();
   const stompClientRef = useRef(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -835,6 +835,68 @@ const DetallePublicacion = () => {
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
               <span role="img" aria-label="ofertas">💸</span> Ofertas totales: {ofertas.length}
             </div>
+            
+            {/* Información del ganador si está finalizada */}
+            {publicacion.estado === 'FINALIZADO' && publicacion.ganador && (
+              <div className="alert alert-success mt-3" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
+                <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
+                  🏆 Subasta finalizada - Ganador:
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  {publicacion.ganador.fotoPerfil ? (
+                    <img 
+                      src={`${API_BASE_URL}${publicacion.ganador.fotoPerfil}`} 
+                      alt="Ganador" 
+                      style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20 }}>
+                      👤
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#155724' }}>{publicacion.ganador.nombre}</div>
+                    <div style={{ color: '#155724', fontSize: '0.9em' }}>
+                      Precio final: ${formatearMonto(publicacion.precioActual)}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Botón de chat para vendedor y ganador */}
+                {(user?.id === publicacion.usuario?.id || user?.id === publicacion.ganador?.id) && (
+                  <button
+                    className="btn btn-primary btn-sm w-100"
+                    style={{ borderRadius: 8, fontWeight: 600, marginTop: 8 }}
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/chats/publicacion/${publicacion.id}`, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                          const chat = await res.json();
+                          navigate(`/chat/${chat.id}`);
+                        } else {
+                          alert('No se pudo acceder al chat');
+                        }
+                      } catch (err) {
+                        alert('Error al abrir chat: ' + err.message);
+                      }
+                    }}
+                  >
+                    💬 Abrir chat de coordinación
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {publicacion.estado === 'FINALIZADO_SIN_OFERTAS' && (
+              <div className="alert alert-info mt-3" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
+                <div style={{ color: '#0c5460', textAlign: 'center' }}>
+                  📦 Esta subasta finalizó sin ofertas
+                </div>
+              </div>
+            )}
+            
             {/* Formulario de oferta */}
             {publicacion.estado === 'ACTIVO' ? (
               <div className="mt-3">

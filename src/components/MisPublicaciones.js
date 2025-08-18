@@ -21,6 +21,10 @@ const MisPublicaciones = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [publicacionACancelar, setPublicacionACancelar] = useState(null);
   const [sancionesInfo, setSancionesInfo] = useState(null);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [publicacionAFinalizar, setPublicacionAFinalizar] = useState(null);
+  const [finalizando, setFinalizando] = useState(false);
+  const [resultadoFinalizacion, setResultadoFinalizacion] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,6 +118,61 @@ const MisPublicaciones = () => {
   const handleCancelar = (publicacion) => {
     setPublicacionACancelar(publicacion);
     setShowCancelModal(true);
+  };
+
+  const handleFinalizar = (publicacion) => {
+    setPublicacionAFinalizar(publicacion);
+    setShowFinalizarModal(true);
+    setResultadoFinalizacion(null);
+  };
+
+  const confirmarFinalizacion = async () => {
+    if (!publicacionAFinalizar) return;
+    
+    setFinalizando(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/${publicacionAFinalizar.id}/finalizar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al finalizar la publicación');
+      }
+      
+      const resultado = await res.json();
+      setResultadoFinalizacion(resultado);
+      
+      // Actualizar la publicación en la lista
+      setPublicaciones(prev => 
+        prev.map(pub => 
+          pub.id === publicacionAFinalizar.id 
+            ? { ...pub, estado: resultado.publicacion.estado, ganador: resultado.publicacion.ganador }
+            : pub
+        )
+      );
+      
+    } catch (err) {
+      alert('Error: ' + err.message);
+      setShowFinalizarModal(false);
+      setPublicacionAFinalizar(null);
+    } finally {
+      setFinalizando(false);
+    }
+  };
+
+  const cerrarModalFinalizacion = () => {
+    setShowFinalizarModal(false);
+    setPublicacionAFinalizar(null);
+    setResultadoFinalizacion(null);
+  };
+
+  const abrirChat = (chatId) => {
+    navigate(`/chat/${chatId}`);
   };
 
   const handleCancelacionExitosa = async (resultado) => {
@@ -235,26 +294,91 @@ const MisPublicaciones = () => {
                     </div>
                     <div className="d-flex gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
                       {pub.estado === 'ACTIVO' && (
+                        <>
+                          <button
+                            className="btn d-flex align-items-center gap-1"
+                            style={{
+                              borderRadius: 8,
+                              fontWeight: 600,
+                              background: '#4caf50',
+                              color: '#fff',
+                              border: 'none',
+                              fontSize: '0.90em',
+                              padding: '0.38em 0.8em',
+                              boxShadow: '0 1px 4px rgba(76,175,80,0.08)',
+                              transition: 'background 0.18s',
+                              flex: 1
+                            }}
+                            title="Finalizar subasta"
+                            onClick={() => handleFinalizar(pub)}
+                            onMouseOver={e => e.currentTarget.style.background = '#45a049'}
+                            onMouseOut={e => e.currentTarget.style.background = '#4caf50'}
+                          >
+                            🏁 Finalizar
+                          </button>
+                          <button
+                            className="btn d-flex align-items-center gap-1"
+                            style={{
+                              borderRadius: 8,
+                              fontWeight: 600,
+                              background: '#ff9800',
+                              color: '#fff',
+                              border: 'none',
+                              fontSize: '0.90em',
+                              padding: '0.38em 0.8em',
+                              boxShadow: '0 1px 4px rgba(255,152,0,0.08)',
+                              transition: 'background 0.18s',
+                              flex: 1
+                            }}
+                            title="Cancelar"
+                            onClick={() => handleCancelar(pub)}
+                            onMouseOver={e => e.currentTarget.style.background = '#f57c00'}
+                            onMouseOut={e => e.currentTarget.style.background = '#ff9800'}
+                          >
+                            <FaTimes /> Cancelar
+                          </button>
+                        </>
+                      )}
+                      {pub.estado === 'FINALIZADO' && pub.ganador && (
                         <button
-                          className="btn d-flex align-items-center gap-1"
+                          className="btn d-flex align-items-center gap-1 w-100"
                           style={{
                             borderRadius: 8,
                             fontWeight: 600,
-                            background: '#ff9800',
+                            background: '#2196f3',
                             color: '#fff',
                             border: 'none',
-                            fontSize: '0.98em',
-                            padding: '0.38em 1em',
-                            boxShadow: '0 1px 4px rgba(255,152,0,0.08)',
+                            fontSize: '0.95em',
+                            padding: '0.45em 1em',
+                            boxShadow: '0 1px 4px rgba(33,150,243,0.08)',
                             transition: 'background 0.18s',
                           }}
-                          title="Cancelar"
-                          onClick={() => handleCancelar(pub)}
-                          onMouseOver={e => e.currentTarget.style.background = '#f57c00'}
-                          onMouseOut={e => e.currentTarget.style.background = '#ff9800'}
+                          title="Chatear con ganador"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_BASE_URL}/chats/publicacion/${pub.id}`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                              });
+                              if (res.ok) {
+                                const chat = await res.json();
+                                navigate(`/chat/${chat.id}`);
+                              } else {
+                                alert('No se pudo acceder al chat');
+                              }
+                            } catch (err) {
+                              alert('Error al abrir chat: ' + err.message);
+                            }
+                          }}
+                          onMouseOver={e => e.currentTarget.style.background = '#1976d2'}
+                          onMouseOut={e => e.currentTarget.style.background = '#2196f3'}
                         >
-                          <FaTimes /> Cancelar
+                          💬 Chat con ganador
                         </button>
+                      )}
+                      {pub.estado === 'FINALIZADO_SIN_OFERTAS' && (
+                        <div className="w-100 text-center py-2" style={{ color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                          Finalizada sin ofertas
+                        </div>
                       )}
                     </div>
                   </div>
@@ -275,6 +399,147 @@ const MisPublicaciones = () => {
           }}
           onCancelacionExitosa={handleCancelacionExitosa}
         />
+      )}
+
+      {/* Modal de finalización */}
+      {showFinalizarModal && publicacionAFinalizar && (
+        <div className="modal-overlay" onClick={cerrarModalFinalizacion}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: '95vw' }}>
+            {!resultadoFinalizacion ? (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🏁</div>
+                  <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Finalizar subasta</h2>
+                  <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>
+                    ¿Estás seguro de que quieres finalizar esta subasta?
+                  </p>
+                </div>
+                
+                <div className="alert alert-info" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
+                  <div style={{ fontWeight: 600, color: '#0c5460', marginBottom: '8px' }}>
+                    📋 Información de la subasta:
+                  </div>
+                  <div style={{ color: '#0c5460', fontSize: '0.9em' }}>
+                    <div><strong>Producto:</strong> {publicacionAFinalizar.titulo}</div>
+                    <div><strong>Ofertas totales:</strong> {publicacionAFinalizar.ofertasTotales || 0}</div>
+                    <div><strong>Precio actual:</strong> ${formatearMonto(publicacionAFinalizar.precioActual || publicacionAFinalizar.precioInicial)}</div>
+                    <div><strong>Fecha programada:</strong> {publicacionAFinalizar.fechaFin ? new Date(publicacionAFinalizar.fechaFin).toLocaleDateString() : 'Sin fecha'}</div>
+                  </div>
+                </div>
+
+                <div className="alert alert-warning" style={{ fontSize: '0.95em', border: '1px solid #ffeaa7', background: '#fff3cd' }}>
+                  <div style={{ fontWeight: 600, color: '#856404', marginBottom: '8px' }}>
+                    ⚠️ Al finalizar la subasta:
+                  </div>
+                  <div style={{ color: '#856404', fontSize: '0.9em' }}>
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      <li>Se determinará automáticamente el ganador (mayor oferta)</li>
+                      <li>Se creará un chat para coordinar la entrega</li>
+                      <li>La subasta cambiará a estado "FINALIZADO"</li>
+                      <li>Esta acción es <strong>irreversible</strong></li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="modal-actions">
+                  <button 
+                    className="btn btn-success" 
+                    onClick={confirmarFinalizacion}
+                    disabled={finalizando}
+                    style={{ minWidth: 120, fontWeight: 600 }}
+                  >
+                    {finalizando ? 'Finalizando...' : '🏁 Finalizar subasta'}
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={cerrarModalFinalizacion}
+                    disabled={finalizando}
+                    style={{ minWidth: 120, marginLeft: 12 }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>
+                    {resultadoFinalizacion.ganador ? '🎉' : '📦'}
+                  </div>
+                  <h2 style={{ color: '#4caf50', fontWeight: 800, margin: 0 }}>
+                    {resultadoFinalizacion.ganador ? '¡Subasta finalizada!' : 'Subasta cerrada'}
+                  </h2>
+                  <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>
+                    {resultadoFinalizacion.mensaje}
+                  </p>
+                </div>
+
+                {resultadoFinalizacion.ganador ? (
+                  <>
+                    <div className="alert alert-success" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
+                      <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
+                        🏆 Ganador de la subasta:
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        {resultadoFinalizacion.ganador.fotoPerfil ? (
+                          <img 
+                            src={`${API_BASE_URL}${resultadoFinalizacion.ganador.fotoPerfil}`} 
+                            alt="Ganador" 
+                            style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 24 }}>
+                            👤
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 600, color: '#155724' }}>{resultadoFinalizacion.ganador.nombre}</div>
+                          <div style={{ color: '#155724', fontSize: '0.9em' }}>@{resultadoFinalizacion.ganador.username}</div>
+                          <div style={{ color: '#155724', fontSize: '0.9em' }}>
+                            {[resultadoFinalizacion.ganador.ciudad, resultadoFinalizacion.ganador.pais].filter(Boolean).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ color: '#155724' }}>
+                        <div><strong>Oferta ganadora:</strong> ${formatearMonto(resultadoFinalizacion.ofertaGanadora.monto)}</div>
+                        <div><strong>Fecha de oferta:</strong> {new Date(resultadoFinalizacion.ofertaGanadora.fecha).toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    <div className="alert alert-info" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
+                      <div style={{ fontWeight: 600, color: '#0c5460', marginBottom: '8px' }}>
+                        💬 Próximos pasos:
+                      </div>
+                      <div style={{ color: '#0c5460', fontSize: '0.9em' }}>
+                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                          <li>Se ha creado un chat automáticamente para coordinar la entrega</li>
+                          <li>Podrás contactar al ganador desde "Mis publicaciones"</li>
+                          <li>Coordina el pago del resto y la entrega del producto</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="alert alert-info" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
+                    <div style={{ color: '#0c5460' }}>
+                      La subasta ha sido cerrada sin ofertas. El producto no se ha vendido.
+                    </div>
+                  </div>
+                )}
+                
+                <div className="modal-actions">
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={cerrarModalFinalizacion}
+                    style={{ minWidth: 120, fontWeight: 600 }}
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
       
       <Footer />
