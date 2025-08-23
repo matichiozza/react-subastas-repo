@@ -5,52 +5,35 @@
 }
 
 .footer-content {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 3rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 2rem;
+  align-items: start;
 }
 
 .footer-section {
-  flex: 1;
-  min-width: 250px;
-  max-width: 350px;
-  text-align: center;
-}
-
-.footer-section-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.footer-logo-section {
-  flex: 1;
-  min-width: 300px;
-  max-width: 350px;
   text-align: left;
 }
 
+.footer-logo-section {
+  grid-column: 1;
+}
+
 .footer-links-section {
-  flex: 1;
-  min-width: 200px;
-  max-width: 250px;
-  text-align: center;
+  grid-column: 2;
+}
+
+.footer-support-section {
+  grid-column: 3;
 }
 
 .footer-contact-section {
-  flex: 1;
-  min-width: 280px;
-  max-width: 350px;
-  text-align: center;
+  grid-column: 4;
 }
 
 .footer-social-links {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   margin-top: 1rem;
 }
 
@@ -74,12 +57,17 @@
   color: #fff;
 }
 
+.footer-social-link i {
+  font-size: 16px;
+}
+
 .footer-link {
   color: #e8eaf6;
   text-decoration: none;
   font-size: 0.95em;
   transition: all 0.2s ease;
   display: inline-block;
+  padding: 4px 0;
 }
 
 .footer-link:hover {
@@ -90,7 +78,6 @@
 .footer-contact-item {
   display: flex;
   align-items: center;
-  justify-content: center;
   margin-bottom: 1rem;
 }
 
@@ -103,7 +90,12 @@
   align-items: center;
   justify-content: center;
   margin-right: 12px;
-  font-size: 16px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.footer-contact-icon i {
+  font-size: 14px;
 }
 
 .footer-divider {
@@ -119,21 +111,40 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .footer-logo-section {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+  
+  .footer-links-section {
+    grid-column: 1;
+    text-align: center;
+  }
+  
+  .footer-support-section {
+    grid-column: 2;
+    text-align: center;
+  }
+  
+  .footer-contact-section {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+}
+
 @media (max-width: 768px) {
   .footer-content {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    grid-template-columns: 1fr;
     gap: 2rem;
   }
   
   .footer-section {
-    text-align: center;
-    width: 100%;
-    max-width: none;
-  }
-  
-  .footer-logo-section {
     text-align: center;
   }
   
@@ -149,9 +160,5 @@
 @media (max-width: 480px) {
   .footer-container {
     padding: 0 15px;
-  }
-  
-  .footer-section {
-    min-width: auto;
   }
 } 

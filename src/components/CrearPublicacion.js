@@ -3,12 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL from '../config/api';
+import './CrearPublicacion.css';
 
 const pasos = [
-  { label: 'Datos Básicos', icon: '📝' },
-  { label: 'Detalles', icon: '📄' },
-  { label: 'Imagen y Precio', icon: '💰' },
-  { label: 'Confirmar', icon: '✅' },
+  { label: 'Datos Básicos', icon: 'fas fa-edit' },
+  { label: 'Detalles', icon: 'fas fa-file-alt' },
+  { label: 'Imagen y Precio', icon: 'fas fa-dollar-sign' },
+  { label: 'Confirmar', icon: 'fas fa-check' },
 ];
 
 const categorias = [
@@ -265,7 +266,9 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
     <div className="vista-previa-container">
       <div className="vista-previa-header">
         <div className="vista-previa-title">
-          <span className="vista-previa-icon">👁️</span>
+          <div className="vista-previa-icon">
+            <i className="fas fa-eye"></i>
+          </div>
           <h3>Vista Previa</h3>
         </div>
       </div>
@@ -273,7 +276,9 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
       <div className="vista-previa-content">
         {!form.titulo ? (
           <div className="vista-previa-empty">
-            <div className="empty-icon">📝</div>
+            <div className="empty-icon">
+              <i className="fas fa-edit"></i>
+            </div>
             <h4>Comienza a crear tu publicación</h4>
             <p>Los datos que ingreses aparecerán aquí en tiempo real</p>
           </div>
@@ -299,7 +304,9 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                 </div>
               ) : (
                 <div className="preview-imagen-placeholder">
-                  <div className="placeholder-icon">📷</div>
+                  <div className="placeholder-icon">
+                    <i className="fas fa-camera"></i>
+                  </div>
                   <p>Sin imágenes</p>
                 </div>
               )}
@@ -383,7 +390,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
               <div className="pasos-indicador">
                 {pasos.map((p, idx) => (
                   <div key={p.label} className={`paso-item ${idx <= step ? 'activo' : ''}`}>
-                    <div className="paso-icono">{p.icon}</div>
+                    <div className="paso-icono"><i className={p.icon}></i></div>
                     <div className="paso-label">{p.label}</div>
                   </div>
                 ))}
@@ -580,7 +587,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                         <li><strong>Fecha de Finalización:</strong> {form.fechaFin}</li>
                       </ul>
                       <div className="alert alert-warning">
-                        <span role="img" aria-label="alerta">⚠️</span> Una vez creada la publicación, no podrás modificar algunos datos clave.
+                        <i className="fas fa-exclamation-triangle" style={{ marginRight: 8 }}></i> Una vez creada la publicación, no podrás modificar algunos datos clave.
                       </div>
                     </div>
                     
@@ -590,7 +597,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                         className="btn btn-secondary" 
                         onClick={prevStep}
                       >
-                        <span>←</span>
+                        <i className="fas fa-arrow-left" style={{ marginRight: 8 }}></i>
                         Anterior
                       </button>
                       <button 
@@ -600,12 +607,12 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                       >
                         {procesandoPublicacion ? (
                           <>
-                            <span>🔄</span>
+                            <i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }}></i>
                             Procesando...
                           </>
                         ) : (
                           <>
-                            <span>✅</span>
+                            <i className="fas fa-check" style={{ marginRight: 8 }}></i>
                             Confirmar y Publicar
                           </>
                         )}
@@ -626,7 +633,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                           className="btn btn-secondary" 
                           onClick={prevStep}
                         >
-                          <span>←</span>
+                          <i className="fas fa-arrow-left" style={{ marginRight: 8 }}></i>
                           Anterior
                         </button>
                       )}
@@ -637,7 +644,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                           onClick={nextStep} 
                           disabled={!validStep()}
                         >
-                          <span>→</span>
+                          <i className="fas fa-arrow-right" style={{ marginRight: 8 }}></i>
                           Siguiente
                         </button>
                       )}
@@ -658,7 +665,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
         <div className="procesamiento-pago">
           <div className="procesamiento-contenido">
             <div className={`procesamiento-icono ${pasoProcesamiento === 1 ? 'procesando' : 'confirmado'}`}>
-              {pasoProcesamiento === 1 ? '📝' : '✅'}
+              {pasoProcesamiento === 1 ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
             </div>
             <div className="procesamiento-titulo">
               {pasoProcesamiento === 1 ? 'Creando publicación...' : '¡Publicación creada!'}

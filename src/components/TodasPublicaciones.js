@@ -5,26 +5,26 @@ import Footer from './Footer';
 import API_BASE_URL from '../config/api';
 
 const categorias = [
-  { nombre: 'Accesorios', emoji: '👜' },
-  { nombre: 'Aire libre', emoji: '🌲' },
-  { nombre: 'Arte', emoji: '🎭' },
-  { nombre: 'Bebés', emoji: '🍼' },
-  { nombre: 'Calzado', emoji: '👞' },
-  { nombre: 'Computación', emoji: '💻' },
-  { nombre: 'Cocina', emoji: '🍽️' },
-  { nombre: 'Deportes', emoji: '⚽' },
-  { nombre: 'Electrónica', emoji: '⚡' },
-  { nombre: 'Herramientas', emoji: '🔨' },
-  { nombre: 'Hogar', emoji: '🏠' },
-  { nombre: 'Joyería', emoji: '💍' },
-  { nombre: 'Juguetes', emoji: '🧸' },
-  { nombre: 'Libros', emoji: '📖' },
-  { nombre: 'Mascotas', emoji: '🐾' },
-  { nombre: 'Moda', emoji: '👕' },
-  { nombre: 'Muebles', emoji: '🪑' },
-  { nombre: 'Música', emoji: '🎼' },
-  { nombre: 'Teléfonos', emoji: '📱' },
-  { nombre: 'Vehículos', emoji: '🚙' },
+  { nombre: 'Accesorios', emoji: 'fas fa-briefcase' },
+  { nombre: 'Aire libre', emoji: 'fas fa-tree' },
+  { nombre: 'Arte', emoji: 'fas fa-palette' },
+  { nombre: 'Bebés', emoji: 'fas fa-baby' },
+  { nombre: 'Calzado', emoji: 'fas fa-shoe-prints' },
+  { nombre: 'Computación', emoji: 'fas fa-laptop' },
+  { nombre: 'Cocina', emoji: 'fas fa-utensils' },
+  { nombre: 'Deportes', emoji: 'fas fa-futbol' },
+  { nombre: 'Electrónica', emoji: 'fas fa-bolt' },
+  { nombre: 'Herramientas', emoji: 'fas fa-hammer' },
+  { nombre: 'Hogar', emoji: 'fas fa-home' },
+  { nombre: 'Joyería', emoji: 'fas fa-gem' },
+  { nombre: 'Juguetes', emoji: 'fas fa-teddy-bear' },
+  { nombre: 'Libros', emoji: 'fas fa-book' },
+  { nombre: 'Mascotas', emoji: 'fas fa-paw' },
+  { nombre: 'Moda', emoji: 'fas fa-tshirt' },
+  { nombre: 'Muebles', emoji: 'fas fa-couch' },
+  { nombre: 'Música', emoji: 'fas fa-music' },
+  { nombre: 'Teléfonos', emoji: 'fas fa-mobile-alt' },
+  { nombre: 'Vehículos', emoji: 'fas fa-car' },
 ];
 
 // Función para normalizar tildes y minúsculas
@@ -378,7 +378,7 @@ const TodasPublicaciones = () => {
               >
                 <div>
                   <h6 style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em', margin: 0 }}>
-                    <span style={{ marginRight: 8 }}>📂</span>Categorías
+                    <i className="fas fa-folder" style={{ marginRight: 8 }}></i>Categorías
                   </h6>
                   {!categoriasDesplegadas && categoriaSeleccionada && (
                     <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: 2 }}>
@@ -406,7 +406,7 @@ const TodasPublicaciones = () => {
                           navigate({ pathname: '/publicaciones', search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
                         }
                       }}>
-                    <span style={{ marginRight: 8 }}>🔎</span>
+                    <i className="fas fa-search" style={{ marginRight: 8 }}></i>
                     <span>Todas las categorías</span>
                   </li>
                   {categorias.map(cat => (
@@ -426,7 +426,7 @@ const TodasPublicaciones = () => {
                         navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
                       }}
                     >
-                      <span style={{ marginRight: 8 }}>{cat.emoji}</span>
+                      <i className={cat.emoji} style={{ marginRight: 8 }}></i>
                       <span>{cat.nombre}</span>
                     </li>
                   ))}
@@ -437,7 +437,7 @@ const TodasPublicaciones = () => {
             {/* Filtro de Precio con Slider */}
             <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
-                <span style={{ marginRight: 8 }}>💰</span>Rango de Precio
+                <i className="fas fa-dollar-sign" style={{ marginRight: 8 }}></i>Rango de Precio
               </h6>
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-2">
@@ -519,7 +519,7 @@ const TodasPublicaciones = () => {
             {/* Filtros de Condición */}
             <div className="card p-3 mb-3" style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <h6 className="mb-3" style={{ color: '#1976d2', fontWeight: 700, fontSize: '1.1em' }}>
-                <span style={{ marginRight: 8 }}>🏷️</span>Condición
+                <i className="fas fa-tag" style={{ marginRight: 8 }}></i>Condición
               </h6>
               <div className="d-flex flex-column gap-2">
                 <div 
@@ -549,7 +549,7 @@ const TodasPublicaciones = () => {
                     </div>
                     <div>
                       <div className="fw-semibold" style={{ fontSize: '1em' }}>
-                        <span style={{ marginRight: 6 }}>🆕</span>Nuevo
+                        <i className="fas fa-star" style={{ marginRight: 6 }}></i>Nuevo
                       </div>
                       <small className="text-muted">Solo productos sin usar</small>
                     </div>
@@ -567,7 +567,7 @@ const TodasPublicaciones = () => {
                     </div>
                     <div>
                       <div className="fw-semibold" style={{ fontSize: '1em' }}>
-                        <span style={{ marginRight: 6 }}>🔄</span>Usado
+                        <i className="fas fa-redo" style={{ marginRight: 6 }}></i>Usado
                       </div>
                       <small className="text-muted">Solo productos de segunda mano</small>
                     </div>
@@ -603,7 +603,7 @@ const TodasPublicaciones = () => {
                     e.target.style.boxShadow = 'none';
                   }}
                 >
-                  <span style={{ marginRight: 6 }}>🗑️</span>Limpiar filtros
+                  <i className="fas fa-trash" style={{ marginRight: 6 }}></i>Limpiar filtros
                 </button>
               </div>
             )}
@@ -695,7 +695,7 @@ const TodasPublicaciones = () => {
                         </div>
                       ) : (
                         <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
-                          <span role="img" aria-label="sin imagen">🖼️</span>
+                          <i className="fas fa-image"></i>
                         </div>
                       )}
                       <div className="p-2 d-flex flex-column justify-content-between h-100">
@@ -717,7 +717,7 @@ const TodasPublicaciones = () => {
                         </div>
                         {/* Fecha de finalización */}
                         <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
-                          <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
+                          <i className="fas fa-clock" style={{ marginRight: 4 }}></i> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
                         </div>
                         {/* Usuario */}
                         <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
@@ -725,7 +725,7 @@ const TodasPublicaciones = () => {
                             <img src={`${API_BASE_URL}${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
                           ) : (
                             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
-                              <span role="img" aria-label="user">👤</span>
+                              <i className="fas fa-user"></i>
                             </div>
                           )}
                           <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>

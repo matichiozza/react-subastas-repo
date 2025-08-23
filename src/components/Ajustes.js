@@ -728,10 +728,10 @@ const Ajustes = () => {
   };
 
   const tabs = [
-    { id: 'perfil', label: 'Perfil', icon: '👤' },
-    { id: 'notificaciones', label: 'Notificaciones', icon: '🔔' },
-    { id: 'pagos', label: 'Métodos de pago', icon: '💳' },
-    { id: 'cuenta', label: 'Cuenta', icon: '⚙️' }
+    { id: 'perfil', label: 'Perfil', icon: 'fas fa-user' },
+    { id: 'notificaciones', label: 'Notificaciones', icon: 'fas fa-bell' },
+    { id: 'pagos', label: 'Métodos de Pago', icon: 'fas fa-credit-card' },
+    { id: 'cuenta', label: 'Cuenta', icon: 'fas fa-cog' }
   ];
 
   const renderTabContent = () => {
@@ -752,11 +752,11 @@ const Ajustes = () => {
                   <div className="photo-overlay">
                     <button
                       type="button"
-                      className="change-photo-btn"
+                      className="btn btn-outline-secondary btn-sm"
                       onClick={() => fileInputRef.current.click()}
-                      aria-label="Cambiar foto de perfil"
+                      style={{ marginTop: 8 }}
                     >
-                      <span role="img" aria-label="cambiar foto">📷</span>
+                      <i className="fas fa-pencil"></i>
                     </button>
                   </div>
                   <input
@@ -998,7 +998,7 @@ const Ajustes = () => {
                             }}
                             title="Eliminar tarjeta"
                           >
-                            🗑️
+                            <i className="fas fa-trash"></i>
                           </button>
                         </div>
                       ))}
@@ -1010,7 +1010,9 @@ const Ajustes = () => {
                 </>
               ) : (
                 <div className="empty-state">
-                  <div className="empty-icon">💳</div>
+                  <div className="empty-icon">
+                    <i className="fas fa-credit-card"></i>
+                  </div>
                   <h4>No tienes tarjetas guardadas</h4>
                   <p>Agrega una tarjeta para realizar pagos más rápido</p>
                 </div>
@@ -1031,7 +1033,7 @@ const Ajustes = () => {
                       onClick={handleEliminarCbu}
                       disabled={loadingCbu}
                     >
-                      {loadingCbu ? 'Eliminando...' : '🗑️ Eliminar'}
+                      {loadingCbu ? 'Eliminando...' : <><i className="fas fa-trash" style={{ marginRight: 8 }}></i>Eliminar</>}
                     </button>
                   </div>
                 ) : (
@@ -1124,7 +1126,7 @@ const Ajustes = () => {
                   className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <span className="tab-icon">{tab.icon}</span>
+                  <span className="tab-icon"><i className={tab.icon}></i></span>
                   <span className="tab-label">{tab.label}</span>
                 </button>
               ))}
@@ -1150,7 +1152,9 @@ const Ajustes = () => {
                 <div style={{ display: 'grid', gap: 20 }}>
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>👤</span>Nombre completo
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-user"></i>
+                      </span>Nombre completo
                     </label>
                     <input
                       type="text"
@@ -1168,7 +1172,9 @@ const Ajustes = () => {
                   
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>🔢</span>Número de tarjeta
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-credit-card"></i>
+                      </span>Número de tarjeta
                     </label>
                     <input
                       type="text"
@@ -1187,7 +1193,9 @@ const Ajustes = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div>
                       <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                        <span style={{ marginRight: 8 }}>📅</span>Vencimiento
+                        <span style={{ marginRight: 8 }}>
+                          <i className="fas fa-calendar-alt"></i>
+                        </span>Vencimiento
                       </label>
                       <input
                         type="text"
@@ -1205,7 +1213,9 @@ const Ajustes = () => {
                     
                     <div>
                       <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                        <span style={{ marginRight: 8 }}>🔒</span>Código de seguridad
+                        <span style={{ marginRight: 8 }}>
+                          <i className="fas fa-lock"></i>
+                        </span>Código de seguridad
                       </label>
                       <input
                         type="text"
@@ -1224,7 +1234,9 @@ const Ajustes = () => {
                   
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>🆔</span>DNI del titular
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-id-card"></i>
+                      </span>DNI del titular
                     </label>
                     <input
                       type="text"
@@ -1243,12 +1255,16 @@ const Ajustes = () => {
                 
                 {errorTarjetas && (
                   <div className="alert alert-danger mt-4" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
-                    <span style={{ marginRight: 8 }}>⚠️</span>{errorTarjetas}
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-exclamation-triangle"></i>
+                    </span>{errorTarjetas}
                   </div>
                 )}
                 {successTarjeta && (
                   <div className="alert alert-success mt-4" style={{ borderRadius: 10, border: 'none', background: '#d4edda', color: '#155724' }}>
-                    <span style={{ marginRight: 8 }}>✅</span>¡Tarjeta guardada exitosamente!
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-check"></i>
+                    </span>¡Tarjeta guardada exitosamente!
                   </div>
                 )}
                 
@@ -1277,7 +1293,9 @@ const Ajustes = () => {
               <form onSubmit={handleAgregarCbu}>
                 <div style={{ marginBottom: 24 }}>
                   <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>🏦</span>CBU/CVU
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-university"></i>
+                    </span>CBU/CVU
                   </label>
                   <input
                     type="text"
@@ -1295,7 +1313,9 @@ const Ajustes = () => {
                 
                 {errorCbu && (
                   <div className="alert alert-danger" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
-                    <span style={{ marginRight: 8 }}>⚠️</span>{errorCbu}
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-exclamation-triangle"></i>
+                    </span>{errorCbu}
                   </div>
                 )}
                 
@@ -1317,7 +1337,9 @@ const Ajustes = () => {
           <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>⚠️ Eliminar cuenta</h2>
+                                  <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>
+                    <i className="fas fa-exclamation-triangle" style={{ marginRight: 8 }}></i>Eliminar cuenta
+                  </h2>
                 <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>
                   Esta acción es irreversible. Todos tus datos serán eliminados permanentemente.
                 </p>
@@ -1331,7 +1353,9 @@ const Ajustes = () => {
                   padding: 16, 
                   marginBottom: 16 
                 }}>
-                  <h4 style={{ color: '#856404', margin: '0 0 8px 0', fontSize: '1.1em' }}>⚠️ Advertencia importante</h4>
+                  <h4 style={{ color: '#856404', margin: '0 0 8px 0', fontSize: '1.1em' }}>
+                    <i className="fas fa-exclamation-triangle" style={{ marginRight: 8 }}></i>Advertencia importante
+                  </h4>
                   <ul style={{ color: '#856404', margin: 0, paddingLeft: 20 }}>
                     <li>Se eliminarán todas tus publicaciones y ofertas</li>
                     <li>Se perderán todos tus datos personales</li>
@@ -1341,7 +1365,9 @@ const Ajustes = () => {
                 </div>
                 
                 <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                  <span style={{ marginRight: 8 }}>✍️</span>Confirmación
+                                      <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-edit"></i>
+                    </span>Confirmación
                 </label>
                 <input
                   type="text"
@@ -1358,7 +1384,9 @@ const Ajustes = () => {
               
               {deleteError && (
                 <div className="alert alert-danger" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
-                  <span style={{ marginRight: 8 }}>⚠️</span>{deleteError}
+                  <span style={{ marginRight: 8 }}>
+                    <i className="fas fa-exclamation-triangle"></i>
+                  </span>{deleteError}
                 </div>
               )}
               
@@ -1402,7 +1430,9 @@ const Ajustes = () => {
           <div className="modal-overlay" onClick={() => setShowModalPassword(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>🔒 Cambiar contraseña</h2>
+                <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>
+                  <i className="fas fa-lock" style={{ marginRight: 8 }}></i>Cambiar contraseña
+                </h2>
                 <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Ingresa tu contraseña actual y la nueva contraseña</p>
               </div>
               
@@ -1410,7 +1440,9 @@ const Ajustes = () => {
                 <div style={{ display: 'grid', gap: 20 }}>
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>🔑</span>Contraseña actual
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-key"></i>
+                      </span>Contraseña actual
                     </label>
                     <input
                       type="password"
@@ -1426,7 +1458,9 @@ const Ajustes = () => {
                   
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>🆕</span>Nueva contraseña
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-plus-circle"></i>
+                      </span>Nueva contraseña
                     </label>
                     <input
                       type="password"
@@ -1445,7 +1479,9 @@ const Ajustes = () => {
                   
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>✅</span>Confirmar nueva contraseña
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-check-circle"></i>
+                      </span>Confirmar nueva contraseña
                     </label>
                     <input
                       type="password"
@@ -1462,12 +1498,16 @@ const Ajustes = () => {
                 
                 {errorPassword && (
                   <div className="alert alert-danger mt-4" style={{ borderRadius: 10, border: 'none', background: '#f8d7da', color: '#721c24' }}>
-                    <span style={{ marginRight: 8 }}>⚠️</span>{errorPassword}
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-exclamation-triangle"></i>
+                    </span>{errorPassword}
                   </div>
                 )}
                 {successPassword && (
                   <div className="alert alert-success mt-4" style={{ borderRadius: 10, border: 'none', background: '#d4edda', color: '#155724' }}>
-                    <span style={{ marginRight: 8 }}>✅</span>¡Contraseña cambiada exitosamente!
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-check-circle"></i>
+                    </span>¡Contraseña cambiada exitosamente!
                   </div>
                 )}
                 

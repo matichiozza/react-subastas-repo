@@ -145,7 +145,7 @@ const MisOfertas = () => {
             {ofertas.length === 0 ? (
               <div className="text-center py-5">
                 <div style={{ fontSize: '4rem', color: '#ccc', marginBottom: '1rem' }}>
-                  💰
+                  <i className="fas fa-coins"></i>
                 </div>
                 <h4 className="text-muted">No tienes ofertas</h4>
                 <p className="text-muted">
@@ -214,7 +214,7 @@ const MisOfertas = () => {
                               position: 'relative'
                             }}
                           >
-                            🖼️
+                            <i className="fas fa-image"></i>
                             <div 
                               style={{
                                 position: 'absolute',
@@ -299,7 +299,7 @@ const MisOfertas = () => {
                               <div className="mb-3">
                                 <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize: '0.85em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
                                   <div style={{ fontWeight: 600, color: '#155724', marginBottom: '4px' }}>
-                                    🎉 ¡Ganaste esta subasta!
+                                    <i className="fas fa-trophy" style={{ marginRight: 8 }}></i>¡Ganaste esta subasta!
                                   </div>
                                   <div style={{ color: '#155724', fontSize: '0.8em', marginBottom: '8px' }}>
                                     Precio final: ${formatearMonto(oferta.publicacion.precioActual)}
@@ -323,7 +323,7 @@ const MisOfertas = () => {
                                       }
                                     }}
                                   >
-                                    💬 Chat con vendedor
+                                    <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Chat con vendedor
                                   </button>
                                 </div>
                               </div>

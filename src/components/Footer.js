@@ -41,14 +41,14 @@ const Footer = () => {
               Conectamos compradores y vendedores de manera eficiente y confiable.
             </p>
             <div className="footer-social-links">
-              <a href="#" className="footer-social-link">
-                📘
+              <a href="#" className="footer-social-link" title="Facebook">
+                <i className="fab fa-facebook-f"></i>
               </a>
-              <a href="#" className="footer-social-link">
-                🐦
+              <a href="#" className="footer-social-link" title="Twitter">
+                <i className="fab fa-twitter"></i>
               </a>
-              <a href="#" className="footer-social-link">
-                📸
+              <a href="#" className="footer-social-link" title="Instagram">
+                <i className="fab fa-instagram"></i>
               </a>
             </div>
           </div>
@@ -56,22 +56,56 @@ const Footer = () => {
           {/* Enlaces rápidos */}
           <div className="footer-section footer-links-section">
             <h6 className="fw-bold mb-3" style={{ color: '#fff', fontSize: '1.1em' }}>
-              <span style={{ marginRight: 8 }}>⚡</span>Acceso Rápido
+              Acceso Rápido
             </h6>
             <ul className="list-unstyled">
               <li className="mb-2">
                 <a href="/publicaciones" className="footer-link">
-                  🛒 Ver subastas
+                  Ver subastas
                 </a>
               </li>
               <li className="mb-2">
                 <a href="/crear-publicacion" className="footer-link">
-                  📤 Vender producto
+                  Crear publicación
                 </a>
               </li>
               <li className="mb-2">
+                <a href="/mis-ofertas" className="footer-link">
+                  Mis ofertas
+                </a>
+              </li>
+              <li className="mb-2">
+                <a href="/mis-publicaciones" className="footer-link">
+                  Mis publicaciones
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Enlaces de soporte */}
+          <div className="footer-section footer-support-section">
+            <h6 className="fw-bold mb-3" style={{ color: '#fff', fontSize: '1.1em' }}>
+              Soporte
+            </h6>
+            <ul className="list-unstyled">
+              <li className="mb-2">
                 <a href="/ayuda" className="footer-link">
-                  ❓ Centro de ayuda
+                  Centro de ayuda
+                </a>
+              </li>
+              <li className="mb-2">
+                <a href="/terminos" className="footer-link">
+                  Términos y condiciones
+                </a>
+              </li>
+              <li className="mb-2">
+                <a href="/privacidad" className="footer-link">
+                  Política de privacidad
+                </a>
+              </li>
+              <li className="mb-2">
+                <a href="/contacto" className="footer-link">
+                  Contacto
                 </a>
               </li>
             </ul>
@@ -80,12 +114,12 @@ const Footer = () => {
           {/* Contacto */}
           <div className="footer-section footer-contact-section">
             <h6 className="fw-bold mb-3" style={{ color: '#fff', fontSize: '1.1em' }}>
-              <span style={{ marginRight: 8 }}>📞</span>Contacto
+              Contacto
             </h6>
             <div className="mb-3">
               <div className="footer-contact-item">
                 <div className="footer-contact-icon">
-                  📧
+                  <i className="fas fa-envelope"></i>
                 </div>
                 <div>
                   <div style={{ color: '#e8eaf6', fontSize: '0.9em', fontWeight: 600 }}>Email</div>
@@ -94,7 +128,7 @@ const Footer = () => {
               </div>
               <div className="footer-contact-item">
                 <div className="footer-contact-icon">
-                  📱
+                  <i className="fas fa-phone"></i>
                 </div>
                 <div>
                   <div style={{ color: '#e8eaf6', fontSize: '0.9em', fontWeight: 600 }}>Teléfono</div>
@@ -103,7 +137,7 @@ const Footer = () => {
               </div>
               <div className="footer-contact-item">
                 <div className="footer-contact-icon">
-                  🌍
+                  <i className="fas fa-clock"></i>
                 </div>
                 <div>
                   <div style={{ color: '#e8eaf6', fontSize: '0.9em', fontWeight: 600 }}>Horarios</div>
@@ -123,7 +157,7 @@ const Footer = () => {
             © {new Date().getFullYear()} SubastasCorp. Todos los derechos reservados.
           </div>
           <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
-            Desarrollado con ❤️ para la comunidad de subastas
+            Desarrollado para la comunidad de subastas
           </div>
         </div>
       </div>

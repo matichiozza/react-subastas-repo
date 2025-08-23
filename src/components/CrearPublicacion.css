@@ -1,0 +1,15 @@
+/* Estilos para los iconos de los pasos del formulario */
+.paso-icono i {
+  color: #1976d2 !important;
+  font-size: 1.2em;
+}
+
+/* Estilos para el paso activo */
+.paso-item.activo .paso-icono i {
+  color: #1976d2 !important;
+}
+
+/* Estilos para los pasos inactivos */
+.paso-item:not(.activo) .paso-icono i {
+  color: #ccc !important;
+}

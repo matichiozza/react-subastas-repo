@@ -244,7 +244,7 @@ const MisPublicaciones = () => {
                   fontWeight: 600, 
                   color: sancionesInfo.sancionesDisponibles === 0 ? '#d32f2f' : '#2e7d32' 
                 }}>
-                  ⚠️ Sanciones: {sancionesInfo.sancionesDisponibles}/{sancionesInfo.maximoSanciones}
+                  <i className="fas fa-exclamation-triangle" style={{ marginRight: 8 }}></i>Sanciones: {sancionesInfo.sancionesDisponibles}/{sancionesInfo.maximoSanciones}
                 </span>
               </div>
             )}
@@ -259,7 +259,9 @@ const MisPublicaciones = () => {
           <div className="alert alert-danger text-center">{error}</div>
         ) : publicaciones.length === 0 ? (
           <div className="card p-4 text-center mx-auto" style={{ maxWidth: 400, borderRadius: 14, boxShadow: '0 2px 12px rgba(25,118,210,0.08)', marginTop: '3rem' }}>
-            <div className="mb-2" style={{ fontSize: 32 }}>📦</div>
+                            <div className="mb-2" style={{ fontSize: 32 }}>
+                  <i className="fas fa-box"></i>
+                </div>
             <div className="mb-2">No tienes publicaciones aún.</div>
             <button className="btn btn-primary mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={handleNuevaPublicacion}>
               Crear publicación
@@ -277,7 +279,9 @@ const MisPublicaciones = () => {
                     </div>
                   ) : (
                     <div style={{ height: 160, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 38 }}>
-                      <span role="img" aria-label="sin imagen">🖼️</span>
+                      <span role="img" aria-label="sin imagen">
+                  <i className="fas fa-image"></i>
+                </span>
                     </div>
                   )}
                   <div className="p-3 d-flex flex-column flex-grow-1">
@@ -314,7 +318,7 @@ const MisPublicaciones = () => {
                             onMouseOver={e => e.currentTarget.style.background = '#45a049'}
                             onMouseOut={e => e.currentTarget.style.background = '#4caf50'}
                           >
-                            🏁 Finalizar
+                                                         <i className="fas fa-flag-checkered" style={{ marginRight: 8 }}></i>Finalizar
                           </button>
                           <button
                             className="btn d-flex align-items-center gap-1"
@@ -372,7 +376,7 @@ const MisPublicaciones = () => {
                           onMouseOver={e => e.currentTarget.style.background = '#1976d2'}
                           onMouseOut={e => e.currentTarget.style.background = '#2196f3'}
                         >
-                          💬 Chat con ganador
+                          <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Chat con ganador
                         </button>
                       )}
                       {pub.estado === 'FINALIZADO_SIN_OFERTAS' && (
@@ -408,7 +412,9 @@ const MisPublicaciones = () => {
             {!resultadoFinalizacion ? (
               <>
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>🏁</div>
+                                     <div style={{ fontSize: 48, marginBottom: 16 }}>
+                     <i className="fas fa-flag-checkered"></i>
+                   </div>
                   <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Finalizar subasta</h2>
                   <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>
                     ¿Estás seguro de que quieres finalizar esta subasta?
@@ -417,7 +423,7 @@ const MisPublicaciones = () => {
                 
                 <div className="alert alert-info" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
                   <div style={{ fontWeight: 600, color: '#0c5460', marginBottom: '8px' }}>
-                    📋 Información de la subasta:
+                    <i className="fas fa-clipboard-list" style={{ marginRight: 8 }}></i>Información de la subasta:
                   </div>
                   <div style={{ color: '#0c5460', fontSize: '0.9em' }}>
                     <div><strong>Producto:</strong> {publicacionAFinalizar.titulo}</div>
@@ -429,7 +435,7 @@ const MisPublicaciones = () => {
 
                 <div className="alert alert-warning" style={{ fontSize: '0.95em', border: '1px solid #ffeaa7', background: '#fff3cd' }}>
                   <div style={{ fontWeight: 600, color: '#856404', marginBottom: '8px' }}>
-                    ⚠️ Al finalizar la subasta:
+                    <i className="fas fa-exclamation-triangle" style={{ marginRight: 8 }}></i>Al finalizar la subasta:
                   </div>
                   <div style={{ color: '#856404', fontSize: '0.9em' }}>
                     <ul style={{ margin: 0, paddingLeft: 20 }}>
@@ -448,7 +454,11 @@ const MisPublicaciones = () => {
                     disabled={finalizando}
                     style={{ minWidth: 120, fontWeight: 600 }}
                   >
-                    {finalizando ? 'Finalizando...' : '🏁 Finalizar subasta'}
+                                         {finalizando ? 'Finalizando...' : 
+                       <>
+                         <i className="fas fa-flag-checkered" style={{ marginRight: 8 }}></i>Finalizar subasta
+                       </>
+                     }
                   </button>
                   <button 
                     className="btn btn-secondary" 
@@ -464,7 +474,10 @@ const MisPublicaciones = () => {
               <>
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>
-                    {resultadoFinalizacion.ganador ? '🎉' : '📦'}
+                    {resultadoFinalizacion.ganador ? 
+                  <i className="fas fa-trophy"></i> : 
+                  <i className="fas fa-box"></i>
+                }
                   </div>
                   <h2 style={{ color: '#4caf50', fontWeight: 800, margin: 0 }}>
                     {resultadoFinalizacion.ganador ? '¡Subasta finalizada!' : 'Subasta cerrada'}
@@ -478,7 +491,7 @@ const MisPublicaciones = () => {
                   <>
                     <div className="alert alert-success" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
                       <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
-                        🏆 Ganador de la subasta:
+                                                 <i className="fas fa-trophy" style={{ marginRight: 8 }}></i>Ganador de la subasta:
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                         {resultadoFinalizacion.ganador.fotoPerfil ? (
@@ -489,7 +502,7 @@ const MisPublicaciones = () => {
                           />
                         ) : (
                           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 24 }}>
-                            👤
+                            <i className="fas fa-user"></i>
                           </div>
                         )}
                         <div>
@@ -508,7 +521,7 @@ const MisPublicaciones = () => {
 
                     <div className="alert alert-info" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
                       <div style={{ fontWeight: 600, color: '#0c5460', marginBottom: '8px' }}>
-                        💬 Próximos pasos:
+                        <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Próximos pasos:
                       </div>
                       <div style={{ color: '#0c5460', fontSize: '0.9em' }}>
                         <ul style={{ margin: 0, paddingLeft: 20 }}>

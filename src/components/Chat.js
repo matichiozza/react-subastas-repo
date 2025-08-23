@@ -287,7 +287,9 @@ const Chat = () => {
     return (
       <div className="container py-5">
         <div className="text-center">
-          <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
+                          <div style={{ fontSize: 48, marginBottom: 16 }}>
+                  <i className="fas fa-comments"></i>
+                </div>
           <div>Cargando chat...</div>
         </div>
       </div>
@@ -298,7 +300,9 @@ const Chat = () => {
     return (
       <div className="container py-5">
         <div className="card p-4 text-center mx-auto" style={{ maxWidth: 400 }}>
-          <div style={{ fontSize: 48, marginBottom: 16, color: '#dc3545' }}>❌</div>
+                          <div style={{ fontSize: 48, marginBottom: 16, color: '#dc3545' }}>
+                  <i className="fas fa-times-circle"></i>
+                </div>
           <h4 style={{ color: '#dc3545', marginBottom: 16 }}>Error</h4>
           <p style={{ marginBottom: 16 }}>{error}</p>
           <button 
@@ -359,7 +363,9 @@ const Chat = () => {
                Volver
              </button>
             <div>
-              <h4 style={{ margin: 0, color: '#1976d2' }}>💬 Chat de coordinación</h4>
+              <h4 style={{ margin: 0, color: '#1976d2' }}>
+                <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Chat de coordinación
+              </h4>
               <small style={{ color: '#666' }}>Coordina la entrega con el ganador</small>
             </div>
           </div>
@@ -488,7 +494,12 @@ const Chat = () => {
                 onMouseOver={(e) => e.target.style.background = '#1565c0'}
                 onMouseOut={(e) => e.target.style.background = '#1976d2'}
               >
-                {enviando ? '⏳' : '📤 Enviar'}
+                {enviando ? 
+                  <i className="fas fa-spinner fa-spin"></i> : 
+                  <>
+                    <i className="fas fa-paper-plane" style={{ marginRight: 8 }}></i>Enviar
+                  </>
+                }
               </button>
             </form>
             
@@ -498,7 +509,7 @@ const Chat = () => {
                marginTop: '0.5rem',
                textAlign: 'center'
              }}>
-               💡 Usa este chat para coordinar el pago del resto y la entrega del producto
+               <i className="fas fa-lightbulb" style={{ marginRight: 8 }}></i>Usa este chat para coordinar el pago del resto y la entrega del producto
              </div>
           </div>
         </div>

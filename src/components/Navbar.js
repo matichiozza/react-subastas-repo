@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { BsPersonCircle } from 'react-icons/bs';
+
 import { FaExclamationTriangle } from 'react-icons/fa';
 import API_BASE_URL from '../config/api';
 
@@ -112,8 +112,19 @@ const Navbar = () => {
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
-              <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
+            <button className="btn btn-primary" type="submit" style={{ 
+              borderRadius: 20, 
+              fontSize: '0.98em', 
+              padding: '0.45em 1.2em', 
+              marginLeft: -38, 
+              zIndex: 2, 
+              background: '#1976d2', 
+              border: 'none', 
+              boxShadow: 'none',
+              transition: 'none',
+              transform: 'none'
+            }}>
+              <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
             </button>
           </form>
         </div>
@@ -142,8 +153,19 @@ const Navbar = () => {
                     value={busqueda}
                     onChange={e => setBusqueda(e.target.value)}
                   />
-                  <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
-                    <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
+                  <button className="btn btn-primary" type="submit" style={{ 
+                    borderRadius: 20, 
+                    fontSize: '0.98em', 
+                    padding: '0.45em 1.2em', 
+                    marginLeft: -38, 
+                    zIndex: 2, 
+                    background: '#1976d2', 
+                    border: 'none', 
+                    boxShadow: 'none',
+                    transition: 'none',
+                    transform: 'none'
+                  }}>
+                    <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
                   </button>
                 </form>
               </li>
@@ -219,7 +241,21 @@ const Navbar = () => {
                   type="button"
                   aria-label={user ? 'Cuenta' : 'Ingresar'}
                 >
-                  <BsPersonCircle size={26} color="#2196f3" />
+                  {user?.fotoPerfil ? (
+                    <img 
+                      src={`http://localhost:8080${user.fotoPerfil}`} 
+                      alt="Foto de perfil" 
+                      style={{ 
+                        width: 32, 
+                        height: 32, 
+                        borderRadius: '50%', 
+                        objectFit: 'cover',
+                        border: '1px solid #ececf3'
+                      }} 
+                    />
+                  ) : (
+                    <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
+                  )}
                 </button>
                 
                 {/* Indicador de sanción */}
@@ -253,16 +289,169 @@ const Navbar = () => {
                     <FaExclamationTriangle size={12} />
                   </div>
                 )}
-                {/* Menú desplegable solo si está logueado */}
-                {user && menuOpen && (
-                  <div ref={menuRef} style={{ position: 'absolute', right: 0, top: 44, minWidth: 180, background: '#fff', border: '1.5px solid #ececf3', borderRadius: 12, boxShadow: '0 4px 24px rgba(25,118,210,0.08)', zIndex: 1000 }}>
-                    <Link to="/ajustes" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Ajustes</Link>
-                    <Link to="/mispublicaciones" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mis publicaciones</Link>
-                    <Link to="/misofertas" className="dropdown-item" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#222' }}>Mis ofertas</Link>
-                    <div className="dropdown-divider" style={{ borderTop: '1px solid #ececf3', margin: 0 }}></div>
-                    <button className="dropdown-item text-danger" style={{ fontSize: '0.97em', padding: '0.7em 1.2em', color: '#e74c3c', background: 'none', border: 'none', textAlign: 'left' }} onClick={() => { handleLogout(); setMenuOpen(false); }}>Cerrar sesión</button>
-                  </div>
-                )}
+                                 {/* Menú desplegable solo si está logueado */}
+                 {user && menuOpen && (
+                   <div ref={menuRef} style={{ 
+                     position: 'absolute', 
+                     right: 0, 
+                     top: 50, 
+                     minWidth: 220, 
+                     background: '#fff', 
+                     border: 'none', 
+                     borderRadius: 16, 
+                     boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 4px 16px rgba(25,118,210,0.08)', 
+                     zIndex: 1000,
+                     padding: '12px 0',
+                     backdropFilter: 'blur(10px)',
+                     border: '1px solid rgba(255,255,255,0.2)'
+                   }}>
+                     <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0f0f0' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                         {user?.fotoPerfil ? (
+                           <img 
+                             src={`http://localhost:8080${user.fotoPerfil}`} 
+                             alt="Foto de perfil" 
+                             style={{ 
+                               width: 40, 
+                               height: 40, 
+                               borderRadius: '50%', 
+                               objectFit: 'cover',
+                               border: '2px solid #e3f2fd'
+                             }} 
+                           />
+                         ) : (
+                           <div style={{
+                             width: 40,
+                             height: 40,
+                             borderRadius: '50%',
+                             background: '#e3f2fd',
+                             display: 'flex',
+                             alignItems: 'center',
+                             justifyContent: 'center',
+                             border: '2px solid #e3f2fd'
+                           }}>
+                             <i className="fas fa-user" style={{ fontSize: '18px', color: '#1976d2' }}></i>
+                           </div>
+                         )}
+                         <div>
+                           <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '14px' }}>
+                             {user.nombre} {user.apellido}
+                           </div>
+                           <div style={{ color: '#666', fontSize: '12px' }}>
+                             {user.email}
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                     
+                     <div style={{ padding: '8px 0' }}>
+                                               <Link to="/ajustes" className="dropdown-item" style={{ 
+                          fontSize: '14px', 
+                          padding: '12px 20px', 
+                          color: '#333',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={e => { 
+                          e.currentTarget.style.background = '#f8f9fa'; 
+                          e.currentTarget.style.color = '#1976d2';
+                          e.currentTarget.querySelector('i').style.color = '#1976d2';
+                        }}
+                        onMouseOut={e => { 
+                          e.currentTarget.style.background = 'transparent'; 
+                          e.currentTarget.style.color = '#333';
+                          e.currentTarget.querySelector('i').style.color = '#666';
+                        }}>
+                          <i className="fas fa-cog" style={{ width: '16px', color: '#666' }}></i>
+                          Ajustes
+                        </Link>
+                       
+                                               <Link to="/mispublicaciones" className="dropdown-item" style={{ 
+                          fontSize: '14px', 
+                          padding: '12px 20px', 
+                          color: '#333',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={e => { 
+                          e.currentTarget.style.background = '#f8f9fa'; 
+                          e.currentTarget.style.color = '#1976d2';
+                          e.currentTarget.querySelector('i').style.color = '#1976d2';
+                        }}
+                        onMouseOut={e => { 
+                          e.currentTarget.style.background = 'transparent'; 
+                          e.currentTarget.style.color = '#333';
+                          e.currentTarget.querySelector('i').style.color = '#666';
+                        }}>
+                          <i className="fas fa-box" style={{ width: '16px', color: '#666' }}></i>
+                          Mis publicaciones
+                        </Link>
+                       
+                                               <Link to="/misofertas" className="dropdown-item" style={{ 
+                          fontSize: '14px', 
+                          padding: '12px 20px', 
+                          color: '#333',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={e => { 
+                          e.currentTarget.style.background = '#f8f9fa'; 
+                          e.currentTarget.style.color = '#1976d2';
+                          e.currentTarget.querySelector('i').style.color = '#1976d2';
+                        }}
+                        onMouseOut={e => { 
+                          e.currentTarget.style.background = 'transparent'; 
+                          e.currentTarget.style.color = '#333';
+                          e.currentTarget.querySelector('i').style.color = '#666';
+                        }}>
+                          <i className="fas fa-gavel" style={{ width: '16px', color: '#666' }}></i>
+                          Mis ofertas
+                        </Link>
+                     </div>
+                     
+                                           <div style={{ padding: '8px 20px', borderTop: '1px solid #f0f0f0' }}>
+                        <button 
+                          className="dropdown-item" 
+                          style={{ 
+                            fontSize: '14px', 
+                            padding: '12px 20px', 
+                            color: 'white', 
+                            background: '#ff6b6b', 
+                            border: 'none', 
+                            textAlign: 'left',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            width: '100%',
+                            borderRadius: '8px',
+                            margin: '0'
+                          }} 
+                          onClick={() => { handleLogout(); setMenuOpen(false); }}
+                          onMouseOver={e => { 
+                            e.currentTarget.style.background = '#ff5252'; 
+                            e.currentTarget.style.color = 'white';
+                          }}
+                          onMouseOut={e => { 
+                            e.currentTarget.style.background = '#ff6b6b'; 
+                            e.currentTarget.style.color = 'white';
+                          }}>
+                          <i className="fas fa-sign-out-alt" style={{ width: '16px', color: 'white' }}></i>
+                          Cerrar sesión
+                        </button>
+                      </div>
+                   </div>
+                 )}
               </li>
             </ul>
           </div>
@@ -297,8 +486,19 @@ const Navbar = () => {
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ borderRadius: 20, fontSize: '0.98em', padding: '0.45em 1.2em', marginLeft: -38, zIndex: 2, background: '#1976d2', border: 'none', boxShadow: 'none' }}>
-              <span className="bi bi-search" style={{ fontSize: '1.1em' }}>🔍</span>
+            <button className="btn btn-primary" type="submit" style={{ 
+              borderRadius: 20, 
+              fontSize: '0.98em', 
+              padding: '0.45em 1.2em', 
+              marginLeft: -38, 
+              zIndex: 2, 
+              background: '#1976d2', 
+              border: 'none', 
+              boxShadow: 'none',
+              transition: 'none',
+              transform: 'none'
+            }}>
+              <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
             </button>
           </form>
           <Link className="nav-link py-2" to="/" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
@@ -320,15 +520,29 @@ const Navbar = () => {
               <Link to="/misofertas" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis ofertas</Link>
               <button className="btn btn-outline-danger mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>Cerrar sesión</button>
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-                <button
-                  className="btn btn-light d-flex align-items-center justify-content-center mx-auto mt-2"
-                  style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                  onClick={() => { setMenuOpen(open => !open); }}
-                  type="button"
-                  aria-label="Cuenta"
-                >
-                  <BsPersonCircle size={26} color="#2196f3" />
-                </button>
+                                 <button
+                   className="btn btn-light d-flex align-items-center justify-content-center mx-auto mt-2"
+                   style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                   onClick={() => { setMenuOpen(open => !open); }}
+                   type="button"
+                   aria-label="Cuenta"
+                 >
+                   {user?.fotoPerfil ? (
+                     <img 
+                       src={`http://localhost:8080${user.fotoPerfil}`} 
+                       alt="Foto de perfil" 
+                       style={{ 
+                         width: 32, 
+                         height: 32, 
+                         borderRadius: '50%', 
+                         objectFit: 'cover',
+                         border: '1px solid #ececf3'
+                       }} 
+                     />
+                   ) : (
+                     <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
+                   )}
+                 </button>
                 
                 {/* Indicador de sanción en móvil */}
                 {sancionesInfo && sancionesInfo.sancionesDisponibles === 1 && (
@@ -371,7 +585,7 @@ const Navbar = () => {
               type="button"
               aria-label="Ingresar"
             >
-              <BsPersonCircle size={26} color="#2196f3" />
+              <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
             </button>
           )}
         </div>

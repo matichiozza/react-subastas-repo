@@ -5,23 +5,43 @@ import Footer from './Footer';
 import API_BASE_URL from '../config/api';
 
 const categorias = [
-  { nombre: 'Computación', icono: '🖥️', color: '#1976d2', grad: 'linear-gradient(135deg, #1976d2 60%, #64b5f6 100%)' },
-  { nombre: 'Calzado', icono: '👟', color: '#e67e22', grad: 'linear-gradient(135deg, #e67e22 60%, #f6c16a 100%)' },
-  { nombre: 'Moda', icono: '👗', color: '#8e24aa', grad: 'linear-gradient(135deg, #8e24aa 60%, #ce93d8 100%)' },
-  { nombre: 'Vehículos', icono: '🚗', color: '#388e3c', grad: 'linear-gradient(135deg, #388e3c 60%, #81c784 100%)' },
+  { 
+    nombre: 'Computación', 
+    icono: 'fas fa-laptop', 
+    color: '#1976d2', 
+    grad: 'linear-gradient(135deg, rgba(13, 71, 161, 0.95) 0%, rgba(21, 101, 192, 0.90) 100%)'
+  },
+  { 
+    nombre: 'Calzado', 
+    icono: 'fas fa-shoe-prints', 
+    color: '#64b5f6', 
+    grad: 'linear-gradient(135deg, rgba(26, 35, 126, 0.95) 0%, rgba(40, 53, 147, 0.90) 100%)'
+  },
+  { 
+    nombre: 'Moda', 
+    icono: 'fas fa-tshirt', 
+    color: '#7b1fa2', 
+    grad: 'linear-gradient(135deg, rgba(74, 20, 140, 0.95) 0%, rgba(106, 27, 154, 0.90) 100%)'
+  },
+  { 
+    nombre: 'Vehículos', 
+    icono: 'fas fa-car', 
+    color: '#e91e63', 
+    grad: 'linear-gradient(135deg, rgba(136, 14, 79, 0.95) 0%, rgba(173, 20, 87, 0.90) 100%)'
+  },
 ];
 
 const beneficios = [
-  { icono: '🔒', titulo: 'Seguridad', desc: 'Tus datos y transacciones están protegidos.' },
-  { icono: '⚡', titulo: 'Rapidez', desc: 'Encuentra y oferta en segundos.' },
-  { icono: '💬', titulo: 'Soporte', desc: 'Atención personalizada ante cualquier duda.' },
-  { icono: '🌎', titulo: 'Variedad', desc: 'Miles de productos y categorías.' },
+  { icono: 'fas fa-shield-alt', titulo: 'Seguridad', desc: 'Tus datos y transacciones están protegidos.' },
+  { icono: 'fas fa-bolt', titulo: 'Rapidez', desc: 'Encuentra y oferta en segundos.' },
+  { icono: 'fas fa-headset', titulo: 'Soporte', desc: 'Atención personalizada ante cualquier duda.' },
+  { icono: 'fas fa-globe', titulo: 'Variedad', desc: 'Miles de productos y categorías.' },
 ];
 
 const testimonios = [
-  { nombre: 'Lucía', texto: '¡Vendí mi bici en menos de 24hs! Súper fácil y seguro.', avatar: '👩' },
-  { nombre: 'Carlos', texto: 'Me encanta la variedad y la atención al cliente.', avatar: '🧔' },
-  { nombre: 'Sofía', texto: 'Ofertar es adictivo, ya gané varias subastas.', avatar: '👩‍🦰' },
+  { nombre: 'Lucía', texto: '¡Vendí mi bici en menos de 24hs! Súper fácil y seguro.', avatar: 'fas fa-user' },
+  { nombre: 'Carlos', texto: 'Me encanta la variedad y la atención al cliente.', avatar: 'fas fa-user' },
+  { nombre: 'Sofía', texto: 'Ofertar es adictivo, ya gané varias subastas.', avatar: 'fas fa-user' },
 ];
 
 const preguntas = [
@@ -182,33 +202,92 @@ const Home = () => {
                   borderRadius: 22,
                   border: 'none',
                   background: cat.grad,
-                  boxShadow: '0 4px 24px rgba(25,118,210,0.10)',
+                  boxShadow: '0 4px 24px rgba(25,118,210,0.15)',
                   cursor: 'pointer',
                   transition: 'transform 0.18s, box-shadow 0.18s',
                   color: '#fff',
                   position: 'relative',
                   overflow: 'hidden',
-                  minHeight: 170,
+                  minHeight: 200,
                   zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
                 onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.nombre)}`)}
                 onMouseOver={e => {
                   e.currentTarget.style.transform = 'translateY(-6px) scale(1.04)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(25,118,210,0.18)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(25,118,210,0.25)';
                 }}
                 onMouseOut={e => {
                   e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(25,118,210,0.10)';
+                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(25,118,210,0.15)';
                 }}
               >
+                {/* Elemento decorativo de fondo */}
                 <div style={{
-                  fontSize: 54,
-                  marginBottom: 14,
-                  filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.10))',
-                  textShadow: '0 2px 12px rgba(0,0,0,0.10)',
-                }}>{cat.icono}</div>
-                <div style={{ fontWeight: 700, fontSize: '1.18em', letterSpacing: '-0.5px', textShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>{cat.nombre}</div>
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 8, background: 'rgba(255,255,255,0.13)', borderBottomLeftRadius: 22, borderBottomRightRadius: 22 }} />
+                  position: 'absolute',
+                  top: -50,
+                  right: -50,
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.1)',
+                  zIndex: 0
+                }} />
+                
+                {/* Nombre de la categoría - más prominente */}
+                <div style={{ 
+                  fontWeight: 800, 
+                  fontSize: '1.8em', 
+                  letterSpacing: '-0.5px', 
+                  textShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                  marginBottom: 20,
+                  textTransform: 'uppercase',
+                  lineHeight: 1.1,
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  {cat.nombre}
+                </div>
+                
+                {/* Icono más grande y centrado */}
+                <div style={{
+                  fontSize: 64,
+                  marginBottom: 20,
+                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
+                  textShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                  color: '#fff',
+                  opacity: 0.95,
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  <i className={cat.icono}></i>
+                </div>
+                
+                {/* Línea decorativa en el centro */}
+                <div style={{ 
+                  width: 60, 
+                  height: 3, 
+                  background: 'rgba(255,255,255,0.4)', 
+                  borderRadius: 2,
+                  marginBottom: 15,
+                  position: 'relative',
+                  zIndex: 1
+                }} />
+                
+                {/* Línea decorativa inferior */}
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: 0, 
+                  left: 0, 
+                  right: 0, 
+                  height: 8, 
+                  background: 'rgba(255,255,255,0.2)', 
+                  borderBottomLeftRadius: 22, 
+                  borderBottomRightRadius: 22 
+                }} />
               </div>
             </div>
           ))}
@@ -217,7 +296,7 @@ const Home = () => {
 
       {/* SUBASTAS DESTACADAS */}
       <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>Subastas destacadas</h3>
+        <h3 className="fw-bold mb-5 text-center pt-4" style={{ color: '#1976d2' }}>Subastas destacadas</h3>
         {loading ? (
           <div className="text-center">Cargando...</div>
         ) : subastasDestacadas.length === 0 ? (
@@ -234,7 +313,7 @@ const Home = () => {
                     </div>
                   ) : (
                     <div style={{ height: 700, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
-                      <span role="img" aria-label="sin imagen">🖼️</span>
+                      <i className="fas fa-image"></i>
                     </div>
                   )}
                   <div className="p-2 d-flex flex-column justify-content-between h-100">
@@ -257,7 +336,7 @@ const Home = () => {
                     </div>
                     {/* Fecha de finalización */}
                     <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
-                      <span role="img" aria-label="fin">⏰</span> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
+                      <i className="fas fa-clock" style={{ marginRight: '4px' }}></i> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
                     </div>
                     {/* Usuario */}
                     <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
@@ -265,7 +344,7 @@ const Home = () => {
                         <img src={`${API_BASE_URL}${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
                       ) : (
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
-                          <span role="img" aria-label="user">👤</span>
+                          <i className="fas fa-user"></i>
                         </div>
                       )}
                       <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
@@ -290,22 +369,49 @@ const Home = () => {
         <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>¿Cómo funciona?</h3>
         <div className="row justify-content-center g-4">
           <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ borderRadius: 16, border: 'none', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.07)' }}>
-              <div style={{ fontSize: 38, marginBottom: 10 }}>📝</div>
+            <div className="card text-center p-4 h-100" style={{ 
+              borderRadius: 16, 
+              border: 'none', 
+              background: '#fff', 
+              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-user-plus"></i></div>
               <h6 className="fw-bold mb-2">1. Regístrate</h6>
               <div>Crea tu cuenta gratis y accede a todas las funciones.</div>
             </div>
           </div>
           <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ borderRadius: 16, border: 'none', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.07)' }}>
-              <div style={{ fontSize: 38, marginBottom: 10 }}>🔎</div>
+            <div className="card text-center p-4 h-100" style={{ 
+              borderRadius: 16, 
+              border: 'none', 
+              background: '#fff', 
+              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-search"></i></div>
               <h6 className="fw-bold mb-2">2. Encuentra y oferta</h6>
               <div>Busca productos, haz tu oferta y sigue la subasta en tiempo real.</div>
             </div>
           </div>
           <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ borderRadius: 16, border: 'none', background: '#fff', boxShadow: '0 2px 12px rgba(25,118,210,0.07)' }}>
-              <div style={{ fontSize: 38, marginBottom: 10 }}>🏆</div>
+            <div className="card text-center p-4 h-100" style={{ 
+              borderRadius: 16, 
+              border: 'none', 
+              background: '#fff', 
+              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-trophy"></i></div>
               <h6 className="fw-bold mb-2">3. Gana y recibe</h6>
               <div>Si tu oferta es la más alta al finalizar, ¡ganaste! Coordina la entrega fácilmente.</div>
             </div>
@@ -315,8 +421,8 @@ const Home = () => {
 
       {/* BENEFICIOS */}
       <section className="container mb-5">
-        <div className="text-center mb-5">
-          <h2 className="fw-bold mb-3" style={{ color: '#1976d2', fontSize: '2.5em' }}>¿Por qué elegirnos?</h2>
+        <div className="text-center mb-4">
+          <h2 className="fw-bold mb-4 pt-5" style={{ color: '#1976d2', fontSize: '2.5em' }}>¿Por qué elegirnos?</h2>
           <p className="lead" style={{ color: '#666', fontSize: '1.2em', maxWidth: 600, margin: '0 auto' }}>
             Descubre las ventajas que hacen de SubastasCorp la plataforma líder en subastas online
           </p>
@@ -371,7 +477,7 @@ const Home = () => {
                       color: '#fff'
                     }}
                   >
-                    {b.icono}
+                    <i className={b.icono}></i>
                   </div>
                   
                   {/* Título */}
@@ -404,26 +510,74 @@ const Home = () => {
         <div className="row mt-5 g-4 justify-content-center">
           <div className="col-12 col-md-3 text-center">
             <div className="p-4">
-              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>10K+</div>
-              <div style={{ color: '#666', fontSize: '1.1em' }}>Usuarios activos</div>
+              <div className="fw-bold" style={{ 
+                color: '#1976d2', 
+                fontSize: '3em', 
+                marginBottom: 8,
+                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
+                fontWeight: 800
+              }}>10K+</div>
+              <div style={{ 
+                color: '#666', 
+                fontSize: '1.1em',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>Usuarios activos</div>
             </div>
           </div>
           <div className="col-12 col-md-3 text-center">
             <div className="p-4">
-              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>50K+</div>
-              <div style={{ color: '#666', fontSize: '1.1em' }}>Subastas completadas</div>
+              <div className="fw-bold" style={{ 
+                color: '#1976d2', 
+                fontSize: '3em', 
+                marginBottom: 8,
+                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
+                fontWeight: 800
+              }}>50K+</div>
+              <div style={{ 
+                color: '#666', 
+                fontSize: '1.1em',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>Subastas completadas</div>
             </div>
           </div>
           <div className="col-12 col-md-3 text-center">
             <div className="p-4">
-              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>99%</div>
-              <div style={{ color: '#666', fontSize: '1.1em' }}>Satisfacción</div>
+              <div className="fw-bold" style={{ 
+                color: '#1976d2', 
+                fontSize: '3em', 
+                marginBottom: 8,
+                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
+                fontWeight: 800
+              }}>99%</div>
+              <div style={{ 
+                color: '#666', 
+                fontSize: '1.1em',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>Satisfacción</div>
             </div>
           </div>
           <div className="col-12 col-md-3 text-center">
             <div className="p-4">
-              <div className="fw-bold" style={{ color: '#1976d2', fontSize: '2.5em', marginBottom: 8 }}>24/7</div>
-              <div style={{ color: '#666', fontSize: '1.1em' }}>Soporte disponible</div>
+              <div className="fw-bold" style={{ 
+                color: '#1976d2', 
+                fontSize: '3em', 
+                marginBottom: 8,
+                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
+                fontWeight: 800
+              }}>24/7</div>
+              <div style={{ 
+                color: '#666', 
+                fontSize: '1.1em',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>Soporte disponible</div>
             </div>
           </div>
         </div>

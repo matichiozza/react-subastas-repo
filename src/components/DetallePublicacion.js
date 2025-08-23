@@ -806,7 +806,7 @@ const DetallePublicacion = () => {
                 <img src={`http://localhost:8080${publicacion.usuario.fotoPerfil}`} alt={publicacion.usuario.username} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
               ) : (
                 <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 24 }}>
-                  <span role="img" aria-label="user">👤</span>
+                  <i className="fas fa-user"></i>
                 </div>
               )}
               <div>
@@ -826,21 +826,21 @@ const DetallePublicacion = () => {
                 <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${formatearMonto(incremento)}</span>
               </div>
               <div style={{ color: '#666', fontSize: '0.95em' }}>
-                <span role="img" aria-label="base">📊</span> Precio base: ${formatearMonto(publicacion.precioInicial)}
+                <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Precio base: ${formatearMonto(publicacion.precioInicial)}
               </div>
             </div>
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
-              <span role="img" aria-label="fin">⏰</span> Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
+              <i className="fas fa-clock" style={{ marginRight: 8 }}></i>Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
             </div>
             <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
-              <span role="img" aria-label="ofertas">💸</span> Ofertas totales: {ofertas.length}
+              <i className="fas fa-coins" style={{ marginRight: 8 }}></i>Ofertas totales: {ofertas.length}
             </div>
             
             {/* Información del ganador si está finalizada */}
             {publicacion.estado === 'FINALIZADO' && publicacion.ganador && (
               <div className="alert alert-success mt-3" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
                 <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
-                  🏆 Subasta finalizada - Ganador:
+                  <i className="fas fa-trophy" style={{ marginRight: 8 }}></i>Subasta finalizada - Ganador:
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                   {publicacion.ganador.fotoPerfil ? (
@@ -851,7 +851,7 @@ const DetallePublicacion = () => {
                     />
                   ) : (
                     <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20 }}>
-                      👤
+                      <i className="fas fa-user"></i>
                     </div>
                   )}
                   <div>
@@ -883,7 +883,7 @@ const DetallePublicacion = () => {
                       }
                     }}
                   >
-                    💬 Abrir chat de coordinación
+                    <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Abrir chat de coordinación
                   </button>
                 )}
               </div>
@@ -892,7 +892,7 @@ const DetallePublicacion = () => {
             {publicacion.estado === 'FINALIZADO_SIN_OFERTAS' && (
               <div className="alert alert-info mt-3" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
                 <div style={{ color: '#0c5460', textAlign: 'center' }}>
-                  📦 Esta subasta finalizó sin ofertas
+                  <i className="fas fa-box" style={{ marginRight: 8 }}></i>Esta subasta finalizó sin ofertas
                 </div>
               </div>
             )}
@@ -1314,7 +1314,9 @@ const DetallePublicacion = () => {
               <div style={{ display: 'grid', gap: 20 }}>
                 <div>
                   <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>👤</span>Nombre completo
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-user"></i>
+                    </span>Nombre completo
                   </label>
                   <input
                     type="text"
@@ -1332,7 +1334,9 @@ const DetallePublicacion = () => {
                 
                 <div>
                   <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>🔢</span>Número de tarjeta
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-credit-card"></i>
+                    </span>Número de tarjeta
                   </label>
                   <input
                     type="text"
@@ -1350,9 +1354,11 @@ const DetallePublicacion = () => {
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>📅</span>Vencimiento
-                    </label>
+                                          <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                        <span style={{ marginRight: 8 }}>
+                          <i className="fas fa-calendar-alt"></i>
+                        </span>Vencimiento
+                      </label>
                     <input
                       type="text"
                       className={`form-control ${erroresTarjeta.fechaVencimiento ? 'is-invalid' : ''}`}
@@ -1369,7 +1375,9 @@ const DetallePublicacion = () => {
                   
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                      <span style={{ marginRight: 8 }}>🔐</span>Código de seguridad
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-lock"></i>
+                      </span>Código de seguridad
                     </label>
                     <input
                       type="text"
@@ -1388,7 +1396,9 @@ const DetallePublicacion = () => {
                 
                 <div>
                   <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>🆔</span>DNI del titular
+                    <span style={{ marginRight: 8 }}>
+                      <i className="fas fa-id-card"></i>
+                    </span>DNI del titular
                   </label>
                   <input
                     type="text"
@@ -1488,7 +1498,7 @@ const DetallePublicacion = () => {
 
             <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: '12px', marginBottom: '20px', fontSize: '0.95em' }}>
               <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
-                📊 Resumen de tu participación:
+                <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Resumen de tu participación:
               </div>
               <div style={{ color: '#856404' }}>
                 <div>• Ofertas realizadas: {ofertas.filter(o => o.usuario?.id === user?.id).length}</div>

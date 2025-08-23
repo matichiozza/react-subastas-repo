@@ -7,12 +7,12 @@ const Ayuda = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const sections = [
-    { id: 'general', title: 'General', icon: '🏠' },
-    { id: 'vender', title: 'Vender', icon: '📤' },
-    { id: 'comprar', title: 'Comprar', icon: '🛒' },
-    { id: 'cuenta', title: 'Mi Cuenta', icon: '👤' },
-    { id: 'seguridad', title: 'Seguridad', icon: '🔒' },
-    { id: 'contacto', title: 'Contacto', icon: '📞' }
+    { id: 'general', title: 'General', icon: 'fas fa-home' },
+    { id: 'vender', title: 'Vender', icon: 'fas fa-upload' },
+    { id: 'comprar', title: 'Comprar', icon: 'fas fa-shopping-cart' },
+    { id: 'cuenta', title: 'Mi Cuenta', icon: 'fas fa-user' },
+    { id: 'seguridad', title: 'Seguridad', icon: 'fas fa-shield-alt' },
+    { id: 'contacto', title: 'Contacto', icon: 'fas fa-phone' }
   ];
 
   const faqs = {
@@ -195,7 +195,7 @@ const Ayuda = () => {
                   color: 'white',
                   padding: '12px 20px'
                 }}>
-                  <span role="img" aria-label="buscar">🔍</span>
+                  <i className="fas fa-search"></i>
                 </button>
               </div>
             </div>
@@ -225,7 +225,7 @@ const Ayuda = () => {
                        }}
                        onClick={() => setActiveSection(section.id)}
                      >
-                       <span style={{ fontSize: '16px' }}>{section.icon}</span>
+                       <i className={section.icon} style={{ fontSize: '16px' }}></i>
                        {section.title}
                      </button>
                    ))}
@@ -242,7 +242,7 @@ const Ayuda = () => {
                   // Mostrar resultados de búsqueda global
                   <div>
                                          <div className="d-flex align-items-center mb-4">
-                       <span style={{ fontSize: '24px', marginRight: '12px' }}>🔍</span>
+                       <i className="fas fa-search" style={{ fontSize: '24px', marginRight: '12px', color: '#1976d2' }}></i>
                        <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
                          Resultados de búsqueda para "{searchTerm}"
                        </h3>
@@ -253,7 +253,7 @@ const Ayuda = () => {
                                                  {getAllSearchResults().map((result, resultIndex) => (
                            <div key={resultIndex} className="mb-4">
                              <div className="d-flex align-items-center mb-3">
-                               <span style={{ fontSize: '20px', marginRight: '8px' }}>{result.sectionIcon}</span>
+                               <i className={result.sectionIcon} style={{ fontSize: '20px', marginRight: '8px', color: '#1976d2' }}></i>
                                <h5 className="fw-bold mb-0" style={{ color: '#666' }}>{result.sectionTitle}</h5>
                              </div>
                             <div className="accordion" id={`searchAccordion${resultIndex}`}>
@@ -297,7 +297,7 @@ const Ayuda = () => {
                       </div>
                     ) : (
                       <div className="text-center py-5">
-                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                        <i className="fas fa-search" style={{ fontSize: '48px', marginBottom: '16px', color: '#ccc' }}></i>
                         <h4 className="fw-bold mb-2" style={{ color: '#666' }}>No se encontraron resultados</h4>
                         <p className="text-muted">Intenta con otros términos de búsqueda</p>
                       </div>
@@ -307,9 +307,7 @@ const Ayuda = () => {
                   // Mostrar sección activa
                   <>
                     <div className="d-flex align-items-center mb-4">
-                      <span style={{ fontSize: '24px', marginRight: '12px' }}>
-                        {sections.find(s => s.id === activeSection)?.icon}
-                      </span>
+                      <i className={sections.find(s => s.id === activeSection)?.icon} style={{ fontSize: '24px', marginRight: '12px', color: '#1976d2' }}></i>
                       <h3 className="fw-bold mb-0" style={{ color: '#1976d2' }}>
                         {sections.find(s => s.id === activeSection)?.title}
                       </h3>
