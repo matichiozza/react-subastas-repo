@@ -156,9 +156,6 @@ const Footer = () => {
           <div className="mb-2">
             © {new Date().getFullYear()} SubastasCorp. Todos los derechos reservados.
           </div>
-          <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
-            Desarrollado para la comunidad de subastas
-          </div>
         </div>
       </div>
     </footer>

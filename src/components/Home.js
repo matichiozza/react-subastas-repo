@@ -144,49 +144,220 @@ const Home = () => {
   return (
     <div style={{ background: '#f7f8fa' }}>
       {/* HERO PRINCIPAL */}
-      <section style={{ background: 'linear-gradient(90deg, #1976d2 60%, #5a48f6 100%)', color: '#fff', padding: '6em 0 5em 0', position: 'relative' }}>
-        <div className="container text-center">
-          <div style={{ maxWidth: 720, margin: '0 auto', marginTop: '-2em' }}>
-            <h1 style={{ fontWeight: 800, fontSize: '2.7em', lineHeight: 1.1, marginBottom: 18 }}>¡Descubre, oferta y gana en <span style={{ fontWeight: 700, color: '#fff' }}>Subastas</span><span style={{ color: '#ffd54f', fontWeight: 400 }}>Corp</span>!</h1>
-            <p style={{ fontSize: '1.25em', color: '#e3e3e3', marginBottom: 28 }}>La plataforma más moderna y segura para comprar y vender en subastas online.</p>
-            <button 
-              className="btn btn-lg fw-bold" 
-              style={{ 
-                borderRadius: 20, 
-                fontSize: '1.2em', 
-                padding: '0.8em 2em',
-                background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
-                color: '#1976d2',
-                border: '2px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 8px 32px rgba(255,255,255,0.2), 0 4px 16px rgba(25,118,210,0.15)',
-                transition: 'all 0.3s ease',
-                textShadow: 'none',
-                position: 'relative',
-                overflow: 'hidden'
-              }} 
-              onClick={() => navigate('/publicaciones')}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,255,255,0.3), 0 6px 20px rgba(25,118,210,0.2)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #fff 0%, #ffffff 100%)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.2), 0 4px 16px rgba(25,118,210,0.15)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)';
-              }}
-            >
-              <span style={{ position: 'relative', zIndex: 2 }}>VER SUBASTAS</span>
-            </button>
+             <section style={{ 
+         background: `linear-gradient(135deg, rgba(25, 118, 210, 0.85) 0%, rgba(90, 72, 246, 0.8) 100%), url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+         backgroundSize: 'cover',
+         backgroundPosition: 'center',
+         backgroundAttachment: 'fixed',
+         color: '#fff', 
+         padding: '5em 0 4em 0', 
+         position: 'relative',
+         overflow: 'hidden'
+       }}>
+        {/* Elementos decorativos de fondo */}
+        <div style={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          filter: 'blur(40px)'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: -150,
+          left: -150,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.08)',
+          filter: 'blur(50px)'
+        }} />
+        
+        <div className="container text-center position-relative" style={{ zIndex: 2 }}>
+          <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            {/* Badge superior */}
+            <div style={{
+              display: 'inline-block',
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '50px',
+              padding: '8px 24px',
+              marginBottom: '24px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              fontSize: '0.95em',
+              fontWeight: '500',
+              letterSpacing: '0.5px'
+            }}>
+              🚀 Plataforma líder en subastas online
+            </div>
+            
+            {/* Título principal */}
+                         <h1 style={{ 
+               fontWeight: 800, 
+               fontSize: '3.5em', 
+               lineHeight: 1.1, 
+               marginBottom: '24px',
+               textShadow: '0 4px 20px rgba(0,0,0,0.3)',
+               color: '#fff'
+             }}>
+               ¡Descubre, oferta y gana en{' '}
+               <span style={{ 
+                 color: '#fff'
+               }}>
+                 SubastasCorp
+               </span>
+               !
+             </h1>
+            
+            {/* Descripción */}
+            <p style={{ 
+              fontSize: '1.4em', 
+              color: '#e8f4fd', 
+              marginBottom: '32px',
+              maxWidth: '600px',
+              margin: '0 auto 32px auto',
+              lineHeight: 1.6,
+              textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }}>
+              La plataforma más moderna y segura para comprar y vender en subastas online. 
+              Conectamos compradores y vendedores de manera eficiente y confiable.
+            </p>
+            
+                         {/* Botones de acción */}
+             <div className="d-flex gap-3 justify-content-center flex-wrap" style={{ marginBottom: '2rem' }}>
+               <button 
+                 className="btn btn-lg fw-bold" 
+                 style={{ 
+                   borderRadius: '50px', 
+                   fontSize: '1.1em', 
+                   padding: '16px 32px',
+                   background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
+                   color: '#1976d2',
+                   border: '2px solid rgba(255,255,255,0.3)',
+                   boxShadow: '0 8px 32px rgba(255,255,255,0.3), 0 4px 16px rgba(25,118,210,0.2)',
+                   transition: 'all 0.3s ease',
+                   textShadow: 'none',
+                   position: 'relative',
+                   overflow: 'hidden',
+                   minWidth: '180px'
+                 }} 
+                 onClick={() => navigate('/publicaciones')}
+                 onMouseEnter={(e) => {
+                   e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                   e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,255,255,0.4), 0 6px 20px rgba(25,118,210,0.3)';
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                   e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.3), 0 4px 16px rgba(25,118,210,0.2)';
+                 }}
+               >
+                 <i className="fas fa-gavel me-2"></i>
+                 VER SUBASTAS
+               </button>
+               
+                              <button 
+                  className="btn btn-lg fw-bold" 
+                  style={{ 
+                    borderRadius: '50px', 
+                    fontSize: '1.1em', 
+                    padding: '16px 32px',
+                    background: 'transparent',
+                    color: '#fff',
+                    border: '2px solid rgba(255,255,255,0.6)',
+                    transition: 'all 0.3s ease',
+                    minWidth: '180px',
+                    backdropFilter: 'blur(10px)'
+                  }} 
+                  onClick={() => token ? navigate('/crear-publicacion') : navigate('/login')}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.8)';
+                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  }}
+                >
+                  <i className="fas fa-plus me-2"></i>
+                  CREAR SUBASTA
+                </button>
+             </div>
+            
+            
           </div>
         </div>
       </section>
 
       {/* BÚSQUEDA RÁPIDA */}
-      <section className="container" style={{ marginTop: -38, marginBottom: 32, zIndex: 2, position: 'relative' }}>
-        <form className="shadow p-3 bg-white rounded-4 d-flex align-items-center gap-2" style={{ maxWidth: 520, margin: '0 auto', boxShadow: '0 2px 12px rgba(25,118,210,0.08)' }} onSubmit={e => { e.preventDefault(); navigate(`/publicaciones?busqueda=${encodeURIComponent(busqueda)}`); }}>
-          <input className="form-control border-0" style={{ fontSize: '1.1em', borderRadius: 12, background: '#f7f8fa' }} type="search" placeholder="Buscar productos..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
-          <button className="btn btn-primary px-4 py-2 fw-bold" style={{ borderRadius: 12 }} type="submit">Buscar</button>
+      <section className="container" style={{ marginTop: -50, marginBottom: 40, zIndex: 10, position: 'relative' }}>
+        <form className="shadow-lg p-4 bg-white rounded-4 d-flex align-items-center gap-3" style={{ 
+          maxWidth: 600, 
+          margin: '0 auto', 
+          boxShadow: '0 8px 32px rgba(25,118,210,0.15), 0 4px 16px rgba(0,0,0,0.1)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)'
+        }} onSubmit={e => { e.preventDefault(); navigate(`/publicaciones?busqueda=${encodeURIComponent(busqueda)}`); }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <i className="fas fa-search" style={{ 
+              position: 'absolute', 
+              left: '16px', 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              color: '#666', 
+              fontSize: '1.1em' 
+            }}></i>
+            <input 
+              className="form-control border-0" 
+              style={{ 
+                fontSize: '1.1em', 
+                borderRadius: 12, 
+                background: '#f8f9fa',
+                padding: '16px 16px 16px 48px',
+                border: '2px solid #e9ecef',
+                transition: 'all 0.3s ease'
+              }} 
+              type="search" 
+              placeholder="¿Qué estás buscando hoy?" 
+              value={busqueda} 
+              onChange={e => setBusqueda(e.target.value)}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#1976d2';
+                e.target.style.boxShadow = '0 0 0 3px rgba(25,118,210,0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e9ecef';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+          <button 
+            className="btn btn-primary px-4 py-3 fw-bold" 
+            style={{ 
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+              border: 'none',
+              fontSize: '1.05em',
+              minWidth: '120px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(25,118,210,0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            type="submit"
+          >
+            <i className="fas fa-search me-2"></i>
+            Buscar
+          </button>
         </form>
       </section>
 

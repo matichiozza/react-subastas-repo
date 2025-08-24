@@ -44,8 +44,24 @@ const Register = () => {
   const [showSugerencias, setShowSugerencias] = useState(false);
   const [searching, setSearching] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [passwordValid, setPasswordValid] = useState(null);
   const sugerenciasRef = useRef();
   const searchTimeoutRef = useRef();
+  const usernameTimeoutRef = useRef();
+
+  // Limpiar timeouts al desmontar
+  useEffect(() => {
+    return () => {
+      if (usernameTimeoutRef.current) {
+        clearTimeout(usernameTimeoutRef.current);
+      }
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,7 +73,53 @@ const Register = () => {
       processedValue = numeros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
     
+    // Validar formato del username (solo letras, números y guiones bajos)
+    if (name === 'username') {
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (value && !usernameRegex.test(value)) {
+        processedValue = value.replace(/[^a-zA-Z0-9_]/g, '');
+      }
+    }
+    
     setFormData({ ...formData, [name]: processedValue });
+    
+    // Validar username en tiempo real
+    if (name === 'username') {
+      // Limpiar timeout anterior
+      if (usernameTimeoutRef.current) {
+        clearTimeout(usernameTimeoutRef.current);
+      }
+      
+      // Si el username está vacío, no validar
+      if (!value.trim()) {
+        setUsernameAvailable(null);
+        return;
+      }
+      
+      // Validar longitud mínima
+      if (value.trim().length < 3) {
+        setUsernameAvailable(false);
+        return;
+      }
+      
+      // Debounce: esperar 500ms antes de validar
+      usernameTimeoutRef.current = setTimeout(async () => {
+        await checkUsernameAvailability(value.trim());
+      }, 500);
+    }
+    
+    // Validar contraseña en tiempo real
+    if (name === 'password') {
+      if (!value.trim()) {
+        setPasswordValid(null);
+      } else if (value.length < 6) {
+        setPasswordValid(false);
+      } else if (value.length > 15) {
+        setPasswordValid(false);
+      } else {
+        setPasswordValid(true);
+      }
+    }
   };
 
   // Autocomplete de dirección optimizado con debounce
@@ -112,6 +174,29 @@ const Register = () => {
     setShowSugerencias(false);
   };
 
+  // Verificar disponibilidad del username
+  const checkUsernameAvailability = async (username) => {
+    if (!username.trim()) return;
+    
+    setCheckingUsername(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/auth/check-username?username=${encodeURIComponent(username)}`);
+      
+      if (res.ok) {
+        const isAvailable = await res.json();
+        setUsernameAvailable(isAvailable);
+      } else {
+        // En caso de error, no cambiar el estado (mantener el anterior)
+        console.error('Error checking username availability:', res.status);
+      }
+    } catch (error) {
+      // En caso de error, no cambiar el estado (mantener el anterior)
+      console.error('Error checking username availability:', error);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Remover puntos del DNI antes de enviar
@@ -142,7 +227,7 @@ const Register = () => {
   };
 
   const canProceed = () => {
-    if (currentStep === 1) return formData.username && formData.password;
+    if (currentStep === 1) return formData.username && formData.username.length >= 3 && formData.password && formData.password.length >= 6 && formData.password.length <= 15 && usernameAvailable === true && passwordValid === true;
     if (currentStep === 2) return formData.nombre && formData.dni;
     return true;
   };
@@ -231,40 +316,161 @@ const Register = () => {
                      Crea tu cuenta de usuario
                    </h3>
                   <div className="row g-3">
-                    <div className="col-12">
-                                           <div className="input-group" style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-                       <span className="input-group-text" style={{ background: '#1976d2', border: 'none', color: 'white' }}>
-                         <i className="fas fa-user"></i>
-                       </span>
-                        <input 
-                          type="text" 
-                          name="username" 
-                          className="form-control border-0" 
-                          placeholder="Nombre de usuario"
-                          value={formData.username} 
-                          onChange={handleChange} 
-                          required 
-                          style={{ padding: '15px', fontSize: '16px' }}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-12">
-                                           <div className="input-group" style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-                       <span className="input-group-text" style={{ background: '#1976d2', border: 'none', color: 'white' }}>
-                         <i className="fas fa-lock"></i>
+                                         <div className="col-12">
+                       <div className="input-group" style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                         <span className="input-group-text" style={{ background: '#1976d2', border: 'none', color: 'white' }}>
+                           <i className="fas fa-user"></i>
                          </span>
-                        <input 
-                          type="password" 
-                          name="password" 
-                          className="form-control border-0" 
-                          placeholder="Contraseña"
-                          value={formData.password} 
-                          onChange={handleChange} 
-                          required 
-                          style={{ padding: '15px', fontSize: '16px' }}
-                        />
-                      </div>
-                    </div>
+                         <input 
+                           type="text" 
+                           name="username" 
+                           className="form-control border-0" 
+                           placeholder="Nombre de usuario (mín. 3 caracteres)"
+                           value={formData.username} 
+                           onChange={handleChange} 
+                           required 
+                           style={{ padding: '15px', fontSize: '16px' }}
+                         />
+                                                   <span className="input-group-text" style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            color: formData.username ? (
+                              formData.username.length < 3 ? '#f44336' : 
+                              usernameAvailable === true ? '#4caf50' : 
+                              usernameAvailable === false ? '#f44336' : '#ccc'
+                            ) : '#ccc',
+                            minWidth: '40px',
+                            justifyContent: 'center'
+                          }}>
+                            {checkingUsername ? (
+                              <span className="spinner-border spinner-border-sm"></span>
+                            ) : formData.username ? (
+                              formData.username.length < 3 ? (
+                                <i className="fas fa-exclamation-triangle"></i>
+                              ) : usernameAvailable === true ? (
+                                <i className="fas fa-check-circle"></i>
+                              ) : usernameAvailable === false ? (
+                                <i className="fas fa-times-circle"></i>
+                              ) : null
+                            ) : null}
+                          </span>
+                       </div>
+                                               {formData.username && formData.username.length < 3 && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '14px',
+                            color: '#f44336',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <i className="fas fa-exclamation-triangle"></i>
+                            Mínimo 3 caracteres
+                          </div>
+                        )}
+                        {formData.username && formData.username.length >= 3 && checkingUsername && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '14px',
+                            color: '#1976d2',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <span className="spinner-border spinner-border-sm"></span>
+                            Verificando disponibilidad...
+                          </div>
+                        )}
+                        {formData.username && formData.username.length >= 3 && !checkingUsername && usernameAvailable === null && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '14px',
+                            color: '#ff9800',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <i className="fas fa-clock"></i>
+                            Escribe para verificar disponibilidad
+                          </div>
+                        )}
+                        {formData.username && formData.username.length >= 3 && !checkingUsername && usernameAvailable !== null && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '14px',
+                            color: usernameAvailable ? '#4caf50' : '#f44336',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <i className={`fas fa-${usernameAvailable ? 'check' : 'times'}-circle`}></i>
+                            {usernameAvailable ? 'Nombre de usuario disponible' : 'Nombre de usuario ya está en uso'}
+                          </div>
+                        )}
+                       <div style={{ 
+                         marginTop: '8px', 
+                         fontSize: '12px',
+                         color: '#666',
+                         fontStyle: 'italic'
+                       }}>
+                         Solo letras, números y guiones bajos (_)
+                       </div>
+                     </div>
+                                         <div className="col-12">
+                       <div className="input-group" style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                         <span className="input-group-text" style={{ background: '#1976d2', border: 'none', color: 'white' }}>
+                           <i className="fas fa-lock"></i>
+                         </span>
+                         <input 
+                           type="password" 
+                           name="password" 
+                           className="form-control border-0" 
+                           placeholder="Contraseña (6-15 caracteres)"
+                           value={formData.password} 
+                           onChange={handleChange} 
+                           required 
+                           style={{ padding: '15px', fontSize: '16px' }}
+                         />
+                         <span className="input-group-text" style={{ 
+                           background: 'transparent', 
+                           border: 'none', 
+                           color: formData.password ? (
+                             passwordValid === true ? '#4caf50' : '#f44336'
+                           ) : '#ccc',
+                           minWidth: '40px',
+                           justifyContent: 'center'
+                         }}>
+                           {formData.password ? (
+                             passwordValid === true ? (
+                               <i className="fas fa-check-circle"></i>
+                             ) : (
+                               <i className="fas fa-times-circle"></i>
+                             )
+                           ) : null}
+                         </span>
+                       </div>
+                                                {formData.password && (
+                           <div style={{ 
+                             marginTop: '8px', 
+                             fontSize: '14px',
+                             color: passwordValid ? '#4caf50' : '#f44336',
+                             display: 'flex',
+                             alignItems: 'center',
+                             gap: '8px'
+                           }}>
+                             <i className={`fas fa-${passwordValid ? 'check' : 'times'}-circle`}></i>
+                             {passwordValid ? 'Contraseña válida' : `Mínimo 6, máximo 15 caracteres (actual: ${formData.password.length})`}
+                           </div>
+                         )}
+                         <div style={{ 
+                           marginTop: '8px', 
+                           fontSize: '12px',
+                           color: '#666',
+                           fontStyle: 'italic'
+                         }}>
+                           La contraseña debe tener entre 6 y 15 caracteres
+                         </div>
+                     </div>
                   </div>
                 </div>
               )}
