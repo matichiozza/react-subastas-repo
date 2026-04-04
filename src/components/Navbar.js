@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 import { FaExclamationTriangle } from 'react-icons/fa';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 
 const Navbar = () => {
   const { user, logout, token } = useContext(AuthContext);

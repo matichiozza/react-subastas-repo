@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaTimes, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 
 const motivosCancelacion = [
   { value: 'PRODUCTO_NO_DISPONIBLE', label: 'Producto no disponible' },

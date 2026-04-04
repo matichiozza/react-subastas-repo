@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 import Footer from './Footer';
 
 const DetallePublicacion = () => {
   const { id } = useParams();
   const { token, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -745,7 +746,7 @@ const DetallePublicacion = () => {
                 }}
               >
                 <img
-                  src={`${API_BASE_URL}${publicacion.imagenes[imgSeleccionada]}`}
+                  src={getImageUrl(publicacion.imagenes[imgSeleccionada])}
                   alt={`Imagen ${imgSeleccionada + 1}`}
                   className="img-fluid"
                   style={{ 
@@ -845,7 +846,7 @@ const DetallePublicacion = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                   {publicacion.ganador.fotoPerfil ? (
                     <img 
-                      src={`${API_BASE_URL}${publicacion.ganador.fotoPerfil}`} 
+                      src={getImageUrl(publicacion.ganador.fotoPerfil)} 
                       alt="Ganador" 
                       style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
                     />
@@ -874,7 +875,7 @@ const DetallePublicacion = () => {
                         });
                         if (res.ok) {
                           const chat = await res.json();
-                          navigate(`/chat/${chat.id}`);
+                          navigate(`/chat/${chat.id}`, { state: { from: location.pathname } });
                         } else {
                           alert('No se pudo acceder al chat');
                         }
@@ -1610,7 +1611,7 @@ const DetallePublicacion = () => {
             }}>
                    {/* Imagen principal con zoom y movimiento */}
                    <img
-                     src={`${API_BASE_URL}${publicacion.imagenes[selectedImageIndex]}`}
+                     src={getImageUrl(publicacion.imagenes[selectedImageIndex])}
                      alt={`Imagen ${selectedImageIndex + 1}`}
                      style={{
                        maxWidth: isZoomed ? '100%' : '95%',
@@ -1680,7 +1681,7 @@ const DetallePublicacion = () => {
                 {publicacion.imagenes.map((img, idx) => (
                   <img
                     key={img}
-                    src={`${API_BASE_URL}${img}`}
+                    src={getImageUrl(img)}
                     alt={`Miniatura ${idx + 1}`}
                          onClick={(e) => {
                            e.stopPropagation();

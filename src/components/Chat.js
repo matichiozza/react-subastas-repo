@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 import Footer from './Footer';
 
 const Chat = () => {
   const { chatId } = useParams();
   const { token, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [chat, setChat] = useState(null);
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState('');
@@ -21,6 +22,12 @@ const Chat = () => {
   const stompClientRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const mensajesProcesadosRef = useRef(new Set()); // Para evitar duplicados
+  const volverA = location.state?.from || '/mispublicaciones';
+  const volverLabel = volverA === '/misofertas'
+    ? 'Volver a mis ofertas'
+    : volverA === '/mispublicaciones'
+      ? 'Volver a mis publicaciones'
+      : 'Volver';
 
   // Auto-scroll simple al final del chat
   const scrollToBottom = () => {
@@ -152,29 +159,57 @@ const Chat = () => {
                  onConnect: () => {
           
           // Suscribirse al topic del chat
-                     stompClient.subscribe(`/topic/chat.${chatId}`, (message) => {
-                            try {
-                 const nuevoMensaje = JSON.parse(message.body);
+          stompClient.subscribe(`/topic/chat.${chatId}`, (message) => {
+            try {
+              const nuevoMensaje = JSON.parse(message.body);
 
-                 // Crear una clave única para el mensaje (sin logs)
-                 const mensajeKey = `${nuevoMensaje.id}-${nuevoMensaje.contenido}-${nuevoMensaje.emisor?.id}-${nuevoMensaje.fechaEnvio}`;
-                 
-                 // Verificar si ya procesamos este mensaje
-                 if (mensajesProcesadosRef.current.has(mensajeKey)) {
-                   return;
-                 }
-                 
-                 // Marcar como procesado
-                 mensajesProcesadosRef.current.add(mensajeKey);
-                 
-                 // Agregar el mensaje
-                 setMensajes(prev => [...prev, nuevoMensaje]);
-               
-                 // Hacer scroll al final cuando llega un nuevo mensaje
-                 setTimeout(() => scrollToBottom(), 100);
-               } catch (error) {
-                 // Silenciar errores de parsing
-               }
+              // Crear una clave única para el mensaje usando el ID real
+              const mensajeKey = nuevoMensaje.id ? `msg-${nuevoMensaje.id}` : null;
+              
+              // Verificar si ya procesamos este mensaje (por ID en el ref)
+              if (mensajeKey && mensajesProcesadosRef.current.has(mensajeKey)) {
+                return;
+              }
+              
+              // Procesar el mensaje del WebSocket
+              setMensajes(prev => {
+                // PRIMERO: Verificar si el mensaje ya existe en la lista (por ID real)
+                if (nuevoMensaje.id) {
+                  const yaExiste = prev.some(m => m.id === nuevoMensaje.id);
+                  if (yaExiste) {
+                    return prev; // Ya existe, no agregar duplicado
+                  }
+                }
+                
+                // SEGUNDO: Si el mensaje es del usuario actual, verificar si hay mensaje optimista pendiente
+                // Si hay uno, ignorar este mensaje del WebSocket (será reemplazado por la respuesta del POST)
+                const esDelUsuarioActual = nuevoMensaje.emisor?.id === user?.id;
+                if (esDelUsuarioActual) {
+                  const tieneMensajeOptimista = prev.some(m => 
+                    typeof m.id === 'string' && m.id.startsWith('temp-')
+                  );
+                  
+                  // Si hay mensaje optimista pendiente, no agregar este mensaje del WebSocket
+                  // El mensaje real llegará en la respuesta del POST y reemplazará al optimista
+                  if (tieneMensajeOptimista) {
+                    return prev;
+                  }
+                }
+                
+                // Marcar como procesado si tiene ID
+                if (mensajeKey) {
+                  mensajesProcesadosRef.current.add(mensajeKey);
+                }
+                
+                // Agregar el mensaje
+                return [...prev, nuevoMensaje];
+              });
+            
+              // Hacer scroll al final cuando llega un nuevo mensaje
+              setTimeout(() => scrollToBottom(), 100);
+            } catch (error) {
+              // Silenciar errores de parsing
+            }
           });
 
           
@@ -216,8 +251,10 @@ const Chat = () => {
     setEnviando(true);
 
     // Crear mensaje optimista (se muestra inmediatamente)
+    // Usar un ID temporal negativo como string para evitar conflictos con IDs reales
+    const mensajeOptimistaId = `temp-${Date.now()}-${Math.random()}`;
     const mensajeOptimista = {
-      id: Date.now(), // ID temporal
+      id: mensajeOptimistaId, // ID temporal como string
       contenido: contenidoMensaje,
       fechaEnvio: new Date().toISOString(),
       emisor: {
@@ -250,16 +287,26 @@ const Chat = () => {
 
       const mensajeReal = await res.json();
       
-             // Reemplazar mensaje optimista con el real
-       setMensajes(prev => {
-         // Filtrar el mensaje optimista y agregar el real
-         const mensajesSinOptimista = prev.filter(m => m.id !== mensajeOptimista.id);
-         return [...mensajesSinOptimista, mensajeReal];
-       });
+      // Reemplazar mensaje optimista con el real y marcar como procesado
+      if (mensajeReal.id) {
+        mensajesProcesadosRef.current.add(`msg-${mensajeReal.id}`);
+      }
+      
+      setMensajes(prev => {
+        // Filtrar el mensaje optimista usando el ID temporal
+        const mensajesSinOptimista = prev.filter(m => m.id !== mensajeOptimistaId);
+        
+        // Verificar si el mensaje real ya existe (por si llegó antes por WebSocket)
+        const yaExiste = mensajesSinOptimista.some(m => m.id === mensajeReal.id);
+        if (!yaExiste) {
+          return [...mensajesSinOptimista, mensajeReal];
+        }
+        return mensajesSinOptimista;
+      });
 
          } catch (err) {
        // Remover mensaje optimista en caso de error
-       setMensajes(prev => prev.filter(m => m.id !== mensajeOptimista.id));
+       setMensajes(prev => prev.filter(m => m.id !== mensajeOptimistaId));
        alert('Error: ' + err.message);
      } finally {
       setEnviando(false);
@@ -307,10 +354,10 @@ const Chat = () => {
           <p style={{ marginBottom: 16 }}>{error}</p>
           <button 
             className="btn btn-primary" 
-            onClick={() => navigate('/mispublicaciones')}
+            onClick={() => navigate(volverA)}
             style={{ borderRadius: 8, fontWeight: 600 }}
           >
-            Volver a mis publicaciones
+            {volverLabel}
           </button>
         </div>
       </div>
@@ -333,8 +380,8 @@ const Chat = () => {
         <div className="card mb-3" style={{ borderRadius: 16, padding: '1rem' }}>
                   <div className="d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-3">
-                         <button 
-               onClick={() => navigate('/mispublicaciones')}
+             <button 
+               onClick={() => navigate(volverA)}
                style={{ 
                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                  color: '#fff',

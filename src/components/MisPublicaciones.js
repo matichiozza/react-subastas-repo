@@ -4,7 +4,7 @@ import { FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import CancelarPublicacion from './CancelarPublicacion';
 import Footer from './Footer';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -140,8 +140,15 @@ const MisPublicaciones = () => {
       });
       
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al finalizar la publicación');
+        let errorMessage = 'Error al finalizar la publicación';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Si no hay JSON en la respuesta, usar el status text
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const resultado = await res.json();
@@ -151,7 +158,7 @@ const MisPublicaciones = () => {
       setPublicaciones(prev => 
         prev.map(pub => 
           pub.id === publicacionAFinalizar.id 
-            ? { ...pub, estado: resultado.publicacion.estado, ganador: resultado.publicacion.ganador }
+            ? { ...pub, estado: resultado.publicacion.estado, ganador: resultado.publicacion.ganador, chatId: resultado.chatId }
             : pub
         )
       );
@@ -171,9 +178,6 @@ const MisPublicaciones = () => {
     setResultadoFinalizacion(null);
   };
 
-  const abrirChat = (chatId) => {
-    navigate(`/chat/${chatId}`);
-  };
 
   const handleCancelacionExitosa = async (resultado) => {
     // Eliminar la publicación de la lista
@@ -344,40 +348,96 @@ const MisPublicaciones = () => {
                         </>
                       )}
                       {pub.estado === 'FINALIZADO' && pub.ganador && (
-                        <button
-                          className="btn d-flex align-items-center gap-1 w-100"
-                          style={{
-                            borderRadius: 8,
-                            fontWeight: 600,
-                            background: '#2196f3',
-                            color: '#fff',
-                            border: 'none',
-                            fontSize: '0.95em',
-                            padding: '0.45em 1em',
-                            boxShadow: '0 1px 4px rgba(33,150,243,0.08)',
-                            transition: 'background 0.18s',
-                          }}
-                          title="Chatear con ganador"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch(`${API_BASE_URL}/chats/publicacion/${pub.id}`, {
-                                headers: { Authorization: `Bearer ${token}` }
-                              });
-                              if (res.ok) {
-                                const chat = await res.json();
-                                navigate(`/chat/${chat.id}`);
-                              } else {
-                                alert('No se pudo acceder al chat');
+                        <>
+                          <button
+                            className="btn d-flex align-items-center gap-1"
+                            style={{
+                              borderRadius: 8,
+                              fontWeight: 600,
+                              background: '#2196f3',
+                              color: '#fff',
+                              border: 'none',
+                              fontSize: '0.95em',
+                              padding: '0.45em 1em',
+                              boxShadow: '0 1px 4px rgba(33,150,243,0.08)',
+                              transition: 'background 0.18s',
+                              flex: 1
+                            }}
+                            title="Chatear con ganador"
+                            onClick={async () => {
+                              try {
+                                // Si tenemos el chatId directamente, usarlo
+                                if (pub.chatId) {
+                                  navigate(`/chat/${pub.chatId}`, { state: { from: '/mispublicaciones' } });
+                                  return;
+                                }
+                                
+                                // Si no, buscar el chat por publicación
+                                const res = await fetch(`${API_BASE_URL}/chats/publicacion/${pub.id}`, {
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                  const chat = await res.json();
+                                  navigate(`/chat/${chat.id}`, { state: { from: '/mispublicaciones' } });
+                                } else if (res.status === 404) {
+                                  alert('El chat aún no está disponible. Por favor, recarga la página.');
+                                } else if (res.status === 403) {
+                                  alert('No tienes permisos para acceder a este chat.');
+                                } else {
+                                  const errorText = await res.text().catch(() => 'Error desconocido');
+                                  alert('No se pudo acceder al chat: ' + errorText);
+                                }
+                              } catch (err) {
+                                alert('Error al abrir chat: ' + err.message);
                               }
-                            } catch (err) {
-                              alert('Error al abrir chat: ' + err.message);
-                            }
-                          }}
-                          onMouseOver={e => e.currentTarget.style.background = '#1976d2'}
-                          onMouseOut={e => e.currentTarget.style.background = '#2196f3'}
-                        >
-                          <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Chat con ganador
-                        </button>
+                            }}
+                            onMouseOver={e => e.currentTarget.style.background = '#1976d2'}
+                            onMouseOut={e => e.currentTarget.style.background = '#2196f3'}
+                          >
+                            <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Chat
+                          </button>
+                          <button
+                            className="btn d-flex align-items-center gap-1"
+                            style={{
+                              borderRadius: 8,
+                              fontWeight: 600,
+                              background: '#dc3545',
+                              color: '#fff',
+                              border: 'none',
+                              fontSize: '0.95em',
+                              padding: '0.45em 1em',
+                              boxShadow: '0 1px 4px rgba(220,53,69,0.08)',
+                              transition: 'background 0.18s',
+                              marginLeft: 8
+                            }}
+                            title="Eliminar publicación"
+                            onClick={async () => {
+                              if (!window.confirm('¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.')) {
+                                return;
+                              }
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/publicaciones/${pub.id}`, {
+                                  method: 'DELETE',
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                  // Eliminar de la lista
+                                  setPublicaciones(prev => prev.filter(p => p.id !== pub.id));
+                                  alert('Publicación eliminada exitosamente');
+                                } else {
+                                  const errorText = await res.text().catch(() => 'Error desconocido');
+                                  alert('Error al eliminar publicación: ' + errorText);
+                                }
+                              } catch (err) {
+                                alert('Error al eliminar publicación: ' + err.message);
+                              }
+                            }}
+                            onMouseOver={e => e.currentTarget.style.background = '#c82333'}
+                            onMouseOut={e => e.currentTarget.style.background = '#dc3545'}
+                          >
+                            <i className="fas fa-trash" style={{ marginRight: 8 }}></i>Eliminar
+                          </button>
+                        </>
                       )}
                       {pub.estado === 'FINALIZADO_SIN_OFERTAS' && (
                         <div className="w-100 text-center py-2" style={{ color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
@@ -496,7 +556,7 @@ const MisPublicaciones = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                         {resultadoFinalizacion.ganador.fotoPerfil ? (
                           <img 
-                            src={`${API_BASE_URL}${resultadoFinalizacion.ganador.fotoPerfil}`} 
+                            src={getImageUrl(resultadoFinalizacion.ganador.fotoPerfil)} 
                             alt="Ganador" 
                             style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
                           />

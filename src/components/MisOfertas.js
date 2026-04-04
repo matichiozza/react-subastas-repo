@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -314,7 +314,7 @@ const MisOfertas = () => {
                                         });
                                         if (res.ok) {
                                           const chat = await res.json();
-                                          navigate(`/chat/${chat.id}`);
+                                          navigate(`/chat/${chat.id}`, { state: { from: '/misofertas' } });
                                         } else {
                                           alert('No se pudo acceder al chat');
                                         }

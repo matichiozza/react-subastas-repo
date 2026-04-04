@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from './Footer';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 
 const categorias = [
   { nombre: 'Accesorios', emoji: 'fas fa-briefcase' },
@@ -685,13 +685,13 @@ const TodasPublicaciones = () => {
               <div className="alert alert-info">No hay publicaciones para esta categoría.</div>
             ) : (
               <div className="row g-4">
-                {publicacionesFiltradas.slice(0, 8).map((pub, idx) => (
+                {publicacionesFiltradas.map((pub, idx) => (
                   <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={pub.id || idx}>
                     <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
                       {/* Imagen principal */}
                       {pub.imagenes && pub.imagenes.length > 0 ? (
                         <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          <img src={`${API_BASE_URL}${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={getImageUrl(pub.imagenes[0])} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ) : (
                         <div style={{ height: 180, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
@@ -722,7 +722,7 @@ const TodasPublicaciones = () => {
                         {/* Usuario */}
                         <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
                           {pub.usuario?.fotoPerfil ? (
-                            <img src={`${API_BASE_URL}${pub.usuario.fotoPerfil}`} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                            <img src={getImageUrl(pub.usuario.fotoPerfil)} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
                           ) : (
                             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
                               <i className="fas fa-user"></i>
