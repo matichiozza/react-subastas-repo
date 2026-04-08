@@ -1,8 +1,22 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+
+export const publicacionesLoader = async () => {
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${API_BASE_URL}/publicaciones`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    return data.reverse();
+  } catch (e) {
+    return [];
+  }
+};
 
 const categorias = [
   { nombre: 'Accesorios', emoji: 'fas fa-briefcase' },
@@ -51,11 +65,15 @@ function limpiarFormato(valor) {
 
 const TodasPublicaciones = () => {
   const { token } = useContext(AuthContext);
-  const [publicaciones, setPublicaciones] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialData = useLoaderData();
+  const [publicaciones, setPublicaciones] = useState(initialData || []);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    setPublicaciones(initialData || []);
+  }, [initialData]);
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -276,23 +294,6 @@ const TodasPublicaciones = () => {
   }, [publicaciones, precioMaximo]);
 
   useEffect(() => {
-    const fetchPublicaciones = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/publicaciones`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setPublicaciones(data.reverse());
-      } catch {
-        setPublicaciones([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPublicaciones();
-
     // WebSocket para actualizaciones en tiempo real
     let socket = null;
     let reconnectAttempts = 0;
@@ -679,9 +680,7 @@ const TodasPublicaciones = () => {
                 )}
               </div>
             </div>
-            {loading ? (
-              <div>Cargando...</div>
-            ) : publicacionesFiltradas.length === 0 ? (
+            {publicacionesFiltradas.length === 0 ? (
               <div className="alert alert-info">No hay publicaciones para esta categoría.</div>
             ) : (
               <div className="row g-4">

@@ -5,20 +5,44 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import API_BASE_URL, { getImageUrl } from '../config/api';
 import Footer from './Footer';
+import { useLoaderData } from 'react-router-dom';
+
+export const detalleLoader = async ({ params }) => {
+  const token = localStorage.getItem('token');
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const [resPub, resOfertas] = await Promise.all([
+    fetch(`${API_BASE_URL}/publicaciones/${params.id}`, { headers }),
+    fetch(`${API_BASE_URL}/publicaciones/${params.id}/ofertas`, { headers })
+  ]);
+  
+  if (!resPub.ok) {
+    throw new Error('No se pudo cargar la publicación');
+  }
+  
+  const publicacion = await resPub.json();
+  const ofertas = resOfertas.ok ? await resOfertas.json() : [];
+  
+  return { publicacion, ofertas };
+};
 
 const DetallePublicacion = () => {
   const { id } = useParams();
   const { token, user } = useContext(AuthContext);
+  const initialData = useLoaderData();
   const navigate = useNavigate();
   const location = useLocation();
-  const [publicacion, setPublicacion] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [publicacion, setPublicacion] = useState(initialData?.publicacion || null);
   const [error, setError] = useState(null);
   const [oferta, setOferta] = useState('');
   const [ofertaFormateada, setOfertaFormateada] = useState('');
   const [ofertando, setOfertando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
-  const [ofertas, setOfertas] = useState([]);
+  const [ofertas, setOfertas] = useState(initialData?.ofertas || []);
+
+  useEffect(() => {
+    setPublicacion(initialData?.publicacion || null);
+    setOfertas(initialData?.ofertas || []);
+  }, [initialData]);
   const [imgSeleccionada, setImgSeleccionada] = useState(0);
   const stompClientRef = useRef(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -26,21 +50,21 @@ const DetallePublicacion = () => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
-  
+
   // Funciones para el carrusel de imágenes
   const nextImage = () => {
     if (publicacion && publicacion.imagenes) {
-      setSelectedImageIndex((prev) => 
+      setSelectedImageIndex((prev) =>
         prev === publicacion.imagenes.length - 1 ? 0 : prev + 1
       );
       setIsZoomed(false);
       setZoomPosition({ x: 0, y: 0 });
     }
   };
-  
+
   const prevImage = () => {
     if (publicacion && publicacion.imagenes) {
-      setSelectedImageIndex((prev) => 
+      setSelectedImageIndex((prev) =>
         prev === 0 ? publicacion.imagenes.length - 1 : prev - 1
       );
       setIsZoomed(false);
@@ -65,13 +89,16 @@ const DetallePublicacion = () => {
   const handleMouseMove = (e) => {
     if (isZoomed) {
       e.preventDefault();
-      const deltaX = e.movementX || 0;
-      const deltaY = e.movementY || 0;
-      
-      setZoomPosition(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
+      // Movimiento natural y acotado: calculamos desplazamiento en base al centro de la pantalla
+      // e.clientX va de 0 a ancho de pantalla.
+      // Al multiplicar por un factor, limitamos cuánto puede desplazarse.
+      const moveX = (window.innerWidth / 2 - e.clientX) * 0.8;
+      const moveY = (window.innerHeight / 2 - e.clientY) * 0.8;
+
+      setZoomPosition({
+        x: moveX,
+        y: moveY
+      });
     }
   };
 
@@ -96,12 +123,12 @@ const DetallePublicacion = () => {
       setZoomPosition({ x: 0, y: 0 });
     }
   };
-  
+
   // Navegación con teclado
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!showImageModal) return;
-      
+
       switch (e.key) {
         case 'Escape':
           setShowImageModal(false);
@@ -120,7 +147,7 @@ const DetallePublicacion = () => {
           break;
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showImageModal, selectedImageIndex, publicacion]);
@@ -128,12 +155,12 @@ const DetallePublicacion = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
   const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState(null);
-  
+
   // Estados para las tarjetas del usuario
   const [tarjetasUsuario, setTarjetasUsuario] = useState([]);
   const [loadingTarjetas, setLoadingTarjetas] = useState(false);
   const [errorTarjetas, setErrorTarjetas] = useState(null);
-  
+
   // Estados para el modal de agregar tarjeta
   const [showModalTarjeta, setShowModalTarjeta] = useState(false);
   const [formTarjeta, setFormTarjeta] = useState({
@@ -146,19 +173,19 @@ const DetallePublicacion = () => {
   const [erroresTarjeta, setErroresTarjeta] = useState({});
   const [loadingTarjeta, setLoadingTarjeta] = useState(false);
   const [successTarjeta, setSuccessTarjeta] = useState(false);
-  
+
   // Estado para la oferta anterior del usuario
   const [ofertaAnterior, setOfertaAnterior] = useState(null);
   const [loadingOfertaAnterior, setLoadingOfertaAnterior] = useState(false);
   const fetchingOfertaAnterior = useRef(false);
-  
+
   // Estado para el valor de oferta en el modal
   const [ofertaModal, setOfertaModal] = useState('');
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [pasoPago, setPasoPago] = useState(1); // 1: procesando, 2: confirmado
   const [showModalBajarse, setShowModalBajarse] = useState(false);
   const [procesandoBajarse, setProcesandoBajarse] = useState(false);
-  
+
   // Estado para la alerta personalizada
   const [alertaPersonalizada, setAlertaPersonalizada] = useState({
     visible: false,
@@ -166,44 +193,34 @@ const DetallePublicacion = () => {
     tipo: 'error' // 'error' o 'warning'
   });
 
-  // Funciones para cargar datos
-  const fetchPublicacion = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-              const res = await fetch(`${API_BASE_URL}/publicaciones/${id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error('No se pudo cargar la publicación');
-      setPublicacion(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchOfertas = async () => {
     try {
-              const res = await fetch(`${API_BASE_URL}/publicaciones/${id}/ofertas`, {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/${id}/ofertas`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json().catch(() => null);
-      setOfertas(data);
+      if (res.ok) setOfertas(data);
     } catch {
-      setOfertas([]);
+      // silencioso
     }
   };
 
-  useEffect(() => {
-    fetchPublicacion();
-  }, [id, token]);
+  const fetchPublicacion = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) setPublicacion(data);
+    } catch {
+      // silencioso
+    }
+  };
 
   // Cargar tarjetas del usuario
   useEffect(() => {
     if (!user?.id) return;
-    
+
     const fetchTarjetas = async () => {
       setLoadingTarjetas(true);
       setErrorTarjetas(null);
@@ -224,14 +241,14 @@ const DetallePublicacion = () => {
         setLoadingTarjetas(false);
       }
     };
-    
+
     fetchTarjetas();
   }, [user?.id, token]);
 
   // Cargar oferta anterior del usuario
   useEffect(() => {
     if (!user?.id || !id || !token || !showModal || fetchingOfertaAnterior.current) return;
-    
+
     const fetchOfertaAnterior = async () => {
       fetchingOfertaAnterior.current = true;
       setLoadingOfertaAnterior(true);
@@ -255,7 +272,7 @@ const DetallePublicacion = () => {
         fetchingOfertaAnterior.current = false;
       }
     };
-    
+
     fetchOfertaAnterior();
   }, [user?.id, id, token, showModal]);
 
@@ -292,7 +309,6 @@ const DetallePublicacion = () => {
     };
   }, [id]);
 
-  if (loading) return <div className="container py-5 text-center">Cargando...</div>;
   if (error) return <div className="container py-5 text-center text-danger">{error}</div>;
   if (!publicacion) return <div className="container py-5 text-center">No encontrada</div>;
 
@@ -303,7 +319,7 @@ const DetallePublicacion = () => {
   // Modificar handleOfertar para que solo envíe si viene del modal
   const handleOfertar = async (e, desdeModal = false) => {
     e.preventDefault();
-    
+
     // Validación antes de mostrar el modal
     if (!desdeModal) {
       const monto = parseFloat(oferta);
@@ -314,7 +330,7 @@ const DetallePublicacion = () => {
       setShowModal(true);
       return;
     }
-    
+
     setOfertando(true);
     setMensaje(null);
     try {
@@ -324,7 +340,7 @@ const DetallePublicacion = () => {
         setOfertando(false);
         return;
       }
-              const res = await fetch(`${API_BASE_URL}/publicaciones/ofertas`, {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/ofertas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -368,10 +384,10 @@ const DetallePublicacion = () => {
     const valor = e.target.value;
     // Remover todos los caracteres no numéricos
     const soloNumeros = valor.replace(/\D/g, '');
-    
+
     // Actualizar el valor numérico para cálculos
     setOferta(soloNumeros);
-    
+
     // Formatear para mostrar al usuario
     if (soloNumeros) {
       const formateado = parseFloat(soloNumeros).toLocaleString('es-AR');
@@ -394,7 +410,7 @@ const DetallePublicacion = () => {
       mensaje,
       tipo
     });
-    
+
     // Auto-ocultar después de 8 segundos
     setTimeout(() => {
       cerrarAlerta();
@@ -431,10 +447,10 @@ const DetallePublicacion = () => {
 
   const handleBajarseDeSubasta = async () => {
     if (!user?.id) return;
-    
+
     setProcesandoBajarse(true);
     try {
-              const res = await fetch(`${API_BASE_URL}/publicaciones/${publicacion.id}/ofertas/usuario/${user.id}`, {
+      const res = await fetch(`${API_BASE_URL}/publicaciones/${publicacion.id}/ofertas/usuario/${user.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -451,7 +467,7 @@ const DetallePublicacion = () => {
       await fetchPublicacion();
       setShowModalBajarse(false);
       setMensaje('Te has bajado de la subasta. Has perdido tu seña.');
-      
+
     } catch (err) {
       setMensaje(err.message);
     } finally {
@@ -493,7 +509,7 @@ const DetallePublicacion = () => {
         }
 
         const data = await res.json();
-        
+
         // Simular confirmación de pago
         setPasoPago(2);
         setTimeout(() => {
@@ -518,21 +534,21 @@ const DetallePublicacion = () => {
   // Funciones para manejar tarjetas
   const validarTarjeta = () => {
     const errores = {};
-    
+
     // Nombre completo
     if (!formTarjeta.nombreCompleto.trim()) {
       errores.nombreCompleto = 'El nombre completo es requerido';
     } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formTarjeta.nombreCompleto)) {
       errores.nombreCompleto = 'Solo se permiten letras y espacios';
     }
-    
+
     // Número de tarjeta
     if (!formTarjeta.numero.trim()) {
       errores.numero = 'El número de tarjeta es requerido';
     } else if (!/^\d{16}$/.test(formTarjeta.numero.replace(/\s/g, ''))) {
       errores.numero = 'Debe tener exactamente 16 dígitos';
     }
-    
+
     // Fecha de vencimiento
     if (!formTarjeta.fechaVencimiento.trim()) {
       errores.fechaVencimiento = 'La fecha de vencimiento es requerida';
@@ -546,7 +562,7 @@ const DetallePublicacion = () => {
         const mesNum = parseInt(mes);
         const añoNum = parseInt(año);
         const añoActual = new Date().getFullYear() % 100; // Solo los últimos 2 dígitos
-        
+
         if (mesNum < 1 || mesNum > 12) {
           errores.fechaVencimiento = 'Mes inválido';
         } else if (añoNum < añoActual) {
@@ -554,21 +570,21 @@ const DetallePublicacion = () => {
         }
       }
     }
-    
+
     // CVV
     if (!formTarjeta.codigoSeguridad.trim()) {
       errores.codigoSeguridad = 'El código de seguridad es requerido';
     } else if (!/^\d{3}$/.test(formTarjeta.codigoSeguridad)) {
       errores.codigoSeguridad = 'Debe tener exactamente 3 dígitos';
     }
-    
+
     // DNI
     if (!formTarjeta.dniTitular.trim()) {
       errores.dniTitular = 'El DNI es requerido';
     } else if (!/^\d{7,8}$/.test(formTarjeta.dniTitular.replace(/\./g, ''))) {
       errores.dniTitular = 'Debe tener 7 u 8 dígitos';
     }
-    
+
     setErroresTarjeta(errores);
     return Object.keys(errores).length === 0;
   };
@@ -576,7 +592,7 @@ const DetallePublicacion = () => {
   const handleChangeTarjeta = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
-    
+
     // Formatear número de tarjeta
     if (name === 'numero') {
       // Remover todos los caracteres no numéricos y limitar a 16 dígitos
@@ -584,7 +600,7 @@ const DetallePublicacion = () => {
       // Formatear con espacios cada 4 dígitos
       processedValue = numeros.replace(/(\d{4})(?=\d)/g, '$1 ');
     }
-    
+
     // Formatear fecha de vencimiento
     if (name === 'fechaVencimiento') {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
@@ -592,21 +608,21 @@ const DetallePublicacion = () => {
         processedValue = processedValue.slice(0, 2) + '/' + processedValue.slice(2);
       }
     }
-    
+
     // Formatear CVV
     if (name === 'codigoSeguridad') {
       processedValue = value.replace(/\D/g, '').slice(0, 3);
     }
-    
+
     // Formatear DNI
     if (name === 'dniTitular') {
       const numeros = value.replace(/\D/g, '').slice(0, 8);
       // Formatear con puntos cada 3 dígitos desde la derecha
       processedValue = numeros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
-    
+
     setFormTarjeta(prev => ({ ...prev, [name]: processedValue }));
-    
+
     // Validar en tiempo real
     if (erroresTarjeta[name]) {
       const nuevosErrores = { ...erroresTarjeta };
@@ -618,11 +634,11 @@ const DetallePublicacion = () => {
   const handleSubmitTarjeta = async (e) => {
     e.preventDefault();
     if (!validarTarjeta()) return;
-    
+
     setLoadingTarjeta(true);
     setErrorTarjetas(null);
     try {
-              const res = await fetch(`${API_BASE_URL}/tarjetas`, {
+      const res = await fetch(`${API_BASE_URL}/tarjetas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -635,19 +651,19 @@ const DetallePublicacion = () => {
           usuario: { id: user.id }
         }),
       });
-      
+
       if (!res.ok) throw new Error('Error al guardar la tarjeta');
-      
+
       const nuevaTarjeta = await res.json();
       setTarjetasUsuario(prev => [...prev, nuevaTarjeta]);
       setTarjetaSeleccionada(nuevaTarjeta.id);
       setSuccessTarjeta(true);
-      
+
       // Cerrar modal después de un breve delay
       setTimeout(() => {
         handleCerrarModalTarjeta();
       }, 1500);
-      
+
     } catch (err) {
       setErrorTarjetas('No se pudo guardar la tarjeta');
     } finally {
@@ -707,1082 +723,1082 @@ const DetallePublicacion = () => {
   return (
     <>
       <div className="container py-4">
-      {/* Breadcrumb */}
-      <div className="mb-2">{breadcrumb}</div>
-      <div className="row">
-        {/* Miniaturas verticales */}
-        <div className="col-md-1 d-none d-md-flex flex-column align-items-center gap-2" style={{ minWidth: 60 }}>
-          {publicacion.imagenes && publicacion.imagenes.length > 0 && publicacion.imagenes.map((img, idx) => (
-            <img
-              key={img}
-              src={`http://localhost:8080${img}`}
-              alt={`Miniatura ${idx + 1}`}
-              onMouseEnter={() => setImgSeleccionada(idx)}
-              style={{
-                width: 48,
-                height: 48,
-                objectFit: 'cover',
-                borderRadius: 8,
-                border: imgSeleccionada === idx ? '2px solid #5a48f6' : '2px solid #ececf3',
-                cursor: 'pointer',
-                boxShadow: imgSeleccionada === idx ? '0 2px 8px rgba(90,72,246,0.10)' : 'none',
-                transition: 'border 0.2s, box-shadow 0.2s',
-              }}
-            />
-          ))}
-        </div>
-        {/* Imagen principal y descripción */}
-        <div className="col-lg-6 mb-4 col-md-7">
-          <div
-            className="card p-3 mb-3 mt-0 position-relative"
-            style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
-          >
-            {publicacion.imagenes && publicacion.imagenes.length > 0 ? (
-              <div
-                style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
-                onClick={() => {
-                  setSelectedImageIndex(imgSeleccionada);
-                  setShowImageModal(true);
+        {/* Breadcrumb */}
+        <div className="mb-2">{breadcrumb}</div>
+        <div className="row">
+          {/* Miniaturas verticales */}
+          <div className="col-md-1 d-none d-md-flex flex-column align-items-center gap-2" style={{ minWidth: 60 }}>
+            {publicacion.imagenes && publicacion.imagenes.length > 0 && publicacion.imagenes.map((img, idx) => (
+              <img
+                key={img}
+                src={getImageUrl(img)}
+                alt={`Miniatura ${idx + 1}`}
+                onMouseEnter={() => setImgSeleccionada(idx)}
+                style={{
+                  width: 48,
+                  height: 48,
+                  objectFit: 'cover',
+                  borderRadius: 8,
+                  border: imgSeleccionada === idx ? '2px solid #5a48f6' : '2px solid #ececf3',
+                  cursor: 'pointer',
+                  boxShadow: imgSeleccionada === idx ? '0 2px 8px rgba(90,72,246,0.10)' : 'none',
+                  transition: 'border 0.2s, box-shadow 0.2s',
                 }}
-              >
-                <img
-                  src={getImageUrl(publicacion.imagenes[imgSeleccionada])}
-                  alt={`Imagen ${imgSeleccionada + 1}`}
-                  className="img-fluid"
-                  style={{ 
-                    maxHeight: 340, 
-                    objectFit: 'contain', 
-                    borderRadius: 12, 
-                    maxWidth: '100%', 
-                    display: 'block',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = 'scale(1.02)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = 'scale(1)';
-                  }}
-                />
-                {/* Overlay con icono de zoom */}
+              />
+            ))}
+          </div>
+          {/* Imagen principal y descripción */}
+          <div className="col-lg-6 mb-4 col-md-7">
+            <div
+              className="card p-3 mb-3 mt-0 position-relative"
+              style={{ borderRadius: 16, minHeight: 340, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
+            >
+              {publicacion.imagenes && publicacion.imagenes.length > 0 ? (
                 <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: 'rgba(0,0,0,0.6)',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: 48,
-                    height: 48,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: 0,
-                    transition: 'opacity 0.2s ease',
-                    pointerEvents: 'none',
+                  style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+                  onClick={() => {
+                    setSelectedImageIndex(imgSeleccionada);
+                    setShowImageModal(true);
                   }}
-                  className="zoom-overlay"
                 >
-                  🔍
+                  <img
+                    src={getImageUrl(publicacion.imagenes[imgSeleccionada])}
+                    alt={`Imagen ${imgSeleccionada + 1}`}
+                    className="img-fluid"
+                    style={{
+                      maxHeight: 340,
+                      objectFit: 'contain',
+                      borderRadius: 12,
+                      maxWidth: '100%',
+                      display: 'block',
+                      transition: 'transform 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'scale(1.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1)';
+                    }}
+                  />
+                  {/* Overlay con icono de zoom */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.6)',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: 48,
+                      height: 48,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 0.2s ease',
+                      pointerEvents: 'none',
+                    }}
+                    className="zoom-overlay"
+                  >
+                    🔍
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="d-flex align-items-center justify-content-center" style={{ height: 220, color: '#bbb', fontSize: 48 }}>
-                <span role="img" aria-label="sin imagen">🖼️</span>
-              </div>
-            )}
-          </div>
-          {/* Descripción en tarjeta sutil */}
-          <div style={{ border: '1px solid #ececf3', borderRadius: 12, background: '#fff', padding: '1.1em 1.3em', marginTop: 8, marginBottom: 0 }}>
-            <div style={{ fontSize: '1.05em', color: '#444', lineHeight: 1.7, fontWeight: 400, whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{publicacion.descripcion}</div>
-          </div>
-        </div>
-        {/* Datos y formulario + historial de ofertas */}
-        <div className="col-lg-5">
-          <div className="card p-4 mb-4 mt-0" style={{ borderRadius: 16 }}>
-            <div className="d-flex align-items-center mb-3 gap-3">
-              {publicacion.usuario?.fotoPerfil ? (
-                <img src={`http://localhost:8080${publicacion.usuario.fotoPerfil}`} alt={publicacion.usuario.username} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
               ) : (
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 24 }}>
-                  <i className="fas fa-user"></i>
+                <div className="d-flex align-items-center justify-content-center" style={{ height: 220, color: '#bbb', fontSize: 48 }}>
+                  <span role="img" aria-label="sin imagen">🖼️</span>
                 </div>
               )}
-              <div>
-                <div className="fw-bold" style={{ fontSize: '1.1em' }}>{publicacion.usuario?.nombre || publicacion.usuario?.username || 'Usuario'}</div>
-                <div style={{ color: '#888', fontSize: '0.95em' }}>{[publicacion.usuario?.ciudad, publicacion.usuario?.pais].filter(Boolean).join(', ')}</div>
-              </div>
-              <span className={`badge ${publicacion.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontSize: '0.95em', marginLeft: 'auto' }}>{publicacion.estado}</span>
             </div>
-            <h3 className="fw-bold mb-2" style={{ color: '#1976d2' }}>{publicacion.titulo}</h3>
-            <div className="mb-2">
-              <span className="badge bg-light text-dark border me-2" style={{ fontWeight: 500, fontSize: '0.95em', background: '#e3f2fd', color: '#1976d2' }}>{publicacion.categoria || 'Sin categoría'}</span>
-              <span className={`badge ${publicacion.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.95em' }}>{publicacion.condicion || 'Condición'}</span>
+            {/* Descripción en tarjeta sutil */}
+            <div style={{ border: '1px solid #ececf3', borderRadius: 12, background: '#fff', padding: '1.1em 1.3em', marginTop: 8, marginBottom: 0 }}>
+              <div style={{ fontSize: '1.05em', color: '#444', lineHeight: 1.7, fontWeight: 400, whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{publicacion.descripcion}</div>
             </div>
-            <div className="mb-2">
-              <div style={{ marginBottom: '4px' }}>
-                <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.15em' }}>Precio actual: ${formatearMonto(precioActual)}</span>
-                <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${formatearMonto(incremento)}</span>
-              </div>
-              <div style={{ color: '#666', fontSize: '0.95em' }}>
-                <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Precio base: ${formatearMonto(publicacion.precioInicial)}
-              </div>
-            </div>
-            <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
-              <i className="fas fa-clock" style={{ marginRight: 8 }}></i>Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
-            </div>
-            <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
-              <i className="fas fa-coins" style={{ marginRight: 8 }}></i>Ofertas totales: {ofertas.length}
-            </div>
-            
-            {/* Información del ganador si está finalizada */}
-            {publicacion.estado === 'FINALIZADO' && publicacion.ganador && (
-              <div className="alert alert-success mt-3" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
-                <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
-                  <i className="fas fa-trophy" style={{ marginRight: 8 }}></i>Subasta finalizada - Ganador:
+          </div>
+          {/* Datos y formulario + historial de ofertas */}
+          <div className="col-lg-5">
+            <div className="card p-4 mb-4 mt-0" style={{ borderRadius: 16 }}>
+              <div className="d-flex align-items-center mb-3 gap-3">
+                {publicacion.usuario?.fotoPerfil ? (
+                  <img src={getImageUrl(publicacion.usuario.fotoPerfil)} alt={publicacion.usuario.username} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                ) : (
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 24 }}>
+                    <i className="fas fa-user"></i>
+                  </div>
+                )}
+                <div>
+                  <div className="fw-bold" style={{ fontSize: '1.1em' }}>{publicacion.usuario?.nombre || publicacion.usuario?.username || 'Usuario'}</div>
+                  <div style={{ color: '#888', fontSize: '0.95em' }}>{[publicacion.usuario?.ciudad, publicacion.usuario?.pais].filter(Boolean).join(', ')}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  {publicacion.ganador.fotoPerfil ? (
-                    <img 
-                      src={getImageUrl(publicacion.ganador.fotoPerfil)} 
-                      alt="Ganador" 
-                      style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20 }}>
-                      <i className="fas fa-user"></i>
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#155724' }}>{publicacion.ganador.nombre}</div>
-                    <div style={{ color: '#155724', fontSize: '0.9em' }}>
-                      Precio final: ${formatearMonto(publicacion.precioActual)}
+                <span className={`badge ${publicacion.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontSize: '0.95em', marginLeft: 'auto' }}>{publicacion.estado}</span>
+              </div>
+              <h3 className="fw-bold mb-2" style={{ color: '#1976d2' }}>{publicacion.titulo}</h3>
+              <div className="mb-2">
+                <span className="badge bg-light text-dark border me-2" style={{ fontWeight: 500, fontSize: '0.95em', background: '#e3f2fd', color: '#1976d2' }}>{publicacion.categoria || 'Sin categoría'}</span>
+                <span className={`badge ${publicacion.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.95em' }}>{publicacion.condicion || 'Condición'}</span>
+              </div>
+              <div className="mb-2">
+                <div style={{ marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.15em' }}>Precio actual: ${formatearMonto(precioActual)}</span>
+                  <span className="ms-3" style={{ color: '#1565c0', fontSize: '0.98em' }}>Incremento mínimo: ${formatearMonto(incremento)}</span>
+                </div>
+                <div style={{ color: '#666', fontSize: '0.95em' }}>
+                  <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Precio base: ${formatearMonto(publicacion.precioInicial)}
+                </div>
+              </div>
+              <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
+                <i className="fas fa-clock" style={{ marginRight: 8 }}></i>Finaliza: {publicacion.fechaFin ? new Date(publicacion.fechaFin).toLocaleString() : 'Sin fecha'}
+              </div>
+              <div className="mb-2" style={{ color: '#222', fontSize: '1.05em' }}>
+                <i className="fas fa-coins" style={{ marginRight: 8 }}></i>Ofertas totales: {ofertas.length}
+              </div>
+
+              {/* Información del ganador si está finalizada */}
+              {publicacion.estado === 'FINALIZADO' && publicacion.ganador && (
+                <div className="alert alert-success mt-3" style={{ fontSize: '0.95em', border: '1px solid #c3e6cb', background: '#d4edda' }}>
+                  <div style={{ fontWeight: 600, color: '#155724', marginBottom: '12px' }}>
+                    <i className="fas fa-trophy" style={{ marginRight: 8 }}></i>Subasta finalizada - Ganador:
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    {publicacion.ganador.fotoPerfil ? (
+                      <img
+                        src={getImageUrl(publicacion.ganador.fotoPerfil)}
+                        alt="Ganador"
+                        style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#4caf50', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20 }}>
+                        <i className="fas fa-user"></i>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#155724' }}>{publicacion.ganador.nombre}</div>
+                      <div style={{ color: '#155724', fontSize: '0.9em' }}>
+                        Precio final: ${formatearMonto(publicacion.precioActual)}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Botón de chat para vendedor y ganador */}
-                {(user?.id === publicacion.usuario?.id || user?.id === publicacion.ganador?.id) && (
-                  <button
-                    className="btn btn-primary btn-sm w-100"
-                    style={{ borderRadius: 8, fontWeight: 600, marginTop: 8 }}
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(`${API_BASE_URL}/chats/publicacion/${publicacion.id}`, {
-                          headers: { Authorization: `Bearer ${token}` }
-                        });
-                        if (res.ok) {
-                          const chat = await res.json();
-                          navigate(`/chat/${chat.id}`, { state: { from: location.pathname } });
-                        } else {
-                          alert('No se pudo acceder al chat');
+
+                  {/* Botón de chat para vendedor y ganador */}
+                  {(user?.id === publicacion.usuario?.id || user?.id === publicacion.ganador?.id) && (
+                    <button
+                      className="btn btn-primary btn-sm w-100"
+                      style={{ borderRadius: 8, fontWeight: 600, marginTop: 8 }}
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE_URL}/chats/publicacion/${publicacion.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          if (res.ok) {
+                            const chat = await res.json();
+                            navigate(`/chat/${chat.id}`, { state: { from: location.pathname } });
+                          } else {
+                            alert('No se pudo acceder al chat');
+                          }
+                        } catch (err) {
+                          alert('Error al abrir chat: ' + err.message);
                         }
-                      } catch (err) {
-                        alert('Error al abrir chat: ' + err.message);
-                      }
-                    }}
-                  >
-                    <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Abrir chat de coordinación
-                  </button>
-                )}
-              </div>
-            )}
-            
-            {publicacion.estado === 'FINALIZADO_SIN_OFERTAS' && (
-              <div className="alert alert-info mt-3" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
-                <div style={{ color: '#0c5460', textAlign: 'center' }}>
-                  <i className="fas fa-box" style={{ marginRight: 8 }}></i>Esta subasta finalizó sin ofertas
+                      }}
+                    >
+                      <i className="fas fa-comments" style={{ marginRight: 8 }}></i>Abrir chat de coordinación
+                    </button>
+                  )}
                 </div>
-              </div>
-            )}
-            
-            {/* Formulario de oferta */}
-            {publicacion.estado === 'ACTIVO' ? (
-              <div className="mt-3">
-                {usuarioYaOferto ? (
-                  <div>
-                    <div className="alert alert-warning mb-3" style={{ fontSize: '0.95em', border: '1px solid #ffeaa7', background: '#fff3cd' }}>
-                      <div style={{ fontWeight: 600, color: '#856404', marginBottom: '8px' }}>
-                        ⚠️ Ya has ofertado en esta subasta
+              )}
+
+              {publicacion.estado === 'FINALIZADO_SIN_OFERTAS' && (
+                <div className="alert alert-info mt-3" style={{ fontSize: '0.95em', border: '1px solid #bee5eb', background: '#d1ecf1' }}>
+                  <div style={{ color: '#0c5460', textAlign: 'center' }}>
+                    <i className="fas fa-box" style={{ marginRight: 8 }}></i>Esta subasta finalizó sin ofertas
+                  </div>
+                </div>
+              )}
+
+              {/* Formulario de oferta */}
+              {publicacion.estado === 'ACTIVO' ? (
+                <div className="mt-3">
+                  {usuarioYaOferto ? (
+                    <div>
+                      <div className="alert alert-warning mb-3" style={{ fontSize: '0.95em', border: '1px solid #ffeaa7', background: '#fff3cd' }}>
+                        <div style={{ fontWeight: 600, color: '#856404', marginBottom: '8px' }}>
+                          ⚠️ Ya has ofertado en esta subasta
+                        </div>
+                        <div style={{ color: '#856404', fontSize: '0.9em' }}>
+                          Tu oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}
+                        </div>
                       </div>
-                      <div style={{ color: '#856404', fontSize: '0.9em' }}>
-                        Tu oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}
+
+                      {/* Opción para hacer nueva oferta */}
+                      <div className="mb-3">
+                        <form onSubmit={e => handleOfertar(e, false)}>
+                          <div className="input-group mb-2">
+                            <span className="input-group-text">$</span>
+                            <input
+                              type="text"
+                              className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
+                              value={ofertaFormateada}
+                              onChange={handleOfertaChange}
+                              placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
+                              required
+                              disabled={!user || ofertando}
+                              style={{
+                                borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
+                                boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
+                              }}
+                            />
+                            <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={incrementarOferta}
+                                disabled={!user || ofertando}
+                                style={{
+                                  borderTopRightRadius: 0,
+                                  borderBottomRightRadius: 0,
+                                  padding: '0.375rem 0.25rem',
+                                  fontSize: '0.75rem',
+                                  color: '#6c757d',
+                                  borderRight: 'none',
+                                  minWidth: '28px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  lineHeight: '1',
+                                  height: '100%',
+                                  transform: 'none'
+                                }}
+                                title="Incrementar en $1.000"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={decrementarOferta}
+                                disabled={!user || ofertando}
+                                style={{
+                                  borderTopLeftRadius: 0,
+                                  borderBottomLeftRadius: 0,
+                                  padding: '0.375rem 0.25rem',
+                                  fontSize: '0.75rem',
+                                  color: '#6c757d',
+                                  minWidth: '28px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  lineHeight: '1',
+                                  height: '100%',
+                                  transform: 'none'
+                                }}
+                                title="Decrementar en $1.000"
+                              >
+                                ▼
+                              </button>
+                            </div>
+                            <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
+                              {ofertando ? 'Ofertando...' : '💰 Hacer nueva oferta'}
+                            </button>
+                          </div>
+                          <div className="text-muted small" style={{ fontSize: '0.85em' }}>
+                            💡 Solo pagarás la diferencia en seña
+                          </div>
+                          {oferta && !esValorValido() && (
+                            <div className="text-danger small mt-2" style={{ fontSize: '0.85em', fontWeight: 500 }}>
+                              ❌ El valor debe ser al menos ${formatearMonto(siguienteOferta)}
+                            </div>
+                          )}
+                          {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
+                          {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
+                        </form>
+                      </div>
+
+                      {/* Opción para bajarse */}
+                      <div style={{
+                        borderTop: '1px solid #ffeaa7',
+                        paddingTop: 16,
+                        marginTop: 8
+                      }}>
+                        <button
+                          className="btn w-100"
+                          onClick={() => setShowModalBajarse(true)}
+                          style={{
+                            fontWeight: 600,
+                            fontSize: '0.95em',
+                            background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                            border: 'none',
+                            color: 'white',
+                            padding: '12px 20px',
+                            borderRadius: '10px',
+                            boxShadow: '0 4px 12px rgba(220, 53, 69, 0.25)',
+                            transition: 'all 0.3s ease',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = '0 6px 16px rgba(220, 53, 69, 0.35)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.25)';
+                          }}
+                        >
+                          <span style={{ marginRight: 8 }}>🚪</span>
+                          Bajarse de la subasta
+                        </button>
+                        <div className="text-muted small mt-3" style={{
+                          fontSize: '0.85em',
+                          color: '#dc3545',
+                          fontWeight: 500,
+                          textAlign: 'center'
+                        }}>
+                          ⚠️ Al bajarte perderás toda tu seña sin reembolso
+                        </div>
                       </div>
                     </div>
-                    
-                    {/* Opción para hacer nueva oferta */}
-                    <div className="mb-3">
-                      <form onSubmit={e => handleOfertar(e, false)}>
-                        <div className="input-group mb-2">
-                          <span className="input-group-text">$</span>
-                          <input
-                            type="text"
-                            className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
-                            value={ofertaFormateada}
-                            onChange={handleOfertaChange}
-                            placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
-                            required
+                  ) : (
+                    <form onSubmit={e => handleOfertar(e, false)}>
+                      <div className="input-group mb-2">
+                        <span className="input-group-text">$</span>
+                        <input
+                          type="text"
+                          className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
+                          value={ofertaFormateada}
+                          onChange={handleOfertaChange}
+                          placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
+                          required
+                          disabled={!user || ofertando}
+                          style={{
+                            borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
+                            boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
+                          }}
+                        />
+                        <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={incrementarOferta}
                             disabled={!user || ofertando}
                             style={{
-                              borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
-                              boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
+                              borderTopRightRadius: 0,
+                              borderBottomRightRadius: 0,
+                              padding: '0.375rem 0.25rem',
+                              fontSize: '0.75rem',
+                              color: '#6c757d',
+                              borderRight: 'none',
+                              minWidth: '28px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: '1',
+                              height: '100%',
+                              transform: 'none'
                             }}
-                          />
-                          <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
-                            <button
-                              type="button"
-                              className="btn btn-outline-secondary"
-                              onClick={incrementarOferta}
-                              disabled={!user || ofertando}
-                              style={{ 
-                                borderTopRightRadius: 0, 
-                                borderBottomRightRadius: 0,
-                                padding: '0.375rem 0.25rem',
-                                fontSize: '0.75rem',
-                                color: '#6c757d',
-                                borderRight: 'none',
-                                minWidth: '28px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                lineHeight: '1',
-                                height: '100%',
-                                transform: 'none'
-                              }}
-                              title="Incrementar en $1.000"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-outline-secondary"
-                              onClick={decrementarOferta}
-                              disabled={!user || ofertando}
-                              style={{ 
-                                borderTopLeftRadius: 0, 
-                                borderBottomLeftRadius: 0,
-                                padding: '0.375rem 0.25rem',
-                                fontSize: '0.75rem',
-                                color: '#6c757d',
-                                minWidth: '28px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                lineHeight: '1',
-                                height: '100%',
-                                transform: 'none'
-                              }}
-                              title="Decrementar en $1.000"
-                            >
-                              ▼
-                            </button>
-                          </div>
-                          <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
-                            {ofertando ? 'Ofertando...' : '💰 Hacer nueva oferta'}
+                            title="Incrementar en $1.000"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={decrementarOferta}
+                            disabled={!user || ofertando}
+                            style={{
+                              borderTopLeftRadius: 0,
+                              borderBottomLeftRadius: 0,
+                              padding: '0.375rem 0.25rem',
+                              fontSize: '0.75rem',
+                              color: '#6c757d',
+                              minWidth: '28px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: '1',
+                              height: '100%',
+                              transform: 'none'
+                            }}
+                            title="Decrementar en $1.000"
+                          >
+                            ▼
                           </button>
                         </div>
-                        <div className="text-muted small" style={{ fontSize: '0.85em' }}>
-                          💡 Solo pagarás la diferencia en seña
-                        </div>
-                        {oferta && !esValorValido() && (
-                          <div className="text-danger small mt-2" style={{ fontSize: '0.85em', fontWeight: 500 }}>
-                            ❌ El valor debe ser al menos ${formatearMonto(siguienteOferta)}
-                          </div>
-                        )}
-                        {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
-                        {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
-                      </form>
-                    </div>
-                    
-                    {/* Opción para bajarse */}
-                    <div style={{ 
-                      borderTop: '1px solid #ffeaa7', 
-                      paddingTop: 16,
-                      marginTop: 8
-                    }}>
-                      <button 
-                        className="btn w-100" 
-                        onClick={() => setShowModalBajarse(true)}
-                        style={{ 
-                          fontWeight: 600, 
-                          fontSize: '0.95em',
-                          background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-                          border: 'none',
-                          color: 'white',
-                          padding: '12px 20px',
-                          borderRadius: '10px',
-                          boxShadow: '0 4px 12px rgba(220, 53, 69, 0.25)',
-                          transition: 'all 0.3s ease',
-                          position: 'relative',
-                          overflow: 'hidden'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 6px 16px rgba(220, 53, 69, 0.35)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.25)';
-                        }}
-                      >
-                        <span style={{ marginRight: 8 }}>🚪</span>
-                        Bajarse de la subasta
-                      </button>
-                      <div className="text-muted small mt-3" style={{ 
-                        fontSize: '0.85em',
-                        color: '#dc3545',
-                        fontWeight: 500,
-                        textAlign: 'center'
-                      }}>
-                        ⚠️ Al bajarte perderás toda tu seña sin reembolso
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <form onSubmit={e => handleOfertar(e, false)}>
-                    <div className="input-group mb-2">
-                      <span className="input-group-text">$</span>
-                      <input
-                        type="text"
-                        className={`form-control ${oferta && !esValorValido() ? 'is-invalid' : ''}`}
-                        value={ofertaFormateada}
-                        onChange={handleOfertaChange}
-                        placeholder={`Mínimo $${formatearMonto(siguienteOferta)}`}
-                        required
-                        disabled={!user || ofertando}
-                        style={{
-                          borderColor: oferta && !esValorValido() ? '#dc3545' : undefined,
-                          boxShadow: oferta && !esValorValido() ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : undefined
-                        }}
-                      />
-                      <div className="input-group-append" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}>
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary"
-                          onClick={incrementarOferta}
-                          disabled={!user || ofertando}
-                          style={{ 
-                            borderTopRightRadius: 0, 
-                            borderBottomRightRadius: 0,
-                            padding: '0.375rem 0.25rem',
-                            fontSize: '0.75rem',
-                            color: '#6c757d',
-                            borderRight: 'none',
-                            minWidth: '28px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            lineHeight: '1',
-                            height: '100%',
-                            transform: 'none'
-                          }}
-                          title="Incrementar en $1.000"
-                        >
-                          ▲
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary"
-                          onClick={decrementarOferta}
-                          disabled={!user || ofertando}
-                          style={{ 
-                            borderTopLeftRadius: 0, 
-                            borderBottomLeftRadius: 0,
-                            padding: '0.375rem 0.25rem',
-                            fontSize: '0.75rem',
-                            color: '#6c757d',
-                            minWidth: '28px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            lineHeight: '1',
-                            height: '100%',
-                            transform: 'none'
-                          }}
-                          title="Decrementar en $1.000"
-                        >
-                          ▼
+                        <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
+                          {ofertando ? 'Ofertando...' : 'Ofertar'}
                         </button>
                       </div>
-                      <button className="btn btn-primary" type="submit" disabled={!user || ofertando} style={{ fontWeight: 600, minWidth: 110 }}>
-                        {ofertando ? 'Ofertando...' : 'Ofertar'}
-                      </button>
-                    </div>
-                    {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
-                    {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
-                  </form>
-                )}
-              </div>
-            ) : (
-              <div className="alert alert-info mt-3">La subasta no está activa.</div>
-            )}
-          </div>
-          {/* Historial de ofertas debajo de la tarjeta de datos */}
-          <div className="card p-3 mt-0" style={{ borderRadius: 14 }}>
-            <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Historial de ofertas</h5>
-            {ofertas.length === 0 ? (
-              <div className="text-muted">No hay ofertas aún.</div>
-            ) : (
-              <ul className="list-group list-group-flush">
-                {ofertas
-                  .slice()
-                  .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-                  .map((of) => {
-                    let fecha = '';
-                    let hora = '';
-                    if (of.fecha) {
-                      const d = new Date(of.fecha);
-                      if (!isNaN(d)) {
-                        fecha = d.toLocaleDateString();
-                        hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      } else {
-                        fecha = of.fecha;
+                      {!user && <div className="text-danger small">Debes iniciar sesión para ofertar.</div>}
+                      {mensaje && <div className={`mt-2 ${mensaje.includes('éxito') ? 'text-success' : 'text-danger'}`}>{mensaje}</div>}
+                    </form>
+                  )}
+                </div>
+              ) : (
+                <div className="alert alert-info mt-3">La subasta no está activa.</div>
+              )}
+            </div>
+            {/* Historial de ofertas debajo de la tarjeta de datos */}
+            <div className="card p-3 mt-0" style={{ borderRadius: 14 }}>
+              <h5 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Historial de ofertas</h5>
+              {ofertas.length === 0 ? (
+                <div className="text-muted">No hay ofertas aún.</div>
+              ) : (
+                <ul className="list-group list-group-flush">
+                  {ofertas
+                    .slice()
+                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                    .map((of) => {
+                      let fecha = '';
+                      let hora = '';
+                      if (of.fecha) {
+                        const d = new Date(of.fecha);
+                        if (!isNaN(d)) {
+                          fecha = d.toLocaleDateString();
+                          hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        } else {
+                          fecha = of.fecha;
+                        }
                       }
-                    }
-                    return (
-                      <li
-                        key={of.id}
-                        className="list-group-item px-3 py-3"
-                        style={{ background: 'none', border: 'none', borderBottom: '1px solid #ececf3' }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center flex-wrap" style={{ rowGap: 6 }}>
-                          <span className="fw-semibold" style={{ color: '#1976d2', fontSize: '1.04em', maxWidth: '60vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
-                          <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.13em', minWidth: 80, textAlign: 'right' }}>${formatearMonto(of.monto)}</span>
-                        </div>
-                        <div className="mt-1" style={{ color: '#888', fontSize: '0.97em', letterSpacing: 0.2 }}>
-                          {fecha} {hora && <span style={{ marginLeft: 10 }}>{hora}</span>}
-                        </div>
-                      </li>
-                    );
-                  })}
-              </ul>
-            )}
+                      return (
+                        <li
+                          key={of.id}
+                          className="list-group-item px-3 py-3"
+                          style={{ background: 'none', border: 'none', borderBottom: '1px solid #ececf3' }}
+                        >
+                          <div className="d-flex justify-content-between align-items-center flex-wrap" style={{ rowGap: 6 }}>
+                            <span className="fw-semibold" style={{ color: '#1976d2', fontSize: '1.04em', maxWidth: '60vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{of.usuario?.nombre || of.usuario?.username || 'Usuario'}</span>
+                            <span style={{ fontWeight: 600, color: '#1976d2', fontSize: '1.13em', minWidth: 80, textAlign: 'right' }}>${formatearMonto(of.monto)}</span>
+                          </div>
+                          <div className="mt-1" style={{ color: '#888', fontSize: '0.97em', letterSpacing: 0.2 }}>
+                            {fecha} {hora && <span style={{ marginLeft: 10 }}>{hora}</span>}
+                          </div>
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-      {(showModal || modalClosing) && (
-        <div className={`modal-overlay${modalClosing ? ' modal-overlay-out' : ''}`} onClick={handleCloseModal}>
-          <div className={`modal-content${modalClosing ? ' modal-out' : ''}`} onClick={e => e.stopPropagation()}>
-            <h2>Confirmar oferta</h2>
-            <div className="modal-flex-row">
-              {/* Desglose */}
-              <div className="modal-desglose mb-3" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
-                <div className="modal-desglose-title">Desglose de pago</div>
-                
-                {/* Información de oferta anterior si existe */}
-                {ofertaAnterior && (
-                  <div style={{ 
-                    background: '#fff3cd', 
-                    border: '1px solid #ffeaa7', 
-                    borderRadius: 8, 
-                    padding: '12px', 
-                    marginBottom: '12px',
-                    fontSize: '0.95em'
-                  }}>
-                    <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
-                      📋 Oferta anterior: ${formatearMonto(ofertaAnterior.monto)}
-                    </div>
-                    <div style={{ color: '#856404' }}>
-                      Ya pagaste seña de: ${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}
-                    </div>
-                  </div>
-                )}
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
-                  <span>Monto ofertado:</span>
-                  <span>${formatearMonto(ofertaModal)}</span>
-                </div>
-                
-                {ofertaAnterior ? (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
-                      <span>Seña nueva (10%):</span>
-                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc3545', fontWeight: 500, marginTop: 2 }}>
-                      <span>Seña ya pagada:</span>
-                      <span>-${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}</span>
-                    </div>
-                    <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#28a745' }}>
-                      <span>Diferencia a pagar:</span>
-                      <span>${formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
-                      <span>Seña (10%):</span>
-                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
-                    </div>
-                    <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1976d2' }}>
-                      <span>Total a pagar ahora:</span>
-                      <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
-                    </div>
-                  </>
-                )}
-                
-                <div style={{ fontSize: '0.97em', color: '#888', marginTop: 2 }}>
-                  {ofertaAnterior 
-                    ? 'Solo pagarás la diferencia de seña. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
-                    : 'Solo abonarás la seña ahora. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
-                  }
-                </div>
-              </div>
-              {/* Selector de tarjetas */}
-              <div className="modal-metodo mb-2" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
-                <div className="modal-metodo-title">Selecciona una tarjeta para la seña:</div>
-                {loadingTarjetas ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                    Cargando tarjetas...
-                  </div>
-                ) : errorTarjetas ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#dc3545' }}>
-                    {errorTarjetas}
-                  </div>
-                ) : tarjetasUsuario.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <div style={{ color: '#666', marginBottom: '15px' }}>
-                      No tienes tarjetas guardadas. Agrega una para continuar.
-                    </div>
-                    <button 
-                      className="btn btn-primary" 
-                      onClick={handleAbrirModalAgregar}
-                      style={{ borderRadius: 8, fontWeight: 600 }}
-                    >
-                      + Agregar tarjeta
-                    </button>
-                  </div>
-                ) : (
-                  <div className="tarjetas-lista" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {tarjetasUsuario.map(t => (
-                      <div
-                        key={t.id}
-                        className={`tarjeta-item${tarjetaSeleccionada === t.id ? ' seleccionada' : ''}`}
-                        style={{
-                          border: tarjetaSeleccionada === t.id ? '2.5px solid #1976d2' : '1.5px solid #e0e2e7',
-                          borderRadius: 10,
-                          padding: '0.8em 1.1em',
-                          background: '#f7f8fa',
-                          display: 'flex',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          boxShadow: tarjetaSeleccionada === t.id ? '0 2px 12px rgba(25,118,210,0.10)' : 'none',
-                          transition: 'border 0.2s, box-shadow 0.2s',
-                          gap: 12,
-                        }}
-                        onClick={() => setTarjetaSeleccionada(t.id)}
-                      >
-                        <span style={{ fontSize: 22 }}>💳</span>
-                        <span style={{ fontWeight: 600, fontSize: '1.08em', color: '#1976d2', marginRight: 8 }}>
-                          {t.numero.slice(-4).startsWith('4') ? 'Visa' : 'Mastercard'}
-                        </span>
-                        <span style={{ color: '#888', fontSize: '1em', marginRight: 8 }}>
-                          •••• {t.numero.slice(-4)}
-                        </span>
-                        <span style={{ color: '#888', fontSize: '0.97em' }}>{t.nombreCompleto}</span>
+        {(showModal || modalClosing) && (
+          <div className={`modal-overlay${modalClosing ? ' modal-overlay-out' : ''}`} onClick={handleCloseModal}>
+            <div className={`modal-content${modalClosing ? ' modal-out' : ''}`} onClick={e => e.stopPropagation()}>
+              <h2>Confirmar oferta</h2>
+              <div className="modal-flex-row">
+                {/* Desglose */}
+                <div className="modal-desglose mb-3" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
+                  <div className="modal-desglose-title">Desglose de pago</div>
+
+                  {/* Información de oferta anterior si existe */}
+                  {ofertaAnterior && (
+                    <div style={{
+                      background: '#fff3cd',
+                      border: '1px solid #ffeaa7',
+                      borderRadius: 8,
+                      padding: '12px',
+                      marginBottom: '12px',
+                      fontSize: '0.95em'
+                    }}>
+                      <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
+                        📋 Oferta anterior: ${formatearMonto(ofertaAnterior.monto)}
                       </div>
-                    ))}
+                      <div style={{ color: '#856404' }}>
+                        Ya pagaste seña de: ${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                    <span>Monto ofertado:</span>
+                    <span>${formatearMonto(ofertaModal)}</span>
                   </div>
-                )}
+
+                  {ofertaAnterior ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
+                        <span>Seña nueva (10%):</span>
+                        <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc3545', fontWeight: 500, marginTop: 2 }}>
+                        <span>Seña ya pagada:</span>
+                        <span>-${formatearMonto((parseFloat(ofertaAnterior.monto) * 0.10).toFixed(2))}</span>
+                      </div>
+                      <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#28a745' }}>
+                        <span>Diferencia a pagar:</span>
+                        <span>${formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#b26a00', fontWeight: 500, marginTop: 2 }}>
+                        <span>Seña (10%):</span>
+                        <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                      </div>
+                      <div style={{ borderTop: '1.5px solid #ececf3', margin: '10px 0 0 0', paddingTop: 7, display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#1976d2' }}>
+                        <span>Total a pagar ahora:</span>
+                        <span>${formatearMonto((parseFloat(ofertaModal) * 0.10).toFixed(2))}</span>
+                      </div>
+                    </>
+                  )}
+
+                  <div style={{ fontSize: '0.97em', color: '#888', marginTop: 2 }}>
+                    {ofertaAnterior
+                      ? 'Solo pagarás la diferencia de seña. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
+                      : 'Solo abonarás la seña ahora. Si ganas la subasta, coordinarás el pago del resto con el vendedor.'
+                    }
+                  </div>
+                </div>
+                {/* Selector de tarjetas */}
+                <div className="modal-metodo mb-2" style={{ width: '100%', margin: '0 auto', textAlign: 'left' }}>
+                  <div className="modal-metodo-title">Selecciona una tarjeta para la seña:</div>
+                  {loadingTarjetas ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                      Cargando tarjetas...
+                    </div>
+                  ) : errorTarjetas ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#dc3545' }}>
+                      {errorTarjetas}
+                    </div>
+                  ) : tarjetasUsuario.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                      <div style={{ color: '#666', marginBottom: '15px' }}>
+                        No tienes tarjetas guardadas. Agrega una para continuar.
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleAbrirModalAgregar}
+                        style={{ borderRadius: 8, fontWeight: 600 }}
+                      >
+                        + Agregar tarjeta
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="tarjetas-lista" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {tarjetasUsuario.map(t => (
+                        <div
+                          key={t.id}
+                          className={`tarjeta-item${tarjetaSeleccionada === t.id ? ' seleccionada' : ''}`}
+                          style={{
+                            border: tarjetaSeleccionada === t.id ? '2.5px solid #1976d2' : '1.5px solid #e0e2e7',
+                            borderRadius: 10,
+                            padding: '0.8em 1.1em',
+                            background: '#f7f8fa',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            boxShadow: tarjetaSeleccionada === t.id ? '0 2px 12px rgba(25,118,210,0.10)' : 'none',
+                            transition: 'border 0.2s, box-shadow 0.2s',
+                            gap: 12,
+                          }}
+                          onClick={() => setTarjetaSeleccionada(t.id)}
+                        >
+                          <span style={{ fontSize: 22 }}>💳</span>
+                          <span style={{ fontWeight: 600, fontSize: '1.08em', color: '#1976d2', marginRight: 8 }}>
+                            {t.numero.slice(-4).startsWith('4') ? 'Visa' : 'Mastercard'}
+                          </span>
+                          <span style={{ color: '#888', fontSize: '1em', marginRight: 8 }}>
+                            •••• {t.numero.slice(-4)}
+                          </span>
+                          <span style={{ color: '#888', fontSize: '0.97em' }}>{t.nombreCompleto}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Advertencia */}
+              <div className="modal-warning">
+                <p>⚠️ <b>Advertencia:</b> Las ofertas son <b>vinculantes</b>. No podrás cancelar ni modificar tu oferta una vez enviada.</p>
+                <p>Si ganas la subasta, deberás cumplir con el pago y coordinar la entrega.</p>
+              </div>
+              {/* Acciones */}
+              <div className="modal-actions">
+                <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={handleConfirmarOferta} disabled={ofertando || !tarjetaSeleccionada || procesandoPago}>Confirmar oferta</button>
+                <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando || procesandoPago}>Cancelar</button>
               </div>
             </div>
-            {/* Advertencia */}
-            <div className="modal-warning">
-              <p>⚠️ <b>Advertencia:</b> Las ofertas son <b>vinculantes</b>. No podrás cancelar ni modificar tu oferta una vez enviada.</p>
-              <p>Si ganas la subasta, deberás cumplir con el pago y coordinar la entrega.</p>
-            </div>
-            {/* Acciones */}
-            <div className="modal-actions">
-              <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={handleConfirmarOferta} disabled={ofertando || !tarjetaSeleccionada || procesandoPago}>Confirmar oferta</button>
-              <button className="btn btn-secondary" style={{ minWidth: 120, marginLeft: 12 }} onClick={handleCloseModal} disabled={ofertando || procesandoPago}>Cancelar</button>
-            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Modal para agregar tarjeta */}
-      {showModalTarjeta && (
-        <div className="modal-overlay" onClick={handleCerrarModalTarjeta}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Agregar nueva tarjeta</h2>
-              <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Completa los datos de tu tarjeta de crédito o débito</p>
-            </div>
-            
-            <form onSubmit={handleSubmitTarjeta}>
-              <div style={{ display: 'grid', gap: 20 }}>
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>
-                      <i className="fas fa-user"></i>
-                    </span>Nombre completo
-                  </label>
-                  <input
-                    type="text"
-                    className={`form-control ${erroresTarjeta.nombreCompleto ? 'is-invalid' : ''}`}
-                    name="nombreCompleto"
-                    value={formTarjeta.nombreCompleto}
-                    onChange={handleChangeTarjeta}
-                    placeholder="Juan Pérez"
-                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
-                  />
-                  {erroresTarjeta.nombreCompleto && (
-                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.nombreCompleto}</div>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>
-                      <i className="fas fa-credit-card"></i>
-                    </span>Número de tarjeta
-                  </label>
-                  <input
-                    type="text"
-                    className={`form-control ${erroresTarjeta.numero ? 'is-invalid' : ''}`}
-                    name="numero"
-                    value={formTarjeta.numero}
-                    onChange={handleChangeTarjeta}
-                    placeholder="1234 5678 9012 3456"
-                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
-                  />
-                  {erroresTarjeta.numero && (
-                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.numero}</div>
-                  )}
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        )}
+
+        {/* Modal para agregar tarjeta */}
+        {showModalTarjeta && (
+          <div className="modal-overlay" onClick={handleCerrarModalTarjeta}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ color: '#1976d2', fontWeight: 800, margin: 0 }}>Agregar nueva tarjeta</h2>
+                <p style={{ color: '#666', margin: '8px 0 0 0', fontSize: '1.05em' }}>Completa los datos de tu tarjeta de crédito o débito</p>
+              </div>
+
+              <form onSubmit={handleSubmitTarjeta}>
+                <div style={{ display: 'grid', gap: 20 }}>
                   <div>
-                                          <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-user"></i>
+                      </span>Nombre completo
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.nombreCompleto ? 'is-invalid' : ''}`}
+                      name="nombreCompleto"
+                      value={formTarjeta.nombreCompleto}
+                      onChange={handleChangeTarjeta}
+                      placeholder="Juan Pérez"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.nombreCompleto && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.nombreCompleto}</div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                      <span style={{ marginRight: 8 }}>
+                        <i className="fas fa-credit-card"></i>
+                      </span>Número de tarjeta
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${erroresTarjeta.numero ? 'is-invalid' : ''}`}
+                      name="numero"
+                      value={formTarjeta.numero}
+                      onChange={handleChangeTarjeta}
+                      placeholder="1234 5678 9012 3456"
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                    />
+                    {erroresTarjeta.numero && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.numero}</div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                      <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
                         <span style={{ marginRight: 8 }}>
                           <i className="fas fa-calendar-alt"></i>
                         </span>Vencimiento
                       </label>
-                    <input
-                      type="text"
-                      className={`form-control ${erroresTarjeta.fechaVencimiento ? 'is-invalid' : ''}`}
-                      name="fechaVencimiento"
-                      value={formTarjeta.fechaVencimiento}
-                      onChange={handleChangeTarjeta}
-                      placeholder="MM/AA"
-                      style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
-                    />
-                    {erroresTarjeta.fechaVencimiento && (
-                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.fechaVencimiento}</div>
-                    )}
+                      <input
+                        type="text"
+                        className={`form-control ${erroresTarjeta.fechaVencimiento ? 'is-invalid' : ''}`}
+                        name="fechaVencimiento"
+                        value={formTarjeta.fechaVencimiento}
+                        onChange={handleChangeTarjeta}
+                        placeholder="MM/AA"
+                        style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                      />
+                      {erroresTarjeta.fechaVencimiento && (
+                        <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.fechaVencimiento}</div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
+                        <span style={{ marginRight: 8 }}>
+                          <i className="fas fa-lock"></i>
+                        </span>Código de seguridad
+                      </label>
+                      <input
+                        type="text"
+                        className={`form-control ${erroresTarjeta.codigoSeguridad ? 'is-invalid' : ''}`}
+                        name="codigoSeguridad"
+                        value={formTarjeta.codigoSeguridad}
+                        onChange={handleChangeTarjeta}
+                        placeholder="123"
+                        style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
+                      />
+                      {erroresTarjeta.codigoSeguridad && (
+                        <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.codigoSeguridad}</div>
+                      )}
+                    </div>
                   </div>
-                  
+
                   <div>
                     <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
                       <span style={{ marginRight: 8 }}>
-                        <i className="fas fa-lock"></i>
-                      </span>Código de seguridad
+                        <i className="fas fa-id-card"></i>
+                      </span>DNI del titular
                     </label>
                     <input
                       type="text"
-                      className={`form-control ${erroresTarjeta.codigoSeguridad ? 'is-invalid' : ''}`}
-                      name="codigoSeguridad"
-                      value={formTarjeta.codigoSeguridad}
+                      className={`form-control ${erroresTarjeta.dniTitular ? 'is-invalid' : ''}`}
+                      name="dniTitular"
+                      value={formTarjeta.dniTitular}
                       onChange={handleChangeTarjeta}
-                      placeholder="123"
+                      placeholder="12345678"
                       style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
                     />
-                    {erroresTarjeta.codigoSeguridad && (
-                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.codigoSeguridad}</div>
+                    {erroresTarjeta.dniTitular && (
+                      <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.dniTitular}</div>
                     )}
                   </div>
                 </div>
-                
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, color: '#333', marginBottom: 8, display: 'block' }}>
-                    <span style={{ marginRight: 8 }}>
-                      <i className="fas fa-id-card"></i>
-                    </span>DNI del titular
-                  </label>
-                  <input
-                    type="text"
-                    className={`form-control ${erroresTarjeta.dniTitular ? 'is-invalid' : ''}`}
-                    name="dniTitular"
-                    value={formTarjeta.dniTitular}
-                    onChange={handleChangeTarjeta}
-                    placeholder="12345678"
-                    style={{ padding: '12px 16px', borderRadius: 10, border: '2px solid #e0e2e7', fontSize: '1.05em' }}
-                  />
-                  {erroresTarjeta.dniTitular && (
-                    <div className="invalid-feedback" style={{ color: '#dc3545', fontSize: '0.95em', marginTop: 4 }}>{erroresTarjeta.dniTitular}</div>
-                  )}
+
+                {errorTarjetas && (
+                  <div className="alert alert-danger mt-3" style={{ fontSize: '0.95em' }}>{errorTarjetas}</div>
+                )}
+
+                {successTarjeta && (
+                  <div className="alert alert-success mt-3" style={{ fontSize: '0.95em' }}>¡Tarjeta agregada exitosamente!</div>
+                )}
+
+                <div className="modal-actions">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={loadingTarjeta}
+                    style={{ minWidth: 120, fontWeight: 600 }}
+                  >
+                    {loadingTarjeta ? 'Guardando...' : 'Guardar tarjeta'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleCerrarModalTarjeta}
+                    disabled={loadingTarjeta}
+                    style={{ minWidth: 120, marginLeft: 12 }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Pantalla de procesamiento de pago */}
+        {procesandoPago && (
+          <div className="procesamiento-pago">
+            <div className="procesamiento-contenido">
+              <div className={`procesamiento-icono ${pasoPago === 1 ? 'procesando' : 'confirmado'}`}>
+                {pasoPago === 1 ? '💳' : '✅'}
+              </div>
+              <div className="procesamiento-titulo">
+                {pasoPago === 1 ? 'Procesando pago...' : '¡Pago confirmado!'}
+              </div>
+              <div className="procesamiento-subtitulo">
+                {pasoPago === 1
+                  ? 'Estamos procesando tu seña de $' + formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))
+                  : 'Tu oferta ha sido registrada exitosamente'
+                }
+              </div>
+              {pasoPago === 1 && (
+                <div className="procesamiento-progreso">
+                  <div className="procesamiento-barra"></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación para bajarse de la subasta */}
+        {showModalBajarse && (
+          <div className="modal-overlay" onClick={() => setShowModalBajarse(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🚪</div>
+                <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>Bajarse de la subasta</h2>
+                <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>¿Estás seguro de que quieres bajarte?</p>
+              </div>
+
+              <div className="alert alert-danger" style={{ fontSize: '0.95em', border: '1px solid #f5c6cb', background: '#f8d7da' }}>
+                <div style={{ fontWeight: 600, color: '#721c24', marginBottom: '8px' }}>
+                  ⚠️ ADVERTENCIA IMPORTANTE
+                </div>
+                <div style={{ color: '#721c24', fontSize: '0.9em' }}>
+                  <ul style={{ margin: 0, paddingLeft: 20 }}>
+                    <li>Todas tus ofertas serán eliminadas</li>
+                    <li>Perderás <strong>TODA</strong> tu seña sin reembolso</li>
+                    <li>No podrás volver a ofertar en esta subasta</li>
+                    <li>Esta acción es <strong>IRREVERSIBLE</strong></li>
+                  </ul>
                 </div>
               </div>
-              
-              {errorTarjetas && (
-                <div className="alert alert-danger mt-3" style={{ fontSize: '0.95em' }}>{errorTarjetas}</div>
-              )}
-              
-              {successTarjeta && (
-                <div className="alert alert-success mt-3" style={{ fontSize: '0.95em' }}>¡Tarjeta agregada exitosamente!</div>
-              )}
-              
+
+              <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: '12px', marginBottom: '20px', fontSize: '0.95em' }}>
+                <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
+                  <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Resumen de tu participación:
+                </div>
+                <div style={{ color: '#856404' }}>
+                  <div>• Ofertas realizadas: {ofertas.filter(o => o.usuario?.id === user?.id).length}</div>
+                  <div>• Seña total pagada: ${formatearMonto((ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto * 0.10 || 0).toFixed(2))}</div>
+                  <div>• Oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}</div>
+                </div>
+              </div>
+
               <div className="modal-actions">
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  disabled={loadingTarjeta}
+                <button
+                  className="btn btn-danger"
+                  onClick={handleBajarseDeSubasta}
+                  disabled={procesandoBajarse}
                   style={{ minWidth: 120, fontWeight: 600 }}
                 >
-                  {loadingTarjeta ? 'Guardando...' : 'Guardar tarjeta'}
+                  {procesandoBajarse ? 'Procesando...' : 'Sí, bajarme'}
                 </button>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={handleCerrarModalTarjeta}
-                  disabled={loadingTarjeta}
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowModalBajarse(false)}
+                  disabled={procesandoBajarse}
                   style={{ minWidth: 120, marginLeft: 12 }}
                 >
                   Cancelar
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Pantalla de procesamiento de pago */}
-      {procesandoPago && (
-        <div className="procesamiento-pago">
-          <div className="procesamiento-contenido">
-            <div className={`procesamiento-icono ${pasoPago === 1 ? 'procesando' : 'confirmado'}`}>
-              {pasoPago === 1 ? '💳' : '✅'}
-            </div>
-            <div className="procesamiento-titulo">
-              {pasoPago === 1 ? 'Procesando pago...' : '¡Pago confirmado!'}
-            </div>
-            <div className="procesamiento-subtitulo">
-              {pasoPago === 1 
-                ? 'Estamos procesando tu seña de $' + formatearMonto(calcularSenaAPagar(ofertaModal).toFixed(2))
-                : 'Tu oferta ha sido registrada exitosamente'
-              }
-            </div>
-            {pasoPago === 1 && (
-              <div className="procesamiento-progreso">
-                <div className="procesamiento-barra"></div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Modal de confirmación para bajarse de la subasta */}
-      {showModalBajarse && (
-        <div className="modal-overlay" onClick={() => setShowModalBajarse(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, width: '95vw' }}>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🚪</div>
-              <h2 style={{ color: '#dc3545', fontWeight: 800, margin: 0 }}>Bajarse de la subasta</h2>
-              <p style={{ color: '#666', margin: '12px 0 0 0', fontSize: '1.05em' }}>¿Estás seguro de que quieres bajarte?</p>
-            </div>
-            
-            <div className="alert alert-danger" style={{ fontSize: '0.95em', border: '1px solid #f5c6cb', background: '#f8d7da' }}>
-              <div style={{ fontWeight: 600, color: '#721c24', marginBottom: '8px' }}>
-                ⚠️ ADVERTENCIA IMPORTANTE
-              </div>
-              <div style={{ color: '#721c24', fontSize: '0.9em' }}>
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
-                  <li>Todas tus ofertas serán eliminadas</li>
-                  <li>Perderás <strong>TODA</strong> tu seña sin reembolso</li>
-                  <li>No podrás volver a ofertar en esta subasta</li>
-                  <li>Esta acción es <strong>IRREVERSIBLE</strong></li>
-                </ul>
-              </div>
-            </div>
-
-            <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: '12px', marginBottom: '20px', fontSize: '0.95em' }}>
-              <div style={{ fontWeight: 600, color: '#856404', marginBottom: '4px' }}>
-                <i className="fas fa-chart-bar" style={{ marginRight: 8 }}></i>Resumen de tu participación:
-              </div>
-              <div style={{ color: '#856404' }}>
-                <div>• Ofertas realizadas: {ofertas.filter(o => o.usuario?.id === user?.id).length}</div>
-                <div>• Seña total pagada: ${formatearMonto((ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto * 0.10 || 0).toFixed(2))}</div>
-                <div>• Oferta más alta: ${formatearMonto(ofertas.filter(o => o.usuario?.id === user?.id).sort((a, b) => b.monto - a.monto)[0]?.monto || 0)}</div>
-              </div>
-            </div>
-            
-            <div className="modal-actions">
-              <button 
-                className="btn btn-danger" 
-                onClick={handleBajarseDeSubasta}
-                disabled={procesandoBajarse}
-                style={{ minWidth: 120, fontWeight: 600 }}
-              >
-                {procesandoBajarse ? 'Procesando...' : 'Sí, bajarme'}
-              </button>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setShowModalBajarse(false)}
-                disabled={procesandoBajarse}
-                style={{ minWidth: 120, marginLeft: 12 }}
-              >
-                Cancelar
-              </button>
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Modal de imagen mejorado */}
-      {showImageModal && (
-        <div 
-          className="modal-overlay" 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '10px'
-          }}
-          onClick={handleModalClick}
-        >
-          <div 
+        )}
+
+        {/* Modal de imagen mejorado */}
+        {showImageModal && (
+          <div
+            className="modal-overlay"
             style={{
-              position: 'relative',
-              width: '95vw',
-              height: '95vh',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(8px)',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              zIndex: 9999,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleModalClick}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
           >
-            {/* Botón de cerrar moderno */}
-            <button
-              onClick={() => {
-                setShowImageModal(false);
-                setIsZoomed(false);
-                setZoomPosition({ x: 0, y: 0 });
-              }}
+            <div
               style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                color: 'white',
-                fontSize: '20px',
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                cursor: 'pointer',
+                position: 'relative',
+                width: '95vw',
+                height: '95vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botón de cerrar moderno */}
+              <button
+                onClick={() => {
+                  setShowImageModal(false);
+                  setIsZoomed(false);
+                  setZoomPosition({ x: 0, y: 0 });
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: 'rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  color: 'white',
+                  fontSize: '20px',
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  zIndex: 10000
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(0,0,0,0.5)';
+                  e.target.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(0,0,0,0.3)';
+                  e.target.style.transform = 'scale(1)';
+                }}
+              >
+                ✕
+              </button>
+
+              {/* Contenedor principal de la imagen */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                zIndex: 10000
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.5)';
-                e.target.style.transform = 'scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.3)';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              ✕
-            </button>
-            
-            {/* Contenedor principal de la imagen */}
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-                   {/* Imagen principal con zoom y movimiento */}
-                   <img
-                     src={getImageUrl(publicacion.imagenes[selectedImageIndex])}
-                     alt={`Imagen ${selectedImageIndex + 1}`}
-                     style={{
-                       maxWidth: isZoomed ? '100%' : '95%',
-                       height: isZoomed ? '100%' : '600px',
-                       objectFit: isZoomed ? 'contain' : 'contain',
-                       borderRadius: '12px',
-                       boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-                       transition: 'all 0.3s ease',
-                       cursor: isZoomed ? 'zoom-out' : 'zoom-in',
-                                                transform: isZoomed 
-                           ? `scale(1.3) translate(${zoomPosition.x}px, ${zoomPosition.y}px)`  
-                         : 'scale(1)',
-                       transformOrigin: 'center center',
-                       zIndex: isZoomed ? 10001 : 'auto',
-                       userSelect: 'none'
-                     }}
-                     onClick={handleImageClick}
-                     onDoubleClick={handleDoubleClick}
-                     onMouseMove={handleMouseMove}
-                     onMouseEnter={handleMouseEnter}
-                     draggable={false}
-                   />
-              
-
-            </div>
-            
-            {/* Contador de imágenes mejorado */}
-            {publicacion.imagenes && publicacion.imagenes.length > 1 && (
-              <div style={{
-                position: 'absolute',
-                bottom: '30px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'rgba(0,0,0,0.7)',
-                backdropFilter: 'blur(10px)',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: '500',
-                padding: '12px 24px',
-                borderRadius: '25px',
-                border: '1px solid rgba(255,255,255,0.2)'
+                justifyContent: 'center'
               }}>
-                {selectedImageIndex + 1} de {publicacion.imagenes.length}
+                {/* Imagen principal con zoom y movimiento */}
+                <img
+                  src={getImageUrl(publicacion.imagenes[selectedImageIndex])}
+                  alt={`Imagen ${selectedImageIndex + 1}`}
+                  style={{
+                    maxWidth: isZoomed ? '100%' : '95%',
+                    height: isZoomed ? '100%' : '600px',
+                    objectFit: isZoomed ? 'contain' : 'contain',
+                    borderRadius: '12px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                    transition: isZoomed ? 'transform 0.15s ease-out' : 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                    cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                    transform: isZoomed
+                      ? `scale(1.1) translate(${zoomPosition.x}px, ${zoomPosition.y}px)`
+                      : 'scale(1)',
+                    transformOrigin: 'center center',
+                    zIndex: isZoomed ? 10001 : 'auto',
+                    userSelect: 'none',
+                    willChange: 'transform'
+                  }}
+                  onClick={handleImageClick}
+                  onDoubleClick={handleDoubleClick}
+                  draggable={false}
+                />
+
+
               </div>
-            )}
+
+              {/* Contador de imágenes mejorado */}
+              {publicacion.imagenes && publicacion.imagenes.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '30px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(0,0,0,0.7)',
+                  backdropFilter: 'blur(10px)',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  padding: '12px 24px',
+                  borderRadius: '25px',
+                  border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                  {selectedImageIndex + 1} de {publicacion.imagenes.length}
+                </div>
+              )}
 
 
-            
-            {/* Miniaturas en la parte inferior */}
-            {publicacion.imagenes && publicacion.imagenes.length > 1 && (
-              <div style={{
-                position: 'absolute',
-                bottom: '80px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: '12px',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                maxWidth: '80%',
-                padding: '15px',
-                background: 'rgba(0,0,0,0.5)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '15px',
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                {publicacion.imagenes.map((img, idx) => (
-                  <img
-                    key={img}
-                    src={getImageUrl(img)}
-                    alt={`Miniatura ${idx + 1}`}
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setSelectedImageIndex(idx);
-                           setIsZoomed(false);
-                           setZoomPosition({ x: 0, y: 0 });
-                         }}
-                         style={{
-                           width: '70px',
-                           height: '70px',
-                           objectFit: 'cover',
-                           borderRadius: '8px',
-                           border: selectedImageIndex === idx ? '3px solid #1976d2' : '2px solid rgba(255,255,255,0.3)',
-                           cursor: 'pointer',
-                           transition: 'all 0.3s ease',
-                           opacity: selectedImageIndex === idx ? 1 : 0.7
-                         }}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = 'scale(1.15)';
-                      e.target.style.opacity = '1';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'scale(1)';
-                      e.target.style.opacity = selectedImageIndex === idx ? 1 : 0.7;
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Alerta personalizada */}
-      {alertaPersonalizada.visible && (
-        <div
-          className="alerta-personalizada"
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9999,
-            maxWidth: '90vw',
-            width: '400px',
-            background: alertaPersonalizada.tipo === 'error' 
-              ? 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)'
-              : 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)',
-            color: 'white',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-            border: 'none',
-            animation: 'fadeIn 0.6s ease-out',
-            fontWeight: 500,
-            fontSize: '0.95em',
-            lineHeight: 1.4,
-            whiteSpace: 'pre-line',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1 }}>
-              {alertaPersonalizada.mensaje}
+              {/* Miniaturas en la parte inferior */}
+              {publicacion.imagenes && publicacion.imagenes.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '80px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  maxWidth: '80%',
+                  padding: '15px',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '15px',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  {publicacion.imagenes.map((img, idx) => (
+                    <img
+                      key={img}
+                      src={getImageUrl(img)}
+                      alt={`Miniatura ${idx + 1}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImageIndex(idx);
+                        setIsZoomed(false);
+                        setZoomPosition({ x: 0, y: 0 });
+                      }}
+                      style={{
+                        width: '70px',
+                        height: '70px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: selectedImageIndex === idx ? '3px solid #1976d2' : '2px solid rgba(255,255,255,0.3)',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        opacity: selectedImageIndex === idx ? 1 : 0.7
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'scale(1.15)';
+                        e.target.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'scale(1)';
+                        e.target.style.opacity = selectedImageIndex === idx ? 1 : 0.7;
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            <button
-              onClick={cerrarAlerta}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                fontSize: '1.2em',
-                cursor: 'pointer',
-                marginLeft: '12px',
-                padding: '0',
-                width: '24px',
-                height: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'none';
-              }}
-            >
-              ×
-            </button>
           </div>
-        </div>
-      )}
-      
-    </div>
-    
-    {/* Footer */}
-    <Footer />
-  </>
+        )}
+
+        {/* Alerta personalizada */}
+        {alertaPersonalizada.visible && (
+          <div
+            className="alerta-personalizada"
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              maxWidth: '90vw',
+              width: '400px',
+              background: alertaPersonalizada.tipo === 'error'
+                ? 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)'
+                : 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)',
+              color: 'white',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+              border: 'none',
+              animation: 'fadeIn 0.6s ease-out',
+              fontWeight: 500,
+              fontSize: '0.95em',
+              lineHeight: 1.4,
+              whiteSpace: 'pre-line',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ flex: 1 }}>
+                {alertaPersonalizada.mensaje}
+              </div>
+              <button
+                onClick={cerrarAlerta}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '1.2em',
+                  cursor: 'pointer',
+                  marginLeft: '12px',
+                  padding: '0',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'none';
+                }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Footer */}
+      <Footer />
+    </>
   );
 };
 

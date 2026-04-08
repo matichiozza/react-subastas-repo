@@ -1,832 +1,455 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import './Home.css';
 
-const categorias = [
-  { 
-    nombre: 'Computación', 
-    icono: 'fas fa-laptop', 
-    color: '#1976d2', 
-    grad: 'linear-gradient(135deg, rgba(13, 71, 161, 0.95) 0%, rgba(21, 101, 192, 0.90) 100%)'
-  },
-  { 
-    nombre: 'Calzado', 
-    icono: 'fas fa-shoe-prints', 
-    color: '#64b5f6', 
-    grad: 'linear-gradient(135deg, rgba(26, 35, 126, 0.95) 0%, rgba(40, 53, 147, 0.90) 100%)'
-  },
-  { 
-    nombre: 'Moda', 
-    icono: 'fas fa-tshirt', 
-    color: '#7b1fa2', 
-    grad: 'linear-gradient(135deg, rgba(74, 20, 140, 0.95) 0%, rgba(106, 27, 154, 0.90) 100%)'
-  },
-  { 
-    nombre: 'Vehículos', 
-    icono: 'fas fa-car', 
-    color: '#e91e63', 
-    grad: 'linear-gradient(135deg, rgba(136, 14, 79, 0.95) 0%, rgba(173, 20, 87, 0.90) 100%)'
-  },
+export const homeLoader = async () => {
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${API_BASE_URL}/publicaciones`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error('Error fetching');
+    const data = await res.json();
+    return data.reverse();
+  } catch (e) {
+    return [];
+  }
+};
+
+/** Búsqueda compatible con categorías existentes en publicaciones */
+const CATEGORIAS_SALON = [
+  { busqueda: 'Coleccionables', titulo: 'Coleccionables', desc: 'Piezas singulares, curiosidades y objetos de vitrina.', icono: 'fas fa-gem' },
+  { busqueda: 'Arte', titulo: 'Arte y papel', desc: 'Grabados, marcos y documentos gráficos con carácter.', icono: 'fas fa-palette' },
+  { busqueda: 'Moda', titulo: 'Moda y textiles', desc: 'Prendas, tejidos y accesorios con oficio antiguo.', icono: 'fas fa-scroll' },
+  { busqueda: 'Computación', titulo: 'Tecnología vintage', desc: 'Equipos y objetos de época con valor nostálgico.', icono: 'fas fa-keyboard' },
+  { busqueda: 'Inmuebles', titulo: 'Hogar y espacios', desc: 'Mobiliario, lámparas y piezas para el entorno doméstico.', icono: 'fas fa-archway' },
+  { busqueda: 'Vehículos', titulo: 'Vehículos clásicos', desc: 'Automóviles y piezas catalogadas para entusiastas.', icono: 'fas fa-car-side' },
 ];
 
-const beneficios = [
-  { icono: 'fas fa-shield-alt', titulo: 'Seguridad', desc: 'Tus datos y transacciones están protegidos.' },
-  { icono: 'fas fa-bolt', titulo: 'Rapidez', desc: 'Encuentra y oferta en segundos.' },
-  { icono: 'fas fa-headset', titulo: 'Soporte', desc: 'Atención personalizada ante cualquier duda.' },
-  { icono: 'fas fa-globe', titulo: 'Variedad', desc: 'Miles de productos y categorías.' },
-];
-
-const testimonios = [
-  { nombre: 'Lucía', texto: '¡Vendí mi bici en menos de 24hs! Súper fácil y seguro.', avatar: 'fas fa-user' },
-  { nombre: 'Carlos', texto: 'Me encanta la variedad y la atención al cliente.', avatar: 'fas fa-user' },
-  { nombre: 'Sofía', texto: 'Ofertar es adictivo, ya gané varias subastas.', avatar: 'fas fa-user' },
-];
-
-const preguntas = [
-  { q: '¿Cómo participo en una subasta?', a: 'Solo debes registrarte, buscar un producto y hacer tu oferta.' },
-  { q: '¿Es seguro pagar por la plataforma?', a: 'Sí, usamos métodos de pago protegidos y cifrado de datos.' },
-  { q: '¿Puedo vender cualquier cosa?', a: 'Sí, siempre que cumpla con nuestras políticas y leyes vigentes.' },
-];
-
-// Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
   if (!valor) return '0';
   return parseFloat(valor).toLocaleString('es-AR');
 }
 
+function fechaCierreLegible(fechaFin) {
+  if (!fechaFin) return '—';
+  try {
+    return new Date(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
 const Home = () => {
   const { token } = useContext(AuthContext);
-  const [publicaciones, setPublicaciones] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
+  const initialData = useLoaderData();
+  const [publicaciones, setPublicaciones] = useState(initialData || []);
   const navigate = useNavigate();
-  const [faqOpen, setFaqOpen] = useState(null);
 
   useEffect(() => {
-    const fetchPublicaciones = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/publicaciones`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setPublicaciones(data.reverse());
-      } catch {
-        setPublicaciones([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPublicaciones();
+    setPublicaciones(initialData || []);
+  }, [initialData]);
 
-    // WebSocket para actualizaciones en tiempo real
+  useEffect(() => {
     let socket = null;
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 3;
-    
+
     const connectWebSocket = () => {
       try {
         socket = new WebSocket(`${API_BASE_URL.replace('http://', 'ws://')}/ws`);
-        
         socket.onopen = () => {
           reconnectAttempts = 0;
         };
-
         socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'oferta_actualizada') {
-              setPublicaciones(prev => 
-                prev.map(pub => 
-                  pub.id === data.publicacion.id 
-                    ? { ...pub, ofertasTotales: data.publicacion.ofertasTotales, precioActual: data.publicacion.precioActual }
+              setPublicaciones((prev) =>
+                prev.map((pub) =>
+                  pub.id === data.publicacion.id
+                    ? {
+                        ...pub,
+                        ofertasTotales: data.publicacion.ofertasTotales,
+                        precioActual: data.publicacion.precioActual,
+                      }
                     : pub
                 )
               );
             }
-          } catch (error) {
-            console.error('Error al procesar mensaje WebSocket:', error);
+          } catch {
+            /* ignore */
           }
         };
-
-        socket.onerror = () => {
-          // Silenciar errores de WebSocket
-        };
-
+        socket.onerror = () => {};
         socket.onclose = (event) => {
           if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
             setTimeout(connectWebSocket, 2000);
           }
         };
-      } catch (error) {
-        // Silenciar errores de conexión
+      } catch {
+        /* ignore */
       }
     };
 
     connectWebSocket();
-
     return () => {
-      if (socket) {
-        socket.close(1000);
-      }
+      if (socket) socket.close(1000);
     };
   }, [token]);
 
-  // Subastas destacadas: las 3 con más ofertas
-  const subastasDestacadas = publicaciones
-    .sort((a, b) => (b.ofertasTotales || 0) - (a.ofertasTotales || 0))
-    .slice(0, 3);
+  const ordenOfertas = [...publicaciones].sort((a, b) => (b.ofertasTotales || 0) - (a.ofertasTotales || 0));
+  const destacada = ordenOfertas[0] || null;
+
+  const subastasProximas = [...publicaciones]
+    .filter((p) => p.fechaFin && new Date(p.fechaFin) > new Date())
+    .sort((a, b) => new Date(a.fechaFin) - new Date(b.fechaFin))
+    .slice(0, 4);
+
+  const precioMostrar = (pub) => pub.precioActual || pub.precioInicial;
 
   return (
-    <div style={{ background: '#f7f8fa' }}>
-      {/* HERO PRINCIPAL */}
-             <section style={{ 
-         background: `linear-gradient(135deg, rgba(25, 118, 210, 0.85) 0%, rgba(90, 72, 246, 0.8) 100%), url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
-         backgroundSize: 'cover',
-         backgroundPosition: 'center',
-         backgroundAttachment: 'fixed',
-         color: '#fff', 
-         padding: '5em 0 4em 0', 
-         position: 'relative',
-         overflow: 'hidden'
-       }}>
-        {/* Elementos decorativos de fondo */}
-        <div style={{
-          position: 'absolute',
-          top: -100,
-          right: -100,
-          width: 300,
-          height: 300,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          filter: 'blur(40px)'
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: -150,
-          left: -150,
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.08)',
-          filter: 'blur(50px)'
-        }} />
-        
-        <div className="container text-center position-relative" style={{ zIndex: 2 }}>
-          <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            {/* Badge superior */}
-            <div style={{
-              display: 'inline-block',
-              background: 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '50px',
-              padding: '8px 24px',
-              marginBottom: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              fontSize: '0.95em',
-              fontWeight: '500',
-              letterSpacing: '0.5px'
-            }}>
-              🚀 Plataforma líder en subastas online
-            </div>
-            
-            {/* Título principal */}
-                         <h1 style={{ 
-               fontWeight: 800, 
-               fontSize: '3.5em', 
-               lineHeight: 1.1, 
-               marginBottom: '24px',
-               textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-               color: '#fff'
-             }}>
-               ¡Descubre, oferta y gana en{' '}
-               <span style={{ 
-                 color: '#fff'
-               }}>
-                 SubastasCorp
-               </span>
-               !
-             </h1>
-            
-            {/* Descripción */}
-            <p style={{ 
-              fontSize: '1.4em', 
-              color: '#e8f4fd', 
-              marginBottom: '32px',
-              maxWidth: '600px',
-              margin: '0 auto 32px auto',
-              lineHeight: 1.6,
-              textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-            }}>
-              La plataforma más moderna y segura para comprar y vender en subastas online. 
-              Conectamos compradores y vendedores de manera eficiente y confiable.
-            </p>
-            
-                         {/* Botones de acción */}
-             <div className="d-flex gap-3 justify-content-center flex-wrap" style={{ marginBottom: '2rem' }}>
-               <button 
-                 className="btn btn-lg fw-bold" 
-                 style={{ 
-                   borderRadius: '50px', 
-                   fontSize: '1.1em', 
-                   padding: '16px 32px',
-                   background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
-                   color: '#1976d2',
-                   border: '2px solid rgba(255,255,255,0.3)',
-                   boxShadow: '0 8px 32px rgba(255,255,255,0.3), 0 4px 16px rgba(25,118,210,0.2)',
-                   transition: 'all 0.3s ease',
-                   textShadow: 'none',
-                   position: 'relative',
-                   overflow: 'hidden',
-                   minWidth: '180px'
-                 }} 
-                 onClick={() => navigate('/publicaciones')}
-                 onMouseEnter={(e) => {
-                   e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                   e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,255,255,0.4), 0 6px 20px rgba(25,118,210,0.3)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                   e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,255,255,0.3), 0 4px 16px rgba(25,118,210,0.2)';
-                 }}
-               >
-                 <i className="fas fa-gavel me-2"></i>
-                 VER SUBASTAS
-               </button>
-               
-                              <button 
-                  className="btn btn-lg fw-bold" 
-                  style={{ 
-                    borderRadius: '50px', 
-                    fontSize: '1.1em', 
-                    padding: '16px 32px',
-                    background: 'transparent',
-                    color: '#fff',
-                    border: '2px solid rgba(255,255,255,0.6)',
-                    transition: 'all 0.3s ease',
-                    minWidth: '180px',
-                    backdropFilter: 'blur(10px)'
-                  }} 
-                  onClick={() => token ? navigate('/crear-publicacion') : navigate('/login')}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.8)';
-                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  }}
-                >
-                  <i className="fas fa-plus me-2"></i>
-                  CREAR SUBASTA
-                </button>
-             </div>
-            
-            
-          </div>
-        </div>
-      </section>
+    <>
+      <style>{`
+        @keyframes homeFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .home-salon .home-animate-in {
+          animation: homeFadeIn 0.6s ease forwards;
+        }
+      `}</style>
 
-      {/* BÚSQUEDA RÁPIDA */}
-      <section className="container" style={{ marginTop: -50, marginBottom: 40, zIndex: 10, position: 'relative' }}>
-        <form className="shadow-lg p-4 bg-white rounded-4 d-flex align-items-center gap-3" style={{ 
-          maxWidth: 600, 
-          margin: '0 auto', 
-          boxShadow: '0 8px 32px rgba(25,118,210,0.15), 0 4px 16px rgba(0,0,0,0.1)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(10px)'
-        }} onSubmit={e => { e.preventDefault(); navigate(`/publicaciones?busqueda=${encodeURIComponent(busqueda)}`); }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <i className="fas fa-search" style={{ 
-              position: 'absolute', 
-              left: '16px', 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              color: '#666', 
-              fontSize: '1.1em' 
-            }}></i>
-            <input 
-              className="form-control border-0" 
-              style={{ 
-                fontSize: '1.1em', 
-                borderRadius: 12, 
-                background: '#f8f9fa',
-                padding: '16px 16px 16px 48px',
-                border: '2px solid #e9ecef',
-                transition: 'all 0.3s ease'
-              }} 
-              type="search" 
-              placeholder="¿Qué estás buscando hoy?" 
-              value={busqueda} 
-              onChange={e => setBusqueda(e.target.value)}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1976d2';
-                e.target.style.boxShadow = '0 0 0 3px rgba(25,118,210,0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e9ecef';
-                e.target.style.boxShadow = 'none';
-              }}
-            />
-          </div>
-          <button 
-            className="btn btn-primary px-4 py-3 fw-bold" 
-            style={{ 
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-              border: 'none',
-              fontSize: '1.05em',
-              minWidth: '120px',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(25,118,210,0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-            type="submit"
-          >
-            <i className="fas fa-search me-2"></i>
-            Buscar
-          </button>
-        </form>
-      </section>
+      <div className="home-salon position-relative">
+        <div
+          aria-hidden
+          className="position-absolute top-0 start-0 end-0"
+          style={{
+            height: '120px',
+            background: 'linear-gradient(180deg, rgba(245,158,11,0.05) 0%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
 
-      {/* CATEGORÍAS DESTACADAS */}
-      <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>Categorías destacadas</h3>
-        <div className="row g-4 justify-content-center">
-          {categorias.map(cat => (
-            <div className="col-12 col-sm-6 col-lg-3" key={cat.nombre}>
-              <div
-                className="card text-center p-4 h-100 categoria-destacada"
-                style={{
-                  borderRadius: 22,
-                  border: 'none',
-                  background: cat.grad,
-                  boxShadow: '0 4px 24px rgba(25,118,210,0.15)',
-                  cursor: 'pointer',
-                  transition: 'transform 0.18s, box-shadow 0.18s',
-                  color: '#fff',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  minHeight: 200,
-                  zIndex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-                onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.nombre)}`)}
-                onMouseOver={e => {
-                  e.currentTarget.style.transform = 'translateY(-6px) scale(1.04)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(25,118,210,0.25)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(25,118,210,0.15)';
-                }}
-              >
-                {/* Elemento decorativo de fondo */}
-                <div style={{
-                  position: 'absolute',
-                  top: -50,
-                  right: -50,
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  zIndex: 0
-                }} />
-                
-                {/* Nombre de la categoría - más prominente */}
-                <div style={{ 
-                  fontWeight: 800, 
-                  fontSize: '1.8em', 
-                  letterSpacing: '-0.5px', 
-                  textShadow: '0 2px 12px rgba(0,0,0,0.2)',
-                  marginBottom: 20,
-                  textTransform: 'uppercase',
-                  lineHeight: 1.1,
-                  position: 'relative',
-                  zIndex: 1
-                }}>
-                  {cat.nombre}
+        {/* —— Hero: manifiesto + ficha lote —— */}
+        <section className="position-relative pt-5 pb-5" style={{ zIndex: 1, paddingTop: 'clamp(5rem, 12vw, 7rem)' }}>
+          <div className="container px-3 px-lg-4">
+            <div className="row g-4 g-xl-5 align-items-stretch home-animate-in">
+              <div className="col-lg-6 d-flex flex-column justify-content-center py-3 py-lg-4">
+                <p className="home-kicker mb-0">Salón de subastas</p>
+                <h1 className="home-hero-title">
+                  Objetos con historia, <em>valor propio</em>
+                </h1>
+                <div className="home-frame-line" />
+                <p className="home-hero-lead">
+                  Aquí se subastan reliquias y piezas cotidianas: cosas que el mercado masivo no cotiza, pero que
+                  merecen un precio acordado entre quienes las entienden. Un espacio sobrio, moderno y respetuoso
+                  con el oficio de coleccionar.
+                </p>
+                <div className="d-flex flex-wrap gap-3 mt-4">
+                  <button type="button" className="btn home-btn-primary" onClick={() => navigate('/publicaciones')}>
+                    Explorar lotes
+                  </button>
+                  <button
+                    type="button"
+                    className="btn home-btn-ghost"
+                    onClick={() => (token ? navigate('/crear-publicacion') : navigate('/login'))}
+                  >
+                    Ofrecer una pieza
+                  </button>
                 </div>
-                
-                {/* Icono más grande y centrado */}
-                <div style={{
-                  fontSize: 64,
-                  marginBottom: 20,
-                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
-                  textShadow: '0 2px 12px rgba(0,0,0,0.2)',
-                  color: '#fff',
-                  opacity: 0.95,
-                  position: 'relative',
-                  zIndex: 1
-                }}>
-                  <i className={cat.icono}></i>
-                </div>
-                
-                {/* Línea decorativa en el centro */}
-                <div style={{ 
-                  width: 60, 
-                  height: 3, 
-                  background: 'rgba(255,255,255,0.4)', 
-                  borderRadius: 2,
-                  marginBottom: 15,
-                  position: 'relative',
-                  zIndex: 1
-                }} />
-                
-                {/* Línea decorativa inferior */}
-                <div style={{ 
-                  position: 'absolute', 
-                  bottom: 0, 
-                  left: 0, 
-                  right: 0, 
-                  height: 8, 
-                  background: 'rgba(255,255,255,0.2)', 
-                  borderBottomLeftRadius: 22, 
-                  borderBottomRightRadius: 22 
-                }} />
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* SUBASTAS DESTACADAS */}
-      <section className="container mb-5">
-        <h3 className="fw-bold mb-5 text-center pt-4" style={{ color: '#1976d2' }}>Subastas destacadas</h3>
-        {loading ? (
-          <div className="text-center">Cargando...</div>
-        ) : subastasDestacadas.length === 0 ? (
-          <div className="alert alert-info text-center">No hay subastas activas en este momento.</div>
-        ) : (
-          <div className="row g-4 justify-content-center">
-            {subastasDestacadas.map(pub => (
-              <div className="col-12 col-md-6 col-lg-4" key={pub.id}>
-                <div className="mt-0 card h-100 shadow-sm p-0 border-0" style={{ borderRadius: 16, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.06)', minHeight: 340, maxHeight: 370 }}>
-                  {/* Imagen principal */}
-                  {pub.imagenes && pub.imagenes.length > 0 ? (
-                    <div style={{ height: 700, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <img src={getImageUrl(pub.imagenes[0])} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div className="col-lg-6">
+                {destacada ? (
+                  <article className="home-featured-lot h-100 d-flex flex-column">
+                    <div className="home-featured-lot__breadcrumb">
+                      Inicio <span>/</span> Lotes <span>/</span> destacado
                     </div>
-                  ) : (
-                    <div style={{ height: 700, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 32 }}>
-                      <i className="fas fa-image"></i>
-                    </div>
-                  )}
-                  <div className="p-2 d-flex flex-column justify-content-between h-100">
-                    {/* Categoría y condición */}
-                    <div className="d-flex align-items-center mb-1 gap-2">
-                      <span className="badge bg-light text-dark border" style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.categoria || 'Sin categoría'}</span>
-                      <span className={`badge ${pub.condicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.condicion || 'Condición'}</span>
-                      {pub.estado && <span className={`badge ${pub.estado === 'ACTIVO' ? 'bg-primary' : 'bg-secondary'}`} style={{ fontWeight: 500, fontSize: '0.75em' }}>{pub.estado}</span>}
-                    </div>
-                    {/* Título */}
-                    <h6 className="fw-bold mb-1" style={{ color: '#222', fontSize: '1em', minHeight: 28, lineHeight: 1.2 }}>{pub.titulo}</h6>
-                    {/* Descripción corta */}
-                    <div className="mb-1 text-truncate" style={{ fontSize: '0.92em', color: '#666', minHeight: 18 }}>{pub.descripcion}</div>
-                    {/* Precio y ofertas */}
-                    <div className="d-flex align-items-center justify-content-between mb-1">
-                                              <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '0.98em' }}>
-                          {pub.precioActual && pub.precioActual > 0 ? `Actual: $${formatearMonto(pub.precioActual)}` : `Inicial: $${formatearMonto(pub.precioInicial)}`}
-                        </div>
-                      <span className="badge bg-warning text-dark" style={{ fontSize: '0.82em' }}>{pub.ofertasTotales || 0} ofertas</span>
-                    </div>
-                    {/* Fecha de finalización */}
-                    <div className="mb-1" style={{ fontSize: '0.85em', color: '#888' }}>
-                      <i className="fas fa-clock" style={{ marginRight: '4px' }}></i> {pub.fechaFin ? new Date(pub.fechaFin).toLocaleDateString() : 'Sin fecha'}
-                    </div>
-                    {/* Usuario */}
-                    <div className="d-flex align-items-center gap-2 mt-auto pt-2 border-top" style={{ borderColor: '#ececf3' }}>
-                      {pub.usuario?.fotoPerfil ? (
-                        <img src={getImageUrl(pub.usuario.fotoPerfil)} alt={pub.usuario.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ececf3' }} />
+                    <div className="home-featured-lot__media flex-grow-1 position-relative">
+                      {destacada.imagenes?.length > 0 ? (
+                        <img src={getImageUrl(destacada.imagenes[0])} alt="" />
                       ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ececf3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 15 }}>
-                          <i className="fas fa-user"></i>
+                        <div
+                          className="d-flex align-items-center justify-content-center h-100 text-muted"
+                          style={{ minHeight: 220 }}
+                        >
+                          <i className="fas fa-image fa-3x" style={{ opacity: 0.2 }} />
                         </div>
                       )}
-                      <div className="d-flex flex-column" style={{ fontSize: '0.90em' }}>
-                        <span className="fw-semibold">{pub.usuario?.nombre || pub.usuario?.username || 'Usuario'}</span>
-                        <span style={{ color: '#888', fontSize: '0.85em' }}>{[pub.usuario?.ciudad, pub.usuario?.pais].filter(Boolean).join(', ')}</span>
-                      </div>
                     </div>
-                    {/* Botón de ver detalles */}
-                    <div className="d-grid mt-2">
-                      <button className="btn" style={{ borderRadius: 8, fontWeight: 500, background: '#1976d2', color: '#fff', fontSize: '0.97em', padding: '0.45em 0.5em' }} onClick={() => navigate(`/publicaciones/${pub.id}`)}>Ver detalles</button>
+                    <div className="home-featured-lot__body">
+                      <p className="home-featured-lot__num">Lote sugerido · N.º {destacada.id}</p>
+                      <h2 className="home-featured-lot__title">{destacada.titulo}</h2>
+                      <p className="home-featured-lot__price-label mt-2">Puja actual</p>
+                      <p className="home-featured-lot__price mb-0">${formatearMonto(precioMostrar(destacada))}</p>
+                      <p className="home-featured-lot__meta">
+                        {destacada.categoria ? `${destacada.categoria} · ` : ''}
+                        Cierre: {fechaCierreLegible(destacada.fechaFin)}
+                        {destacada.ofertasTotales != null ? ` · ${destacada.ofertasTotales} pujas registradas` : ''}
+                      </p>
+                      <button
+                        type="button"
+                        className="btn home-btn-primary w-100 mt-3"
+                        onClick={() => navigate(`/publicaciones/${destacada.id}`)}
+                      >
+                        Ver ficha del lote
+                      </button>
                     </div>
+                  </article>
+                ) : (
+                  <div className="home-featured-lot d-flex flex-column align-items-center justify-content-center text-center p-5">
+                    <div className="home-frame-line w-75 mb-4" style={{ marginTop: 0 }} />
+                    <p className="text-muted mb-2" style={{ maxWidth: 280 }}>
+                      Aún no hay lotes en el salón. Sé el primero en ofrecer una pieza con historia.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn home-btn-primary mt-2"
+                      onClick={() => (token ? navigate('/crear-publicacion') : navigate('/login'))}
+                    >
+                      Publicar un lote
+                    </button>
                   </div>
-                </div>
+                )}
               </div>
-            ))}
+            </div>
           </div>
-        )}
-      </section>
+        </section>
 
-      {/* CÓMO FUNCIONA */}
-      <section className="container mb-5">
-        <h3 className="fw-bold mb-4 text-center" style={{ color: '#1976d2' }}>¿Cómo funciona?</h3>
-        <div className="row justify-content-center g-4">
-          <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ 
-              borderRadius: 16, 
-              border: 'none', 
-              background: '#fff', 
-              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-user-plus"></i></div>
-              <h6 className="fw-bold mb-2">1. Regístrate</h6>
-              <div>Crea tu cuenta gratis y accede a todas las funciones.</div>
+        {/* —— Tres pilares / categorías —— */}
+        <section className="py-5 border-top border-bottom" style={{ borderColor: 'rgba(245,158,11,0.1) !important' }}>
+          <div className="container px-3 px-lg-4">
+            <header className="text-center mb-5">
+              <p className="home-section-eyebrow">Cómo navegamos el catálogo</p>
+              <h2 className="home-section-heading">Ejes para encontrar tu próximo hallazgo</h2>
+            </header>
+            <div className="row g-4">
+              {CATEGORIAS_SALON.map((cat) => (
+                <div key={cat.busqueda} className="col-md-6 col-xl-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.busqueda)}`)}
+                    className="home-salon-block w-100 text-start h-100 border-0 bg-transparent"
+                  >
+                    <div className="home-salon-block__icon">
+                      <i className={cat.icono} aria-hidden />
+                    </div>
+                    <h3>{cat.titulo}</h3>
+                    <p>{cat.desc}</p>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ 
-              borderRadius: 16, 
-              border: 'none', 
-              background: '#fff', 
-              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-search"></i></div>
-              <h6 className="fw-bold mb-2">2. Encuentra y oferta</h6>
-              <div>Busca productos, haz tu oferta y sigue la subasta en tiempo real.</div>
-            </div>
-          </div>
-          <div className="col-12 col-md-4">
-            <div className="card text-center p-4 h-100" style={{ 
-              borderRadius: 16, 
-              border: 'none', 
-              background: '#fff', 
-              boxShadow: '0 2px 12px rgba(25,118,210,0.07)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <div style={{ fontSize: 38, marginBottom: 10, color: '#1976d2' }}><i className="fas fa-trophy"></i></div>
-              <h6 className="fw-bold mb-2">3. Gana y recibe</h6>
-              <div>Si tu oferta es la más alta al finalizar, ¡ganaste! Coordina la entrega fácilmente.</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* BENEFICIOS */}
-      <section className="container mb-5">
-        <div className="text-center mb-4">
-          <h2 className="fw-bold mb-4 pt-5" style={{ color: '#1976d2', fontSize: '2.5em' }}>¿Por qué elegirnos?</h2>
-          <p className="lead" style={{ color: '#666', fontSize: '1.2em', maxWidth: 600, margin: '0 auto' }}>
-            Descubre las ventajas que hacen de SubastasCorp la plataforma líder en subastas online
-          </p>
-        </div>
-        <div className="row g-4 justify-content-center">
-          {beneficios.map((b, index) => (
-            <div className="col-12 col-md-6 col-lg-3" key={b.titulo}>
-              <div 
-                className="card h-100 border-0 position-relative overflow-hidden"
-                style={{ 
-                  borderRadius: 24, 
-                  background: 'linear-gradient(135deg, #fff 0%, #f8f9ff 100%)',
-                  boxShadow: '0 8px 32px rgba(25,118,210,0.08)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'default',
-                  minHeight: 280
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 48px rgba(25,118,210,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(25,118,210,0.08)';
-                }}
-              >
-                {/* Fondo decorativo */}
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: -20,
-                    right: -20,
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}20, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}10)`,
-                    zIndex: 0
-                  }}
-                />
-                
-                <div className="p-3 d-flex flex-column align-items-center text-center position-relative" style={{ zIndex: 1 }}>
-                  {/* Icono con fondo circular */}
-                  <div 
-                    className="mb-4 d-flex align-items-center justify-content-center"
-                    style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      background: `linear-gradient(135deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}, ${['#64b5f6', '#f6c16a', '#ce93d8', '#81c784'][index]})`,
-                      boxShadow: `0 8px 24px ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}30`,
-                      fontSize: 32,
-                      color: '#fff'
+        {/* —— Catálogo —— */}
+        <section className="container px-3 px-lg-4 py-5 mb-2">
+          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end gap-3 mb-4">
+            <div>
+              <p className="home-section-eyebrow">Catálogo</p>
+              <h2 className="home-section-heading">Lotes en exhibición</h2>
+              <p className="text-muted small mt-2 mb-0" style={{ maxWidth: 420 }}>
+                Vista resumida; cada ficha abre el detalle completo con imágenes y condiciones de venta.
+              </p>
+            </div>
+            <button type="button" className="btn home-btn-ghost d-none d-sm-inline-block" onClick={() => navigate('/publicaciones')}>
+              Ver todo el catálogo
+            </button>
+          </div>
+
+          {publicaciones.length === 0 ? (
+            <div className="home-salon-block text-center py-5">
+              <p className="mb-2" style={{ color: '#a8a29e' }}>
+                No hay lotes publicados por el momento.
+              </p>
+              <button type="button" className="btn home-btn-primary btn-sm" onClick={() => navigate('/crear-publicacion')}>
+                Ser el primero en ofrecer
+              </button>
+            </div>
+          ) : (
+            <div className="row g-4">
+              {publicaciones.slice(0, 12).map((pub) => (
+                <div key={pub.id} className="col-12 col-md-6 col-xl-3">
+                  <article
+                    className="home-lot-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/publicaciones/${pub.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
                     }}
                   >
-                    <i className={b.icono}></i>
-                  </div>
-                  
-                  {/* Título */}
-                  <h5 className="fw-bold mb-3" style={{ color: '#1976d2', fontSize: '1.3em' }}>
-                    {b.titulo}
-                  </h5>
-                  
-                  {/* Descripción */}
-                  <p className="mb-0" style={{ color: '#666', fontSize: '1.05em', lineHeight: 1.6 }}>
-                    {b.desc}
-                  </p>
-                  
-                  {/* Línea decorativa */}
-                  <div 
-                    className="mt-3"
-                    style={{
-                      width: 40,
-                      height: 3,
-                      borderRadius: 2,
-                      background: `linear-gradient(90deg, ${['#1976d2', '#e67e22', '#8e24aa', '#388e3c'][index]}, ${['#64b5f6', '#f6c16a', '#ce93d8', '#81c784'][index]})`
-                    }}
-                  />
+                    <div className="home-lot-card__fig">
+                      {pub.imagenes?.length > 0 ? (
+                        <img src={getImageUrl(pub.imagenes[0])} alt="" />
+                      ) : (
+                        <div className="d-flex align-items-center justify-content-center h-100 bg-dark">
+                          <i className="fas fa-image fa-2x" style={{ opacity: 0.15 }} />
+                        </div>
+                      )}
+                      <span className="home-lot-card__lotnum">Lote {pub.id}</span>
+                      {pub.estado === 'ACTIVO' && <span className="home-lot-card__status">Subasta abierta</span>}
+                    </div>
+                    <div className="home-lot-card__body">
+                      <h3 className="home-lot-card__title">{pub.titulo}</h3>
+                      <div className="d-flex gap-2 flex-wrap mb-1">
+                        {pub.categoria && (
+                          <span
+                            className="badge rounded-0"
+                            style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 500,
+                              background: 'transparent',
+                              color: '#a8a29e',
+                              border: '1px solid rgba(245,158,11,0.22)',
+                            }}
+                          >
+                            {pub.categoria}
+                          </span>
+                        )}
+                      </div>
+                      <div className="home-lot-card__foot">
+                        <div>
+                          <div className="home-lot-card__price-label">Puja actual</div>
+                          <div className="home-lot-card__price">${formatearMonto(precioMostrar(pub))}</div>
+                        </div>
+                        <div className="home-lot-card__date">
+                          {pub.fechaFin ? (
+                            <>
+                              Cierre
+                              <br />
+                              {new Date(pub.fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
                 </div>
+              ))}
+            </div>
+          )}
+
+          <button type="button" className="btn home-btn-ghost w-100 mt-4 d-sm-none" onClick={() => navigate('/publicaciones')}>
+            Ver catálogo completo
+          </button>
+        </section>
+
+        {/* —— Próximos cierres —— */}
+        {subastasProximas.length > 0 && (
+          <section className="container px-3 px-lg-4 pb-5">
+            <header className="mb-4 pt-4 border-top" style={{ borderColor: 'rgba(245,158,11,0.12) !important' }}>
+              <p className="home-section-eyebrow">Agenda</p>
+              <h2 className="home-section-heading">Próximos cierres</h2>
+            </header>
+            <div className="row g-4">
+              {subastasProximas.map((pub) => (
+                <div key={`prox-${pub.id}`} className="col-12 col-md-6 col-xl-3">
+                  <article
+                    className="home-lot-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/publicaciones/${pub.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
+                    }}
+                  >
+                    <div className="home-lot-card__fig">
+                      {pub.imagenes?.length > 0 ? (
+                        <img src={getImageUrl(pub.imagenes[0])} alt="" style={{ opacity: 0.92 }} />
+                      ) : (
+                        <div className="d-flex align-items-center justify-content-center h-100 bg-dark">
+                          <i className="fas fa-image fa-2x" style={{ opacity: 0.15 }} />
+                        </div>
+                      )}
+                      <span className="home-lot-card__lotnum">Lote {pub.id}</span>
+                    </div>
+                    <div className="home-lot-card__body">
+                      <h3 className="home-lot-card__title">{pub.titulo}</h3>
+                      <div className="home-lot-card__foot">
+                        <div>
+                          <div className="home-lot-card__price-label">Puja actual</div>
+                          <div className="home-lot-card__price">${formatearMonto(precioMostrar(pub))}</div>
+                        </div>
+                        <div className="home-lot-card__date text-end">
+                          Cierra el
+                          <br />
+                          <strong style={{ color: '#fff7ed', fontWeight: 600 }}>
+                            {new Date(pub.fechaFin).toLocaleDateString('es-AR', {
+                              day: 'numeric',
+                              month: 'long',
+                            })}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* —— Métricas (tono coleccionista, no trading) —— */}
+        <section className="container px-3 px-lg-4 pb-5">
+          <div className="row g-3 g-md-4">
+            <div className="col-md-4">
+              <div className="home-stat">
+                <div className="home-stat__n">+50K</div>
+                <div className="home-stat__label">Personas en la comunidad</div>
               </div>
             </div>
-          ))}
-        </div>
-        
-        {/* Estadísticas adicionales */}
-        <div className="row mt-5 g-4 justify-content-center">
-          <div className="col-12 col-md-3 text-center">
-            <div className="p-4">
-              <div className="fw-bold" style={{ 
-                color: '#1976d2', 
-                fontSize: '3em', 
-                marginBottom: 8,
-                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
-                fontWeight: 800
-              }}>10K+</div>
-              <div style={{ 
-                color: '#666', 
-                fontSize: '1.1em',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>Usuarios activos</div>
+            <div className="col-md-4">
+              <div className="home-stat">
+                <div className="home-stat__n">+$2M</div>
+                <div className="home-stat__label">En transacciones coordinadas</div>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="home-stat">
+                <div className="home-stat__n">100%</div>
+                <div className="home-stat__label">Normas claras por lote</div>
+              </div>
             </div>
           </div>
-          <div className="col-12 col-md-3 text-center">
-            <div className="p-4">
-              <div className="fw-bold" style={{ 
-                color: '#1976d2', 
-                fontSize: '3em', 
-                marginBottom: 8,
-                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
-                fontWeight: 800
-              }}>50K+</div>
-              <div style={{ 
-                color: '#666', 
-                fontSize: '1.1em',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>Subastas completadas</div>
-            </div>
-          </div>
-          <div className="col-12 col-md-3 text-center">
-            <div className="p-4">
-              <div className="fw-bold" style={{ 
-                color: '#1976d2', 
-                fontSize: '3em', 
-                marginBottom: 8,
-                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
-                fontWeight: 800
-              }}>99%</div>
-              <div style={{ 
-                color: '#666', 
-                fontSize: '1.1em',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>Satisfacción</div>
-            </div>
-          </div>
-          <div className="col-12 col-md-3 text-center">
-            <div className="p-4">
-              <div className="fw-bold" style={{ 
-                color: '#1976d2', 
-                fontSize: '3em', 
-                marginBottom: 8,
-                textShadow: '0 2px 8px rgba(25,118,210,0.1)',
-                fontWeight: 800
-              }}>24/7</div>
-              <div style={{ 
-                color: '#666', 
-                fontSize: '1.1em',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>Soporte disponible</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* PREGUNTAS FRECUENTES */}
-      <section className="container mb-5">
-        <div className="text-center mb-4">
-          <h3 className="fw-bold mb-3" style={{ color: '#1976d2' }}>Preguntas frecuentes</h3>
-          <p className="text-muted" style={{ fontSize: '1.1em' }}>Las dudas más comunes de nuestros usuarios</p>
-        </div>
-        <div className="accordion" id="faqAccordion">
-          {preguntas.map((p, idx) => (
-            <div className="accordion-item mb-2" key={p.q} style={{ borderRadius: 12, border: 'none', boxShadow: '0 2px 12px rgba(25,118,210,0.04)' }}>
-              <h2 className="accordion-header" id={`heading${idx}`}>
-                <button
-                  className={`accordion-button${faqOpen === idx ? '' : ' collapsed'}`}
-                  type="button"
-                  style={{ borderRadius: 12, fontWeight: 600, color: '#1976d2', background: '#f7f8fa' }}
-                  onClick={() => setFaqOpen(faqOpen === idx ? null : idx)}
-                >
-                  {p.q}
+        {/* —— Ayuda —— */}
+        <section className="container px-3 px-lg-4 pb-5">
+          <div className="home-help-panel">
+            <div className="row align-items-center">
+              <div className="col-lg-8 mb-4 mb-lg-0">
+                <p className="home-section-eyebrow mb-2">Guía y soporte</p>
+                <h3 className="home-section-heading mb-3" style={{ fontSize: '1.75rem' }}>
+                  Reglas de puja, envíos y responsabilidades
+                </h3>
+                <p className="mb-0" style={{ color: '#a8a29e', maxWidth: 540, lineHeight: 1.7 }}>
+                  Cómo funciona el cierre de una subasta, qué esperar del vendedor y cómo resolver dudas antes de
+                  ofertar.
+                </p>
+              </div>
+              <div className="col-lg-4 text-lg-end">
+                <button type="button" className="btn home-btn-primary" onClick={() => navigate('/ayuda')}>
+                  Centro de ayuda
                 </button>
-              </h2>
-              <div className={`accordion-collapse collapse${faqOpen === idx ? ' show' : ''}`}
-                style={{ background: '#fff' }}>
-                <div className="accordion-body" style={{ color: '#444', fontSize: '1.05em' }}>{p.a}</div>
               </div>
             </div>
-          ))}
-        </div>
-        
-        {/* Acceso directo a Ayuda */}
-        <div className="text-center mt-4">
-          <div className="card border-0" style={{ 
-            background: '#e3f2fd', 
-            borderRadius: 12, 
-            padding: '1.8rem',
-            border: '1px solid #bbdefb',
-            boxShadow: '0 2px 8px rgba(25,118,210,0.08)'
-          }}>
-            <div>
-              <h6 className="fw-semibold mb-2" style={{ color: '#1976d2' }}>
-                ¿Necesitas más información?
-              </h6>
-              <p className="mb-3" style={{ fontSize: '1em', color: '#666' }}>
-                Tenemos una sección completa de ayuda con todas las preguntas y respuestas
-              </p>
-              <a 
-                href="/ayuda"
-                className="d-inline-flex align-items-center text-decoration-none px-3 py-2 rounded"
-                style={{ 
-                  background: '#1976d2',
-                  color: '#fff',
-                  fontSize: '0.95em',
-                  fontWeight: 500,
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#1565c0';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#1976d2';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Ver Ayuda
-              </a>
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* FOOTER AMPLIADO */}
       <Footer />
-    </div>
+    </>
   );
 };
 
-export default Home; 
+export default Home;

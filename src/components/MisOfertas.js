@@ -3,6 +3,28 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import { useLoaderData, redirect } from 'react-router-dom';
+
+export const misOfertasLoader = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) return redirect('/login');
+  try {
+    const res = await fetch(`${API_BASE_URL}/ofertas/mis-ofertas`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+       if (res.status === 401) return redirect('/login');
+       throw new Error('Error al cargar las ofertas');
+    }
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    return [];
+  }
+};
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -29,50 +51,17 @@ function calcularSenaPagada(montoOferta) {
 
 const MisOfertas = () => {
   const { token, user } = useContext(AuthContext);
-  const [ofertas, setOfertas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialOfertas = useLoaderData();
+  const [ofertas, setOfertas] = useState(initialOfertas || []);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setOfertas(initialOfertas || []);
+  }, [initialOfertas]);
   
   // Estados para el modal de pago
   const [showModalPago, setShowModalPago] = useState(false);
   const [ofertaSeleccionada, setOfertaSeleccionada] = useState(null);
-
-  useEffect(() => {
-    const fetchMisOfertas = async () => {
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/ofertas/mis-ofertas`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!res.ok) {
-          if (res.status === 401) {
-            navigate('/login');
-            return;
-          }
-          throw new Error('Error al cargar las ofertas');
-        }
-        
-        const data = await res.json();
-        setOfertas(data);
-      } catch (error) {
-        console.error('Error:', error);
-        setOfertas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMisOfertas();
-  }, [token, navigate]);
 
   const getEstadoOferta = (oferta) => {
     const ahora = new Date();
@@ -111,19 +100,6 @@ const MisOfertas = () => {
     setShowModalPago(false);
     setOfertaSeleccionada(null);
   };
-
-  if (loading) {
-    return (
-      <div className="container py-4">
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
-          </div>
-          <p className="mt-3">Cargando tus ofertas...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -179,7 +155,7 @@ const MisOfertas = () => {
                         {oferta.publicacion.imagenes && oferta.publicacion.imagenes.length > 0 ? (
                           <div style={{ height: 180, overflow: 'hidden', position: 'relative' }}>
                             <img 
-                              src={`http://localhost:8080${oferta.publicacion.imagenes[0]}`} 
+                              src={getImageUrl(oferta.publicacion.imagenes[0])} 
                               alt={oferta.publicacion.titulo}
                               className="w-100 h-100"
                               style={{ objectFit: 'cover' }}

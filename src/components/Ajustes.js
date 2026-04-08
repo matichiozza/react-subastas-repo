@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
+import API_BASE_URL, { getImageUrl } from '../config/api';
 import './Ajustes.css';
 
 // Icono personalizado para el marcador
@@ -43,7 +44,7 @@ const Ajustes = () => {
     latitud: user.latitud || '',
     longitud: user.longitud || '',
   } : {});
-  const [fotoPreview, setFotoPreview] = useState(user?.fotoPerfil ? `http://localhost:8080${user.fotoPerfil}` : null);
+  const [fotoPreview, setFotoPreview] = useState(user?.fotoPerfil ? getImageUrl(user.fotoPerfil) : null);
   const [fotoFile, setFotoFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -135,7 +136,7 @@ const Ajustes = () => {
       const cargarTarjetas = async () => {
         try {
           setLoadingTarjetas(true);
-          const res = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+          const res = await fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
           if (res.ok) {
@@ -156,7 +157,7 @@ const Ajustes = () => {
 
   useEffect(() => {
     if (user && user.fotoPerfil && !fotoFile) {
-      setFotoPreview(`http://localhost:8080${user.fotoPerfil}`);
+      setFotoPreview(getImageUrl(user.fotoPerfil));
     }
     if (user && !user.fotoPerfil && !fotoFile) {
       setFotoPreview(null);
@@ -197,7 +198,7 @@ const Ajustes = () => {
         const formData = new FormData();
         formData.append('fotoPerfil', file);
         console.log('Enviando archivo al servidor...');
-        const res = await fetch('http://localhost:8080/usuarios/foto-perfil', {
+        const res = await fetch(`${API_BASE_URL}/usuarios/foto-perfil`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
@@ -217,7 +218,7 @@ const Ajustes = () => {
         updateUser(updatedUser);
         
         // Actualizar el preview con la nueva URL
-        setFotoPreview(`http://localhost:8080${updatedUser.fotoPerfil}`);
+        setFotoPreview(getImageUrl(updatedUser.fotoPerfil));
         
         setSuccess(true);
         setFotoFile(null);
@@ -226,7 +227,7 @@ const Ajustes = () => {
         setError(`No se pudo subir la foto: ${err.message}`);
         // Revertir el preview en caso de error
         if (user?.fotoPerfil) {
-          setFotoPreview(`http://localhost:8080${user.fotoPerfil}`);
+          setFotoPreview(getImageUrl(user.fotoPerfil));
         } else {
           setFotoPreview(null);
         }
@@ -242,7 +243,7 @@ const Ajustes = () => {
     setError(null);
     setSuccess(false);
     try {
-      const res = await fetch('http://localhost:8080/usuarios/mis-datos', {
+      const res = await fetch(`${API_BASE_URL}/usuarios/mis-datos`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -361,7 +362,7 @@ const Ajustes = () => {
     }
     
     try {
-      const res = await fetch(`http://localhost:8080/tarjetas/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/tarjetas/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -370,7 +371,7 @@ const Ajustes = () => {
       
       if (res.ok) {
         // Recargar tarjetas
-        const tarjetasRes = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+        const tarjetasRes = await fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (tarjetasRes.ok) {
@@ -493,7 +494,7 @@ const Ajustes = () => {
     setSuccessTarjeta(false);
     
     try {
-      const res = await fetch('http://localhost:8080/tarjetas', {
+      const res = await fetch(`${API_BASE_URL}/tarjetas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -525,7 +526,7 @@ const Ajustes = () => {
       setShowModalTarjeta(false);
       
       // Recargar tarjetas
-      const tarjetasRes = await fetch(`http://localhost:8080/tarjetas/usuario/${user.id}`, {
+      const tarjetasRes = await fetch(`${API_BASE_URL}/tarjetas/usuario/${user.id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (tarjetasRes.ok) {
@@ -558,7 +559,7 @@ const Ajustes = () => {
       setLoadingCbu(true);
       setErrorCbu(null);
       
-      const res = await fetch('http://localhost:8080/usuarios/cbu', {
+      const res = await fetch(`${API_BASE_URL}/usuarios/cbu`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -590,7 +591,7 @@ const Ajustes = () => {
       setLoadingCbu(true);
       setErrorCbu(null);
       
-      const res = await fetch('http://localhost:8080/usuarios/cbu', {
+      const res = await fetch(`${API_BASE_URL}/usuarios/cbu`, {
         method: 'DELETE',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -623,7 +624,7 @@ const Ajustes = () => {
     setDeleteError(null);
 
     try {
-      const response = await fetch(`http://localhost:8080/usuarios/eliminar-cuenta`, {
+      const response = await fetch(`${API_BASE_URL}/usuarios/eliminar-cuenta`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -693,7 +694,7 @@ const Ajustes = () => {
     setSuccessPassword(false);
     
     try {
-      const response = await fetch('http://localhost:8080/usuarios/cambiar-contrasena', {
+      const response = await fetch(`${API_BASE_URL}/usuarios/cambiar-contrasena`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

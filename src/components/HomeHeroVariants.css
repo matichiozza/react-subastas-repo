@@ -1,0 +1,190 @@
+/* Página de prueba — solo /dev/heroes */
+.hero-lab {
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --ink: #1a1210;
+  --stone: #292524;
+  --cream: #fff7ed;
+  --muted: #a8a29e;
+  --amber: #f59e0b;
+  --copper: #ea580c;
+  --gold: #fbbf24;
+  font-family: var(--sans);
+  color: var(--cream);
+  background: var(--ink);
+  padding-bottom: 4rem;
+}
+
+.hero-lab__nav {
+  position: sticky;
+  top: 78px;
+  z-index: 50;
+  background: rgba(26, 18, 16, 0.95);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.hero-lab__nav a {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted) !important;
+  text-decoration: none !important;
+  padding: 0.35rem 0.65rem;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.hero-lab__nav a:hover {
+  color: var(--gold) !important;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.hero-lab__block {
+  padding: 3rem 1rem;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.12);
+  scroll-margin-top: 140px;
+}
+
+.hero-lab__block--featured {
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 55%);
+  border-bottom-color: rgba(245, 158, 11, 0.2);
+}
+
+.hero-lab__intro {
+  text-align: center;
+  padding: 0.65rem 1rem 0.5rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Hero libro: carrusel ancho completo, altura contenida */
+.hero-lab__block--papyrus-full {
+  display: flex;
+  flex-direction: column;
+  min-height: auto;
+  padding: 0.5rem 0 1rem;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  scroll-margin-top: 132px;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(245, 158, 11, 0.09) 0%, transparent 52%),
+    linear-gradient(180deg, #14100e 0%, #0a0a09 55%, #0f0c0b 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.hero-lab__papyrus-head {
+  flex-shrink: 0;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 0.5rem;
+  padding: 0 clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.hero-lab__title--tight {
+  margin-bottom: 0.4rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.hero-lab__papyrus-lead {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.hero-lab__papyrus-book-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 clamp(0.5rem, 2vw, 1rem);
+  box-sizing: border-box;
+}
+
+.hero-lab__label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 0.5rem;
+}
+
+.hero-lab__title {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  color: var(--cream);
+}
+
+.hero-lab .hl-btn {
+  background: linear-gradient(180deg, var(--amber) 0%, var(--copper) 100%);
+  color: var(--cream) !important;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 2px;
+}
+
+.hero-lab .hl-btn-ghost {
+  background: transparent;
+  color: var(--cream) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* Ficha mini compartida */
+.hl-ficha {
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: linear-gradient(160deg, rgba(41, 37, 36, 0.5) 0%, rgba(26, 18, 16, 0.95) 100%);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hl-ficha__img {
+  aspect-ratio: 16/10;
+  background: #14100e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.hl-ficha__body {
+  padding: 1.25rem;
+}
+
+.hl-ficha__num {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.hl-ficha__h {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.hl-ficha__price {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  color: var(--gold);
+}
+
+.hl-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent);
+  margin: 1.25rem 0;
+}

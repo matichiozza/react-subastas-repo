@@ -52,9 +52,10 @@
 }
 
 .footer-social-link:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.45);
   transform: translateY(-2px);
-  color: #fff;
+  color: #fff7ed;
 }
 
 .footer-social-link i {
@@ -62,7 +63,7 @@
 }
 
 .footer-link {
-  color: #e8eaf6;
+  color: #d6d3d1;
   text-decoration: none;
   font-size: 0.95em;
   transition: all 0.2s ease;
@@ -71,7 +72,7 @@
 }
 
 .footer-link:hover {
-  color: #fff;
+  color: #fbbf24;
   transform: translateX(5px);
 }
 
@@ -106,7 +107,7 @@
 
 .footer-copyright {
   text-align: center;
-  color: #e8eaf6;
+  color: #a8a29e;
   font-size: 0.95em;
 }
 

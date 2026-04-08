@@ -1,9 +1,11 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 import { FaExclamationTriangle } from 'react-icons/fa';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import TopTicker from './TopTicker';
+import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout, token } = useContext(AuthContext);
@@ -92,93 +94,107 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="navbar navbar-expand-lg fixed-top" style={{ background: '#fff', boxShadow: '0 2px 12px rgba(90,72,246,0.04)', borderBottom: '1px solid #ececf3', padding: '0.5em 0', minHeight: 68, zIndex: 1050 }}>
-      <div className="container-fluid" style={{ maxWidth: 1300, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <header className="fixed-top" style={{ zIndex: 1050, background: '#1a1210' }}>
+      <TopTicker />
+      <nav
+        className="navbar navbar-expand-lg navbar-dark"
+        style={{
+          background: '#1a1210',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+          borderBottom: '1px solid rgba(245, 158, 11, 0.18)',
+          padding: '0.55em 0',
+          minHeight: 76,
+        }}
+      >
+      <div className="container-fluid" style={{ maxWidth: '1600px', padding: '0 2% 0 1%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Columna 1: Logo */}
         <div style={{ flex: '0 0 auto' }}>
-          <Link className="navbar-brand fw-bold me-3" to="/" style={{ color: '#1976d2', fontSize: '1.3em', letterSpacing: '-1px', padding: 0 }}>
-            <span style={{ fontWeight: 700 }}>Subastas</span><span style={{ color: '#222', fontWeight: 400 }}>Corp</span>
+          <Link className="navbar-brand fw-bold me-3 d-flex align-items-center" to="/" style={{ padding: 0 }}>
+            {/* Si el logo es oscuro, un filtro invert invert(1) puede venir bien. Si es logo blanco, no tocamos nada */}
+            <img src="/logo_transparent.png" alt="SubastasCorp Logo" style={{ height: '98px', objectFit: 'contain', margin: '-16px 6px', transform: 'scale(1.58)', transformOrigin: 'left center', filter: 'brightness(0) invert(1)' }} />
           </Link>
         </div>
         {/* Columna 2: Buscador centrado solo en desktop */}
-        <div className="d-none d-lg-flex" style={{ flex: '1 1 0', justifyContent: 'center', minWidth: 0 }}>
-          <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 500 }}>
+        <div className="d-none d-lg-flex" style={{ flex: '1 1 0', justifyContent: 'center', minWidth: 0, padding: '0 2em' }}>
+          <form className="navbar-search-shell d-flex w-100" onSubmit={handleBuscar}>
             <input
-              className="form-control me-2"
+              className="form-control text-light border-0 shadow-none"
               type="search"
-              placeholder="Buscar productos..."
+              placeholder="Buscar productos, categorías, marcas..."
               aria-label="Buscar"
-              style={{ borderRadius: 20, fontSize: '0.98em', background: '#f7f8fa', border: '1.5px solid #ececf3', boxShadow: 'none', paddingLeft: 18 }}
+              style={{ fontSize: '1em', background: 'transparent', color: '#fff7ed', padding: '0.65em 1.25rem', margin: 0 }}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ 
-              borderRadius: 20, 
-              fontSize: '0.98em', 
-              padding: '0.45em 1.2em', 
-              marginLeft: -38, 
-              zIndex: 2, 
-              background: '#1976d2', 
-              border: 'none', 
-              boxShadow: 'none',
-              transition: 'none',
-              transform: 'none'
-            }}>
-              <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
+            <button
+              className="btn navbar-search-btn"
+              type="submit"
+              style={{
+                fontSize: '1em',
+                padding: '0.65em 1.55em',
+                margin: 0,
+                zIndex: 2,
+                background: 'linear-gradient(180deg, #f59e0b 0%, #ea580c 100%)',
+                border: 'none',
+                boxShadow: 'inset 0 1px 0 rgba(255,247,237,0.2)',
+              }}
+            >
+              <i className="fas fa-search" style={{ fontSize: '1.1em', color: '#fff7ed' }}></i>
             </button>
           </form>
         </div>
         {/* Columna 3: Menú */}
         <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center' }}>
           <button
-            className="navbar-toggler"
+            className="navbar-toggler border-0"
             type="button"
             aria-label="Toggle navigation"
             onClick={() => setMobileMenuOpen(open => !open)}
-            style={{ border: 'none', background: 'none', boxShadow: 'none' }}
+            style={{ color: '#e7e5e4' }}
           >
-            <span className="navbar-toggler-icon"></span>
+            <i className="fas fa-bars" style={{ fontSize: '1.2em' }}></i>
           </button>
           <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul className="navbar-nav align-items-lg-center gap-2 mb-0 flex-lg-row flex-column text-center" style={{ fontWeight: 500, fontSize: '0.89em' }}>
               {/* Buscador en mobile */}
               <li className="nav-item d-lg-none mb-2">
-                <form className="d-flex w-100" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
+                <form className="navbar-search-shell navbar-search-shell--mobile d-flex w-100" onSubmit={handleBuscar}>
                   <input
-                    className="form-control me-2"
+                    className="form-control text-light border-0 shadow-none"
                     type="search"
                     placeholder="Buscar productos, categorías..."
                     aria-label="Buscar"
-                    style={{ borderRadius: 20, fontSize: '0.98em', background: '#f7f8fa', border: '1.5px solid #ececf3', boxShadow: 'none', paddingLeft: 18 }}
+                    style={{ fontSize: '0.98em', background: 'transparent', color: '#fff7ed', padding: '0.5em 1rem' }}
                     value={busqueda}
                     onChange={e => setBusqueda(e.target.value)}
                   />
-                  <button className="btn btn-primary" type="submit" style={{ 
-                    borderRadius: 20, 
-                    fontSize: '0.98em', 
-                    padding: '0.45em 1.2em', 
-                    marginLeft: -38, 
-                    zIndex: 2, 
-                    background: '#1976d2', 
-                    border: 'none', 
-                    boxShadow: 'none',
-                    transition: 'none',
-                    transform: 'none'
-                  }}>
-                    <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
+                  <button
+                    className="btn navbar-search-btn"
+                    type="submit"
+                    style={{
+                      fontSize: '0.98em',
+                      padding: '0.5em 1.15em',
+                      marginLeft: -2,
+                      zIndex: 2,
+                      background: 'linear-gradient(180deg, #f59e0b 0%, #ea580c 100%)',
+                      border: 'none',
+                      boxShadow: 'inset 0 1px 0 rgba(255,247,237,0.2)',
+                    }}
+                  >
+                    <i className="fas fa-search" style={{ fontSize: '1.05em' }}></i>
                   </button>
                 </form>
               </li>
               <li className="nav-item mb-2 mb-lg-0">
                 <button
                   className="nav-link btn"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
                   onClick={handleInicio}
                   type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
+                  onFocus={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
                 >
                   Inicio
                 </button>
@@ -186,13 +202,13 @@ const Navbar = () => {
               <li className="nav-item mb-2 mb-lg-0">
                 <button
                   className="nav-link btn"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
                   onClick={handleComprar}
                   type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
+                  onFocus={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
                 >
                   Comprar
                 </button>
@@ -200,13 +216,13 @@ const Navbar = () => {
               <li className="nav-item mb-2 mb-lg-0">
                 <button
                   className="nav-link btn"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
                   onClick={handleVender}
                   type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
+                  onFocus={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
                 >
                   Vender
                 </button>
@@ -214,13 +230,13 @@ const Navbar = () => {
               <li className="nav-item mb-2 mb-lg-0">
                 <button
                   className="nav-link btn"
-                  style={{ color: '#222', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s' }}
+                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
                   onClick={handleAyuda}
                   type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
-                  onFocus={e => { e.currentTarget.style.background = '#e3f2fd'; e.currentTarget.style.color = '#1976d2'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#222'; }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
+                  onFocus={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
+                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
                 >
                   Ayuda
                 </button>
@@ -228,8 +244,8 @@ const Navbar = () => {
               {/* Botón de cuenta, igual para logueado y no logueado */}
               <li className="nav-item mb-2 mb-lg-0" style={{ position: 'relative' }}>
                 <button
-                  className="btn btn-light d-flex align-items-center justify-content-center mx-auto"
-                  style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1.5px solid #ececf3', background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                  className="btn d-flex align-items-center justify-content-center mx-auto"
+                  style={{ borderRadius: '50%', width: 40, height: 40, padding: 0, border: '1px solid rgba(245,158,11,0.25)', background: 'rgba(41,37,36,0.95)', color: '#fff7ed', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                   onClick={() => {
                     if (user) {
                       setMenuOpen(open => !open);
@@ -243,18 +259,18 @@ const Navbar = () => {
                 >
                   {user?.fotoPerfil ? (
                     <img 
-                      src={`http://localhost:8080${user.fotoPerfil}`} 
+                      src={getImageUrl(user.fotoPerfil)} 
                       alt="Foto de perfil" 
                       style={{ 
                         width: 32, 
                         height: 32, 
                         borderRadius: '50%', 
                         objectFit: 'cover',
-                        border: '1px solid #ececf3'
+                        border: '1px solid rgba(255,255,255,0.1)'
                       }} 
                     />
                   ) : (
-                    <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
+                    <i className="fas fa-user" style={{ fontSize: '20px', color: '#f59e0b' }}></i>
                   )}
                 </button>
                 
@@ -289,169 +305,81 @@ const Navbar = () => {
                     <FaExclamationTriangle size={12} />
                   </div>
                 )}
-                                 {/* Menú desplegable solo si está logueado */}
-                 {user && menuOpen && (
-                   <div ref={menuRef} style={{ 
-                     position: 'absolute', 
-                     right: 0, 
-                     top: 50, 
-                     minWidth: 220, 
-                     background: '#fff', 
-                     border: 'none', 
-                     borderRadius: 16, 
-                     boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 4px 16px rgba(25,118,210,0.08)', 
-                     zIndex: 1000,
-                     padding: '12px 0',
-                     backdropFilter: 'blur(10px)',
-                     border: '1px solid rgba(255,255,255,0.2)'
-                   }}>
-                     <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0f0f0' }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                         {user?.fotoPerfil ? (
-                           <img 
-                             src={`http://localhost:8080${user.fotoPerfil}`} 
-                             alt="Foto de perfil" 
-                             style={{ 
-                               width: 40, 
-                               height: 40, 
-                               borderRadius: '50%', 
-                               objectFit: 'cover',
-                               border: '2px solid #e3f2fd'
-                             }} 
-                           />
-                         ) : (
-                           <div style={{
-                             width: 40,
-                             height: 40,
-                             borderRadius: '50%',
-                             background: '#e3f2fd',
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center',
-                             border: '2px solid #e3f2fd'
-                           }}>
-                             <i className="fas fa-user" style={{ fontSize: '18px', color: '#1976d2' }}></i>
-                           </div>
-                         )}
-                         <div>
-                           <div style={{ fontWeight: 600, color: '#1976d2', fontSize: '14px' }}>
-                             {user.nombre} {user.apellido}
-                           </div>
-                           <div style={{ color: '#666', fontSize: '12px' }}>
-                             {user.email}
-                           </div>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     <div style={{ padding: '8px 0' }}>
-                                               <Link to="/ajustes" className="dropdown-item" style={{ 
-                          fontSize: '14px', 
-                          padding: '12px 20px', 
-                          color: '#333',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          textDecoration: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseOver={e => { 
-                          e.currentTarget.style.background = '#f8f9fa'; 
-                          e.currentTarget.style.color = '#1976d2';
-                          e.currentTarget.querySelector('i').style.color = '#1976d2';
-                        }}
-                        onMouseOut={e => { 
-                          e.currentTarget.style.background = 'transparent'; 
-                          e.currentTarget.style.color = '#333';
-                          e.currentTarget.querySelector('i').style.color = '#666';
-                        }}>
-                          <i className="fas fa-cog" style={{ width: '16px', color: '#666' }}></i>
-                          Ajustes
-                        </Link>
-                       
-                                               <Link to="/mispublicaciones" className="dropdown-item" style={{ 
-                          fontSize: '14px', 
-                          padding: '12px 20px', 
-                          color: '#333',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          textDecoration: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseOver={e => { 
-                          e.currentTarget.style.background = '#f8f9fa'; 
-                          e.currentTarget.style.color = '#1976d2';
-                          e.currentTarget.querySelector('i').style.color = '#1976d2';
-                        }}
-                        onMouseOut={e => { 
-                          e.currentTarget.style.background = 'transparent'; 
-                          e.currentTarget.style.color = '#333';
-                          e.currentTarget.querySelector('i').style.color = '#666';
-                        }}>
-                          <i className="fas fa-box" style={{ width: '16px', color: '#666' }}></i>
-                          Mis publicaciones
-                        </Link>
-                       
-                                               <Link to="/misofertas" className="dropdown-item" style={{ 
-                          fontSize: '14px', 
-                          padding: '12px 20px', 
-                          color: '#333',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          textDecoration: 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseOver={e => { 
-                          e.currentTarget.style.background = '#f8f9fa'; 
-                          e.currentTarget.style.color = '#1976d2';
-                          e.currentTarget.querySelector('i').style.color = '#1976d2';
-                        }}
-                        onMouseOut={e => { 
-                          e.currentTarget.style.background = 'transparent'; 
-                          e.currentTarget.style.color = '#333';
-                          e.currentTarget.querySelector('i').style.color = '#666';
-                        }}>
-                          <i className="fas fa-gavel" style={{ width: '16px', color: '#666' }}></i>
-                          Mis ofertas
-                        </Link>
-                     </div>
-                     
-                                           <div style={{ padding: '8px 20px', borderTop: '1px solid #f0f0f0' }}>
-                        <button 
-                          className="dropdown-item" 
-                          style={{ 
-                            fontSize: '14px', 
-                            padding: '12px 20px', 
-                            color: 'white', 
-                            background: '#ff6b6b', 
-                            border: 'none', 
-                            textAlign: 'left',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 12,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            width: '100%',
-                            borderRadius: '8px',
-                            margin: '0'
-                          }} 
-                          onClick={() => { handleLogout(); setMenuOpen(false); }}
-                          onMouseOver={e => { 
-                            e.currentTarget.style.background = '#ff5252'; 
-                            e.currentTarget.style.color = 'white';
-                          }}
-                          onMouseOut={e => { 
-                            e.currentTarget.style.background = '#ff6b6b'; 
-                            e.currentTarget.style.color = 'white';
-                          }}>
-                          <i className="fas fa-sign-out-alt" style={{ width: '16px', color: 'white' }}></i>
-                          Cerrar sesión
-                        </button>
+                {user && menuOpen && (
+                  <div ref={menuRef} className="navbar-profile-dropdown">
+                    <div className="navbar-profile-dropdown__accent" aria-hidden />
+                    <div className="navbar-profile-dropdown__header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        {user?.fotoPerfil ? (
+                          <img
+                            src={getImageUrl(user.fotoPerfil)}
+                            alt="Foto de perfil"
+                            style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(245, 158, 11, 0.45)',
+                              boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius: '50%',
+                              background: 'linear-gradient(145deg, rgba(234,88,12,0.2) 0%, rgba(41,37,36,0.95) 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '2px solid rgba(245, 158, 11, 0.35)',
+                            }}
+                          >
+                            <i className="fas fa-user" style={{ fontSize: '20px', color: '#fbbf24' }}></i>
+                          </div>
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, color: '#fff7ed', fontSize: '15px', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
+                            {user.nombre} {user.apellido}
+                          </div>
+                          <div style={{ color: '#a8a29e', fontSize: '12px', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user.email}
+                          </div>
+                        </div>
                       </div>
-                   </div>
-                 )}
+                    </div>
+
+                    <div className="navbar-profile-dropdown__links">
+                      <Link to="/ajustes" className="navbar-profile-dropdown__link" onClick={() => setMenuOpen(false)}>
+                        <i className="fas fa-sliders-h" aria-hidden />
+                        <span>Ajustes</span>
+                      </Link>
+                      <Link to="/mispublicaciones" className="navbar-profile-dropdown__link" onClick={() => setMenuOpen(false)}>
+                        <i className="fas fa-layer-group" aria-hidden />
+                        <span>Mis publicaciones</span>
+                      </Link>
+                      <Link to="/misofertas" className="navbar-profile-dropdown__link" onClick={() => setMenuOpen(false)}>
+                        <i className="fas fa-hammer" aria-hidden />
+                        <span>Mis ofertas</span>
+                      </Link>
+                    </div>
+
+                    <div className="navbar-profile-dropdown__footer">
+                      <button
+                        type="button"
+                        className="navbar-profile-dropdown__logout"
+                        onClick={() => {
+                          handleLogout();
+                          setMenuOpen(false);
+                        }}
+                      >
+                        <i className="fas fa-sign-out-alt" aria-hidden />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             </ul>
           </div>
@@ -462,11 +390,11 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div style={{
           position: 'fixed',
-          top: 68,
+          top: 76,
           left: 0,
           right: 0,
-          background: '#fff',
-          boxShadow: '0 8px 32px rgba(25,118,210,0.10)',
+          background: 'linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%)',
+          boxShadow: '0 8px 32px rgba(26,18,16,0.18)',
           zIndex: 2000,
           padding: '1.2em 1.2em 1em 1.2em',
           borderBottomLeftRadius: 18,
@@ -476,48 +404,49 @@ const Navbar = () => {
           gap: '1.1em',
           alignItems: 'stretch',
         }}>
-          <form className="d-flex w-100 mb-2" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
+          <form className="navbar-search-shell navbar-search-shell--mobile navbar-search-shell--on-light d-flex w-100 mb-2" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
             <input
-              className="form-control me-2"
+              className="form-control border-0 shadow-none"
               type="search"
               placeholder="Buscar productos..."
               aria-label="Buscar"
-              style={{ borderRadius: 20, fontSize: '0.98em', background: '#f7f8fa', border: '1.5px solid #ececf3', boxShadow: 'none', paddingLeft: 18 }}
+              style={{ fontSize: '0.98em', background: 'transparent', padding: '0.5em 1rem' }}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
-            <button className="btn btn-primary" type="submit" style={{ 
-              borderRadius: 20, 
-              fontSize: '0.98em', 
-              padding: '0.45em 1.2em', 
-              marginLeft: -38, 
-              zIndex: 2, 
-              background: '#1976d2', 
-              border: 'none', 
-              boxShadow: 'none',
-              transition: 'none',
-              transform: 'none'
-            }}>
-              <i className="fas fa-search" style={{ fontSize: '1.1em' }}></i>
+            <button
+              className="btn navbar-search-btn"
+              type="submit"
+              style={{
+                fontSize: '0.98em',
+                padding: '0.5em 1.15em',
+                marginLeft: -2,
+                zIndex: 2,
+                background: 'linear-gradient(180deg, #f59e0b 0%, #ea580c 100%)',
+                border: 'none',
+                boxShadow: 'inset 0 1px 0 rgba(255,247,237,0.2)',
+              }}
+            >
+              <i className="fas fa-search" style={{ fontSize: '1.05em' }}></i>
             </button>
           </form>
-          <Link className="nav-link py-2" to="/" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+          <Link className="nav-link py-2" to="/" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="inicio">🏠</span> Inicio
           </Link>
-          <Link className="nav-link py-2" to="/publicaciones" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+          <Link className="nav-link py-2" to="/publicaciones" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="comprar">🛒</span> Comprar
           </Link>
-          <Link className="nav-link py-2" to="/crear-publicacion" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+          <Link className="nav-link py-2" to="/crear-publicacion" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="vender">📤</span> Vender
           </Link>
-          <Link className="nav-link py-2" to="/ayuda" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
+          <Link className="nav-link py-2" to="/ayuda" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="ayuda">❓</span> Ayuda
           </Link>
           {user ? (
             <>
-              <Link to="/ajustes" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Ajustes</Link>
-              <Link to="/mispublicaciones" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis publicaciones</Link>
-              <Link to="/misofertas" className="nav-link py-2" style={{ color: '#222', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis ofertas</Link>
+              <Link to="/ajustes" className="nav-link py-2" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Ajustes</Link>
+              <Link to="/mispublicaciones" className="nav-link py-2" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis publicaciones</Link>
+              <Link to="/misofertas" className="nav-link py-2" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>Mis ofertas</Link>
               <button className="btn btn-outline-danger mt-2" style={{ borderRadius: 8, fontWeight: 600 }} onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>Cerrar sesión</button>
               <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                                  <button
@@ -529,7 +458,7 @@ const Navbar = () => {
                  >
                    {user?.fotoPerfil ? (
                      <img 
-                       src={`http://localhost:8080${user.fotoPerfil}`} 
+                       src={getImageUrl(user.fotoPerfil)} 
                        alt="Foto de perfil" 
                        style={{ 
                          width: 32, 
@@ -540,7 +469,7 @@ const Navbar = () => {
                        }} 
                      />
                    ) : (
-                     <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
+                     <i className="fas fa-user" style={{ fontSize: '20px', color: '#ea580c' }}></i>
                    )}
                  </button>
                 
@@ -585,12 +514,13 @@ const Navbar = () => {
               type="button"
               aria-label="Ingresar"
             >
-              <i className="fas fa-user" style={{ fontSize: '20px', color: '#1976d2' }}></i>
+              <i className="fas fa-user" style={{ fontSize: '20px', color: '#ea580c' }}></i>
             </button>
           )}
         </div>
       )}
     </nav>
+    </header>
   );
 };
 

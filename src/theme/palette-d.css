@@ -1,0 +1,18 @@
+/* Paleta D — cobre, ámbar y calor (referencia moodboard) */
+:root {
+  --pd-ink: #1a1210;
+  --pd-ink-deep: #120d0c;
+  --pd-stone: #292524;
+  --pd-stone-light: #3f3a36;
+  --pd-card: #1f1815;
+  --pd-amber: #f59e0b;
+  --pd-amber-light: #fbbf24;
+  --pd-copper: #ea580c;
+  --pd-copper-dark: #c2410c;
+  --pd-cream: #fff7ed;
+  --pd-text: #e7e5e4;
+  --pd-muted: #a8a29e;
+  --pd-border: rgba(245, 158, 11, 0.28);
+  --pd-border-soft: rgba(255, 247, 237, 0.08);
+  --pd-glow: rgba(234, 88, 12, 0.12);
+}

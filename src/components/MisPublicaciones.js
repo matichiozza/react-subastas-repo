@@ -5,6 +5,28 @@ import { useNavigate } from 'react-router-dom';
 import CancelarPublicacion from './CancelarPublicacion';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import { useLoaderData, redirect } from 'react-router-dom';
+
+export const misPublicacionesLoader = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) return redirect('/login');
+  try {
+    const [resPub, resSanciones] = await Promise.all([
+      fetch(`${API_BASE_URL}/publicaciones/mias`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, { headers: { Authorization: `Bearer ${token}` } })
+    ]);
+    if (!resPub.ok) {
+       if (resPub.status === 401) return redirect('/login');
+       throw new Error('Error al obtener publicaciones');
+    }
+    const dataPub = await resPub.json();
+    let dataSanciones = null;
+    if (resSanciones.ok) dataSanciones = await resSanciones.json();
+    return { publicaciones: dataPub.reverse(), sancionesInfo: dataSanciones };
+  } catch (err) {
+    throw err;
+  }
+};
 
 // Función para formatear montos con separadores de miles
 function formatearMonto(valor) {
@@ -15,50 +37,23 @@ function formatearMonto(valor) {
 const MisPublicaciones = () => {
   const { token, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [publicaciones, setPublicaciones] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialData = useLoaderData();
+  const [publicaciones, setPublicaciones] = useState(initialData?.publicaciones || []);
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [publicacionACancelar, setPublicacionACancelar] = useState(null);
-  const [sancionesInfo, setSancionesInfo] = useState(null);
+  const [sancionesInfo, setSancionesInfo] = useState(initialData?.sancionesInfo || null);
+
+  useEffect(() => {
+    setPublicaciones(initialData?.publicaciones || []);
+    setSancionesInfo(initialData?.sancionesInfo || null);
+  }, [initialData]);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [publicacionAFinalizar, setPublicacionAFinalizar] = useState(null);
   const [finalizando, setFinalizando] = useState(false);
   const [resultadoFinalizacion, setResultadoFinalizacion] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Obtener publicaciones
-        const resPublicaciones = await fetch(`${API_BASE_URL}/publicaciones/mias`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!resPublicaciones.ok) throw new Error('Error al obtener publicaciones');
-        const dataPublicaciones = await resPublicaciones.json();
-        setPublicaciones(dataPublicaciones.reverse());
-
-        // Obtener información de sanciones
-        const resSanciones = await fetch(`${API_BASE_URL}/publicaciones/usuario/sanciones`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (resSanciones.ok) {
-          const dataSanciones = await resSanciones.json();
-          setSancionesInfo(dataSanciones);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (token) fetchData();
-
     // WebSocket para actualizaciones en tiempo real
     let socket = null;
     let reconnectAttempts = 0;
@@ -257,9 +252,7 @@ const MisPublicaciones = () => {
             </button>
           </div>
         </div>
-        {loading ? (
-          <div className="text-center">Cargando...</div>
-        ) : error ? (
+        {error ? (
           <div className="alert alert-danger text-center">{error}</div>
         ) : publicaciones.length === 0 ? (
           <div className="card p-4 text-center mx-auto" style={{ maxWidth: 400, borderRadius: 14, boxShadow: '0 2px 12px rgba(25,118,210,0.08)', marginTop: '3rem' }}>
@@ -279,7 +272,7 @@ const MisPublicaciones = () => {
                   {/* Imagen principal */}
                   {pub.imagenes && pub.imagenes.length > 0 ? (
                     <div style={{ height: 160, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <img src={`http://localhost:8080${pub.imagenes[0]}`} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={getImageUrl(pub.imagenes[0])} alt={pub.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ) : (
                     <div style={{ height: 160, background: '#f7f8fa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 38 }}>
