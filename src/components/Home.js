@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
@@ -19,7 +19,22 @@ export const homeLoader = async () => {
   }
 };
 
-/** Búsqueda compatible con categorías existentes en publicaciones */
+const heroBase = `${process.env.PUBLIC_URL || ''}/hero`;
+
+/** Carrusel hero — imágenes en public/hero/ (la primera define el alto del viewport). */
+const HERO_SLIDES = [
+  {
+    id: 'portada1',
+    src: `${heroBase}/portada1.png`,
+    alt: 'Salón de subastas — portada',
+  },
+  {
+    id: 'portada2',
+    src: `${heroBase}/portada2.png`,
+    alt: 'Salón de subastas — destacado',
+  },
+];
+
 const CATEGORIAS_SALON = [
   { busqueda: 'Coleccionables', titulo: 'Coleccionables', desc: 'Piezas singulares, curiosidades y objetos de vitrina.', icono: 'fas fa-gem' },
   { busqueda: 'Arte', titulo: 'Arte y papel', desc: 'Grabados, marcos y documentos gráficos con carácter.', icono: 'fas fa-palette' },
@@ -32,15 +47,6 @@ const CATEGORIAS_SALON = [
 function formatearMonto(valor) {
   if (!valor) return '0';
   return parseFloat(valor).toLocaleString('es-AR');
-}
-
-function fechaCierreLegible(fechaFin) {
-  if (!fechaFin) return '—';
-  try {
-    return new Date(fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch {
-    return '—';
-  }
 }
 
 const Home = () => {
@@ -102,8 +108,72 @@ const Home = () => {
     };
   }, [token]);
 
-  const ordenOfertas = [...publicaciones].sort((a, b) => (b.ofertasTotales || 0) - (a.ofertasTotales || 0));
-  const destacada = ordenOfertas[0] || null;
+  /** Índice en la cinta extendida (0..n-1 reales, n = clon de la 1ª para bucle siempre hacia la derecha) */
+  const [heroTrackIndex, setHeroTrackIndex] = useState(0);
+  const [heroNoTransition, setHeroNoTransition] = useState(false);
+  const heroSkipSnapRef = useRef(false);
+  const heroTrackIndexRef = useRef(0);
+  heroTrackIndexRef.current = heroTrackIndex;
+  /** Relación ancho/alto de la primera slide para fijar el alto del carrusel a ancho completo */
+  const [heroPortadaAspect, setHeroPortadaAspect] = useState(null);
+
+  const heroCount = HERO_SLIDES.length;
+  const heroUseLoop = heroCount > 1;
+  const heroSlidesTrack = heroUseLoop ? [...HERO_SLIDES, HERO_SLIDES[0]] : HERO_SLIDES;
+  const heroExtCount = heroSlidesTrack.length;
+
+  useEffect(() => {
+    const portadaSrc = HERO_SLIDES[0]?.src;
+    if (!portadaSrc) return undefined;
+    const img = new Image();
+    img.onload = () => {
+      const { naturalWidth: w, naturalHeight: h } = img;
+      if (w > 0 && h > 0) setHeroPortadaAspect(`${w} / ${h}`);
+    };
+    img.src = portadaSrc;
+    return undefined;
+  }, []);
+
+  const heroAdvanceForward = useCallback(() => {
+    if (heroCount < 2) return;
+    setHeroTrackIndex((idx) => {
+      if (idx === heroCount) return idx;
+      if (idx === heroCount - 1) return heroCount;
+      return idx + 1;
+    });
+  }, [heroCount]);
+
+  useEffect(() => {
+    if (heroCount <= 1) return undefined;
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return undefined;
+    const id = window.setInterval(heroAdvanceForward, 8000);
+    return () => window.clearInterval(id);
+  }, [heroCount, heroAdvanceForward]);
+
+  const heroSnapTo = useCallback((index) => {
+    setHeroNoTransition(true);
+    heroSkipSnapRef.current = true;
+    setHeroTrackIndex(index);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setHeroNoTransition(false);
+        heroSkipSnapRef.current = false;
+      });
+    });
+  }, []);
+
+  const handleHeroTrackTransitionEnd = useCallback(
+    (e) => {
+      if (e.propertyName !== 'transform') return;
+      if (heroSkipSnapRef.current) return;
+      if (heroUseLoop && heroTrackIndexRef.current === heroCount) {
+        heroSnapTo(0);
+      }
+    },
+    [heroUseLoop, heroCount, heroSnapTo]
+  );
 
   const subastasProximas = [...publicaciones]
     .filter((p) => p.fechaFin && new Date(p.fechaFin) > new Date())
@@ -111,6 +181,51 @@ const Home = () => {
     .slice(0, 4);
 
   const precioMostrar = (pub) => pub.precioActual || pub.precioInicial;
+
+  const heroTrackTransform =
+    heroExtCount > 0 ? `translateX(-${(heroTrackIndex * 100) / heroExtCount}%)` : undefined;
+  const heroTrackWidth = heroExtCount > 0 ? `${heroExtCount * 100}%` : '100%';
+
+  /** Índice lógico 0..n-1 (para puntos y accesibilidad; en el clon cuenta como 0) */
+  const heroLogicalSlide = heroUseLoop && heroTrackIndex === heroCount ? 0 : heroTrackIndex;
+
+  const heroGoPrev = () => {
+    if (heroCount < 2) return;
+    if (heroTrackIndex === 0) {
+      heroSnapTo(heroCount - 1);
+      return;
+    }
+    if (heroTrackIndex === heroCount) {
+      setHeroTrackIndex(heroCount - 1);
+      return;
+    }
+    setHeroTrackIndex((i) => i - 1);
+  };
+
+  const heroGoNext = () => {
+    if (heroCount < 2) return;
+    if (heroTrackIndex === heroCount) {
+      heroSnapTo(1);
+      return;
+    }
+    heroAdvanceForward();
+  };
+
+  const heroGoToSlide = (i) => {
+    if (i < 0 || i >= heroCount) return;
+    if (heroTrackIndex === heroCount && i === 0) {
+      heroSnapTo(0);
+      return;
+    }
+    setHeroTrackIndex(i);
+  };
+
+  const handleHeroImageClick = (trackPositionIndex) => {
+    const logical =
+      heroUseLoop && trackPositionIndex === heroExtCount - 1 ? 0 : trackPositionIndex;
+    if (logical === 0) navigate('/publicaciones');
+    else if (logical === 1) navigate(token ? '/crear-publicacion' : '/login');
+  };
 
   return (
     <>
@@ -125,101 +240,167 @@ const Home = () => {
       `}</style>
 
       <div className="home-salon position-relative">
-        <div
-          aria-hidden
-          className="position-absolute top-0 start-0 end-0"
-          style={{
-            height: '120px',
-            background: 'linear-gradient(180deg, rgba(245,158,11,0.05) 0%, transparent 100%)',
-            pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
-
-        {/* —— Hero: manifiesto + ficha lote —— */}
-        <section className="position-relative pt-5 pb-5" style={{ zIndex: 1, paddingTop: 'clamp(5rem, 12vw, 7rem)' }}>
-          <div className="container px-3 px-lg-4">
-            <div className="row g-4 g-xl-5 align-items-stretch home-animate-in">
-              <div className="col-lg-6 d-flex flex-column justify-content-center py-3 py-lg-4">
-                <p className="home-kicker mb-0">Salón de subastas</p>
-                <h1 className="home-hero-title">
-                  Objetos con historia, <em>valor propio</em>
-                </h1>
-                <div className="home-frame-line" />
-                <p className="home-hero-lead">
-                  Aquí se subastan reliquias y piezas cotidianas: cosas que el mercado masivo no cotiza, pero que
-                  merecen un precio acordado entre quienes las entienden. Un espacio sobrio, moderno y respetuoso
-                  con el oficio de coleccionar.
-                </p>
-                <div className="d-flex flex-wrap gap-3 mt-4">
-                  <button type="button" className="btn home-btn-primary" onClick={() => navigate('/publicaciones')}>
-                    Explorar lotes
+        {/* —— Carrusel a ancho completo (banners tipo marketplace, tema subastas) —— */}
+        <section className="home-hero-fullbleed" aria-label="Destacados">
+          <div
+            className="home-hero-carousel home-hero-carousel--full"
+            role="region"
+            aria-roledescription="carrusel"
+            aria-label="Campañas del salón de subastas"
+          >
+            <div
+              className="home-hero-carousel__viewport"
+              style={
+                heroPortadaAspect
+                  ? { aspectRatio: heroPortadaAspect }
+                  : { minHeight: '200px' }
+              }
+            >
+              <div
+                className={`home-hero-carousel__track${heroNoTransition ? ' home-hero-carousel__track--no-transition' : ''}`}
+                style={{
+                  width: heroTrackWidth,
+                  transform: heroTrackTransform,
+                }}
+                onTransitionEnd={handleHeroTrackTransitionEnd}
+              >
+                {heroSlidesTrack.map((slide, i) => {
+                  const isClone = heroUseLoop && i === heroExtCount - 1;
+                  const key = isClone ? `${slide.id}-loop` : slide.id;
+                  const logicalForLabel = isClone ? 0 : i;
+                  return (
+                    <div
+                      key={key}
+                      className="home-hero-carousel__slide"
+                      style={{ flex: `0 0 ${100 / heroExtCount}%` }}
+                      aria-hidden={i !== heroTrackIndex}
+                    >
+                      <button
+                        type="button"
+                        className="home-hero-carousel__slide-hit"
+                        onClick={() => handleHeroImageClick(i)}
+                        aria-label={
+                          logicalForLabel === 0
+                            ? 'Ir a comprar — ver publicaciones y pujar'
+                            : 'Ir a vender — publicar un lote'
+                        }
+                      >
+                        <img src={slide.src} alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {heroCount > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="home-hero-carousel__arrow home-hero-carousel__arrow--prev"
+                    aria-label="Diapositiva anterior"
+                    onClick={heroGoPrev}
+                  >
+                    <i className="fas fa-chevron-left" aria-hidden />
                   </button>
                   <button
                     type="button"
-                    className="btn home-btn-ghost"
-                    onClick={() => (token ? navigate('/crear-publicacion') : navigate('/login'))}
+                    className="home-hero-carousel__arrow home-hero-carousel__arrow--next"
+                    aria-label="Diapositiva siguiente"
+                    onClick={heroGoNext}
                   >
-                    Ofrecer una pieza
+                    <i className="fas fa-chevron-right" aria-hidden />
                   </button>
-                </div>
-              </div>
-
-              <div className="col-lg-6">
-                {destacada ? (
-                  <article className="home-featured-lot h-100 d-flex flex-column">
-                    <div className="home-featured-lot__breadcrumb">
-                      Inicio <span>/</span> Lotes <span>/</span> destacado
-                    </div>
-                    <div className="home-featured-lot__media flex-grow-1 position-relative">
-                      {destacada.imagenes?.length > 0 ? (
-                        <img src={getImageUrl(destacada.imagenes[0])} alt="" />
-                      ) : (
-                        <div
-                          className="d-flex align-items-center justify-content-center h-100 text-muted"
-                          style={{ minHeight: 220 }}
-                        >
-                          <i className="fas fa-image fa-3x" style={{ opacity: 0.2 }} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="home-featured-lot__body">
-                      <p className="home-featured-lot__num">Lote sugerido · N.º {destacada.id}</p>
-                      <h2 className="home-featured-lot__title">{destacada.titulo}</h2>
-                      <p className="home-featured-lot__price-label mt-2">Puja actual</p>
-                      <p className="home-featured-lot__price mb-0">${formatearMonto(precioMostrar(destacada))}</p>
-                      <p className="home-featured-lot__meta">
-                        {destacada.categoria ? `${destacada.categoria} · ` : ''}
-                        Cierre: {fechaCierreLegible(destacada.fechaFin)}
-                        {destacada.ofertasTotales != null ? ` · ${destacada.ofertasTotales} pujas registradas` : ''}
-                      </p>
-                      <button
-                        type="button"
-                        className="btn home-btn-primary w-100 mt-3"
-                        onClick={() => navigate(`/publicaciones/${destacada.id}`)}
-                      >
-                        Ver ficha del lote
-                      </button>
-                    </div>
-                  </article>
-                ) : (
-                  <div className="home-featured-lot d-flex flex-column align-items-center justify-content-center text-center p-5">
-                    <div className="home-frame-line w-75 mb-4" style={{ marginTop: 0 }} />
-                    <p className="text-muted mb-2" style={{ maxWidth: 280 }}>
-                      Aún no hay lotes en el salón. Sé el primero en ofrecer una pieza con historia.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn home-btn-primary mt-2"
-                      onClick={() => (token ? navigate('/crear-publicacion') : navigate('/login'))}
-                    >
-                      Publicar un lote
-                    </button>
-                  </div>
-                )}
+                </>
+              )}
+              <div className="home-hero-carousel__dots home-hero-carousel__dots--overlay" role="tablist" aria-label="Elegir diapositiva">
+                {HERO_SLIDES.map((slide, i) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === heroLogicalSlide}
+                    aria-label={`Diapositiva ${i + 1} de ${HERO_SLIDES.length}`}
+                    className={`home-hero-carousel__dot${i === heroLogicalSlide ? ' home-hero-carousel__dot--active' : ''}`}
+                    onClick={() => heroGoToSlide(i)}
+                  />
+                ))}
               </div>
             </div>
           </div>
+        </section>
+
+        {/* —— Catálogo (vitrina · variante D) —— */}
+        <section className="container px-3 px-lg-4 py-5 mb-2 home-animate-in">
+          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end gap-3 mb-4">
+            <header className="lotes-v-d__head lotes-v-d__head--flush">
+              <span className="lotes-v-d__pill">Hoy en vitrina</span>
+              <h2 className="lotes-v-d__title">Piezas que pasan frente a tu café</h2>
+              <p className="lotes-v-d__lead">
+                Tarjetas amplias y claras: tocás una ficha y abrís el detalle con fotos, condiciones y reglas de puja.
+              </p>
+            </header>
+            <button type="button" className="btn home-btn-ghost d-none d-sm-inline-block flex-shrink-0" onClick={() => navigate('/publicaciones')}>
+              Ver todo el catálogo
+            </button>
+          </div>
+
+          {publicaciones.length === 0 ? (
+            <div className="home-salon-block text-center py-5">
+              <p className="mb-2" style={{ color: '#a8a29e' }}>
+                No hay lotes publicados por el momento.
+              </p>
+              <button type="button" className="btn home-btn-primary btn-sm" onClick={() => navigate('/crear-publicacion')}>
+                Ser el primero en ofrecer
+              </button>
+            </div>
+          ) : (
+            <div className="lotes-v-d__grid">
+              {publicaciones.slice(0, 12).map((pub) => (
+                <article
+                  key={pub.id}
+                  className="lotes-v-d__card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/publicaciones/${pub.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
+                  }}
+                >
+                  <div className="lotes-v-d__fig">
+                    {pub.imagenes?.length > 0 ? (
+                      <img src={getImageUrl(pub.imagenes[0])} alt="" />
+                    ) : (
+                      <div className="d-flex align-items-center justify-content-center h-100">
+                        <i className="fas fa-image fa-3x" style={{ opacity: 0.15 }} />
+                      </div>
+                    )}
+                    {pub.estado === 'ACTIVO' && <span className="lotes-v-d__badge">Abierto</span>}
+                  </div>
+                  <div className="lotes-v-d__body">
+                    <div className="lotes-v-d__tags">
+                      <span className="lotes-v-d__tag">Lote {pub.id}</span>
+                      {pub.categoria && <span className="lotes-v-d__tag">{pub.categoria}</span>}
+                    </div>
+                    <h3 className="lotes-v-d__card-title">{pub.titulo}</h3>
+                    <div className="lotes-v-d__foot">
+                      <div>
+                        <div className="lotes-v-d__price-lab">Mejor oferta</div>
+                        <div className="lotes-v-d__price">${formatearMonto(precioMostrar(pub))}</div>
+                      </div>
+                      <div className="lotes-v-d__date">
+                        {pub.fechaFin
+                          ? new Date(pub.fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+                          : '—'}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          <button type="button" className="btn home-btn-ghost w-100 mt-4 d-sm-none" onClick={() => navigate('/publicaciones')}>
+            Ver catálogo completo
+          </button>
         </section>
 
         {/* —— Tres pilares / categorías —— */}
@@ -247,101 +428,6 @@ const Home = () => {
               ))}
             </div>
           </div>
-        </section>
-
-        {/* —— Catálogo —— */}
-        <section className="container px-3 px-lg-4 py-5 mb-2">
-          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end gap-3 mb-4">
-            <div>
-              <p className="home-section-eyebrow">Catálogo</p>
-              <h2 className="home-section-heading">Lotes en exhibición</h2>
-              <p className="text-muted small mt-2 mb-0" style={{ maxWidth: 420 }}>
-                Vista resumida; cada ficha abre el detalle completo con imágenes y condiciones de venta.
-              </p>
-            </div>
-            <button type="button" className="btn home-btn-ghost d-none d-sm-inline-block" onClick={() => navigate('/publicaciones')}>
-              Ver todo el catálogo
-            </button>
-          </div>
-
-          {publicaciones.length === 0 ? (
-            <div className="home-salon-block text-center py-5">
-              <p className="mb-2" style={{ color: '#a8a29e' }}>
-                No hay lotes publicados por el momento.
-              </p>
-              <button type="button" className="btn home-btn-primary btn-sm" onClick={() => navigate('/crear-publicacion')}>
-                Ser el primero en ofrecer
-              </button>
-            </div>
-          ) : (
-            <div className="row g-4">
-              {publicaciones.slice(0, 12).map((pub) => (
-                <div key={pub.id} className="col-12 col-md-6 col-xl-3">
-                  <article
-                    className="home-lot-card"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => navigate(`/publicaciones/${pub.id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
-                    }}
-                  >
-                    <div className="home-lot-card__fig">
-                      {pub.imagenes?.length > 0 ? (
-                        <img src={getImageUrl(pub.imagenes[0])} alt="" />
-                      ) : (
-                        <div className="d-flex align-items-center justify-content-center h-100 bg-dark">
-                          <i className="fas fa-image fa-2x" style={{ opacity: 0.15 }} />
-                        </div>
-                      )}
-                      <span className="home-lot-card__lotnum">Lote {pub.id}</span>
-                      {pub.estado === 'ACTIVO' && <span className="home-lot-card__status">Subasta abierta</span>}
-                    </div>
-                    <div className="home-lot-card__body">
-                      <h3 className="home-lot-card__title">{pub.titulo}</h3>
-                      <div className="d-flex gap-2 flex-wrap mb-1">
-                        {pub.categoria && (
-                          <span
-                            className="badge rounded-0"
-                            style={{
-                              fontSize: '0.65rem',
-                              fontWeight: 500,
-                              background: 'transparent',
-                              color: '#a8a29e',
-                              border: '1px solid rgba(245,158,11,0.22)',
-                            }}
-                          >
-                            {pub.categoria}
-                          </span>
-                        )}
-                      </div>
-                      <div className="home-lot-card__foot">
-                        <div>
-                          <div className="home-lot-card__price-label">Puja actual</div>
-                          <div className="home-lot-card__price">${formatearMonto(precioMostrar(pub))}</div>
-                        </div>
-                        <div className="home-lot-card__date">
-                          {pub.fechaFin ? (
-                            <>
-                              Cierre
-                              <br />
-                              {new Date(pub.fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
-                            </>
-                          ) : (
-                            '—'
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button type="button" className="btn home-btn-ghost w-100 mt-4 d-sm-none" onClick={() => navigate('/publicaciones')}>
-            Ver catálogo completo
-          </button>
         </section>
 
         {/* —— Próximos cierres —— */}

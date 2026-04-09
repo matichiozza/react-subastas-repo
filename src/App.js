@@ -17,6 +17,7 @@ import DetallePublicacion, { detalleLoader } from './components/DetallePublicaci
 import Chat from './components/Chat';
 import SwiperTest from './components/SwiperTest';
 import HomeHeroVariants from './components/HomeHeroVariants';
+import HomeLotesVariants from './components/HomeLotesVariants';
 
 const Layout = () => {
   const navigation = useNavigation();
@@ -52,7 +53,8 @@ const router = createBrowserRouter([
       { path: "/chat/:chatId", element: <PrivateRoute><Chat /></PrivateRoute> },
       { path: "/ayuda", element: <Ayuda /> },
       { path: "/pruebas", element: <SwiperTest /> },
-      { path: "/dev/heroes", element: <HomeHeroVariants />, loader: homeLoader }
+      { path: "/dev/heroes", element: <HomeHeroVariants />, loader: homeLoader },
+      { path: "/dev/lotes", element: <HomeLotesVariants />, loader: homeLoader }
     ]
   }
 ]);
