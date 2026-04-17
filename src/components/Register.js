@@ -410,8 +410,7 @@ const Register = () => {
                        <div style={{ 
                          marginTop: '8px', 
                          fontSize: '12px',
-                         color: '#666',
-                         fontStyle: 'italic'
+                         color: '#666'
                        }}>
                          Solo letras, números y guiones bajos (_)
                        </div>
@@ -465,8 +464,7 @@ const Register = () => {
                          <div style={{ 
                            marginTop: '8px', 
                            fontSize: '12px',
-                           color: '#666',
-                           fontStyle: 'italic'
+                           color: '#666'
                          }}>
                            La contraseña debe tener entre 6 y 15 caracteres
                          </div>

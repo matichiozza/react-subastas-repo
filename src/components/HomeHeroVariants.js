@@ -110,7 +110,7 @@ export default function HomeHeroVariants() {
               fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
               lineHeight: 1.35,
               margin: 0,
-              fontStyle: 'italic',
+              fontStyle: 'normal',
               color: '#e7e5e4',
             }}
           >

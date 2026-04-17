@@ -382,7 +382,7 @@
 
 .suggestion-item.loading {
   color: #666;
-  font-style: italic;
+  font-style: normal;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -390,7 +390,7 @@
 
 .suggestion-item.no-results {
   color: #666;
-  font-style: italic;
+  font-style: normal;
   text-align: center;
 }
 

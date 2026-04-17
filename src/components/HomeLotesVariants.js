@@ -119,7 +119,7 @@ export default function HomeLotesVariants() {
             <div className="lotes-v-b__rule" aria-hidden />
             <p className="lotes-v-b__eyebrow">Curaduría del salón</p>
             <h3 className="lotes-v-b__title">
-              Selección bajo <em>luz baja</em>
+              Selección bajo luz baja
             </h3>
             <p className="lotes-v-b__lead">
               Menos fichas, más presencia: el titular vive sobre la imagen como en una revista de arte. Pensado para

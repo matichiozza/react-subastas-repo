@@ -433,7 +433,7 @@ const MisPublicaciones = () => {
                         </>
                       )}
                       {pub.estado === 'FINALIZADO_SIN_OFERTAS' && (
-                        <div className="w-100 text-center py-2" style={{ color: '#666', fontSize: '0.9em', fontStyle: 'italic' }}>
+                        <div className="w-100 text-center py-2" style={{ color: '#666', fontSize: '0.9em' }}>
                           Finalizada sin ofertas
                         </div>
                       )}

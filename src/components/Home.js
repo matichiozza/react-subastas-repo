@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useContext, useCallback, useRef, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
@@ -47,6 +47,48 @@ const CATEGORIAS_SALON = [
 function formatearMonto(valor) {
   if (!valor) return '0';
   return parseFloat(valor).toLocaleString('es-AR');
+}
+
+function chunkArray(arr, size) {
+  if (!Array.isArray(arr) || size <= 0) return [];
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function formatFinCierre(fechaFin) {
+  if (!fechaFin) return null;
+  const d = new Date(fechaFin);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/** Cuenta regresiva legible hasta fechaFin (ms actual = nowMs). */
+function formatCountdown(fechaFin, nowMs) {
+  if (!fechaFin) return { expired: false, main: '—', detail: '' };
+  const end = new Date(fechaFin).getTime();
+  if (Number.isNaN(end)) return { expired: false, main: '—', detail: '' };
+  const diff = end - nowMs;
+  if (diff <= 0) return { expired: true, main: 'Cierre', detail: 'Finalizada' };
+  const totalSec = Math.floor(diff / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (days >= 1) {
+    return { expired: false, main: `${days}d ${h}h ${m}m`, detail: `${String(s).padStart(2, '0')}s` };
+  }
+  return {
+    expired: false,
+    main: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+    detail: 'restantes',
+  };
 }
 
 const Home = () => {
@@ -108,6 +150,64 @@ const Home = () => {
     };
   }, [token]);
 
+  /** Catálogo home: reloj para cuenta regresiva + carrusel por páginas */
+  const [catalogNow, setCatalogNow] = useState(() => Date.now());
+  const [catalogPerPage, setCatalogPerPage] = useState(1);
+  const [catalogPage, setCatalogPage] = useState(0);
+  const [catalogPaused, setCatalogPaused] = useState(false);
+  const catalogCarouselRef = useRef(null);
+
+  useEffect(() => {
+    if (!publicaciones.length) return undefined;
+    const id = window.setInterval(() => setCatalogNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [publicaciones.length]);
+
+  useLayoutEffect(() => {
+    const el = catalogCarouselRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const CARD = 180;
+    const GAP = 8;
+    const listLen = Math.min(12, publicaciones.length);
+    const read = () => {
+      if (!listLen) return;
+      const w = el.getBoundingClientRect().width || el.offsetWidth || el.clientWidth;
+      const fit = Math.max(1, Math.floor((w + GAP) / (CARD + GAP)));
+      const n = Math.min(fit, listLen, 8);
+      setCatalogPerPage(n);
+    };
+    const scheduleRead = () => requestAnimationFrame(read);
+    scheduleRead();
+    const ro = new ResizeObserver(scheduleRead);
+    ro.observe(el);
+    window.addEventListener('resize', scheduleRead);
+    const t = window.setTimeout(read, 100);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', scheduleRead);
+      window.clearTimeout(t);
+    };
+  }, [publicaciones.length]);
+
+  const catalogList = useMemo(() => publicaciones.slice(0, 12), [publicaciones]);
+  const catalogChunks = useMemo(() => chunkArray(catalogList, catalogPerPage), [catalogList, catalogPerPage]);
+
+  useEffect(() => {
+    setCatalogPage(0);
+  }, [catalogPerPage, catalogList.length]);
+
+  useEffect(() => {
+    if (catalogChunks.length <= 1) return undefined;
+    if (catalogPaused) return undefined;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return undefined;
+    }
+    const id = window.setInterval(() => {
+      setCatalogPage((p) => (p + 1) % catalogChunks.length);
+    }, 10000);
+    return () => window.clearInterval(id);
+  }, [catalogChunks.length, catalogPaused]);
+
   /** Índice en la cinta extendida (0..n-1 reales, n = clon de la 1ª para bucle siempre hacia la derecha) */
   const [heroTrackIndex, setHeroTrackIndex] = useState(0);
   const [heroNoTransition, setHeroNoTransition] = useState(false);
@@ -145,11 +245,25 @@ const Home = () => {
 
   useEffect(() => {
     if (heroCount <= 1) return undefined;
-    const reduced =
-      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return undefined;
-    const id = window.setInterval(heroAdvanceForward, 8000);
-    return () => window.clearInterval(id);
+    let intervalId;
+    const tick = () => heroAdvanceForward();
+    const start = () => {
+      intervalId = window.setInterval(tick, 8000);
+    };
+    const stop = () => {
+      if (intervalId != null) window.clearInterval(intervalId);
+      intervalId = undefined;
+    };
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    if (typeof document !== 'undefined' && !document.hidden) start();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [heroCount, heroAdvanceForward]);
 
   const heroSnapTo = useCallback((index) => {
@@ -163,6 +277,18 @@ const Home = () => {
       });
     });
   }, []);
+
+  /** Sin transition (p. ej. prefers-reduced-motion), transitionend no corre: cerrar el bucle al llegar al clon */
+  useEffect(() => {
+    if (!heroUseLoop || heroTrackIndex !== heroCount) return undefined;
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduced) return undefined;
+    const t = window.setTimeout(() => {
+      if (heroTrackIndexRef.current === heroCount) heroSnapTo(0);
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [heroTrackIndex, heroUseLoop, heroCount, heroSnapTo]);
 
   const handleHeroTrackTransitionEnd = useCallback(
     (e) => {
@@ -328,20 +454,16 @@ const Home = () => {
           </div>
         </section>
 
-        {/* —— Catálogo (vitrina · variante D) —— */}
-        <section className="container px-3 px-lg-4 py-5 mb-2 home-animate-in">
-          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end gap-3 mb-4">
-            <header className="lotes-v-d__head lotes-v-d__head--flush">
-              <span className="lotes-v-d__pill">Hoy en vitrina</span>
-              <h2 className="lotes-v-d__title">Piezas que pasan frente a tu café</h2>
-              <p className="lotes-v-d__lead">
-                Tarjetas amplias y claras: tocás una ficha y abrís el detalle con fotos, condiciones y reglas de puja.
-              </p>
-            </header>
-            <button type="button" className="btn home-btn-ghost d-none d-sm-inline-block flex-shrink-0" onClick={() => navigate('/publicaciones')}>
-              Ver todo el catálogo
-            </button>
-          </div>
+        {/* —— Subastas relevantes (carrusel compacto) —— */}
+        <section className="container px-3 px-lg-4 py-3 py-lg-4 mb-2 home-animate-in">
+          <header className="home-relevant-head mb-3">
+            <div className="home-relevant-head__band">
+              <span className="home-relevant-head__logo" aria-hidden>
+                <i className="fas fa-gavel" />
+              </span>
+              <h2 className="home-relevant-head__title">Subastas relevantes</h2>
+            </div>
+          </header>
 
           {publicaciones.length === 0 ? (
             <div className="home-salon-block text-center py-5">
@@ -353,54 +475,102 @@ const Home = () => {
               </button>
             </div>
           ) : (
-            <div className="lotes-v-d__grid">
-              {publicaciones.slice(0, 12).map((pub) => (
-                <article
-                  key={pub.id}
-                  className="lotes-v-d__card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/publicaciones/${pub.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
-                  }}
-                >
-                  <div className="lotes-v-d__fig">
-                    {pub.imagenes?.length > 0 ? (
-                      <img src={getImageUrl(pub.imagenes[0])} alt="" />
-                    ) : (
-                      <div className="d-flex align-items-center justify-content-center h-100">
-                        <i className="fas fa-image fa-3x" style={{ opacity: 0.15 }} />
-                      </div>
-                    )}
-                    {pub.estado === 'ACTIVO' && <span className="lotes-v-d__badge">Abierto</span>}
+            <div ref={catalogCarouselRef} className="home-lotes-carousel-observe">
+              <div
+                className="home-lotes-carousel"
+                onMouseEnter={() => setCatalogPaused(true)}
+                onMouseLeave={() => setCatalogPaused(false)}
+                onFocusCapture={() => setCatalogPaused(true)}
+                onBlurCapture={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) setCatalogPaused(false);
+                }}
+              >
+              <div
+                className="home-lotes-carousel__track"
+                style={{ transform: `translateX(-${catalogPage * 100}%)` }}
+              >
+                {catalogChunks.map((chunk, pageIdx) => (
+                  <div key={`cat-page-${pageIdx}`} className="home-lotes-carousel__page">
+                    {chunk.map((pub) => {
+                      const cd = formatCountdown(pub.fechaFin, catalogNow);
+                      const finTxt = formatFinCierre(pub.fechaFin);
+                      return (
+                        <article
+                          key={pub.id}
+                          className="lotes-v-d__card"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => navigate(`/publicaciones/${pub.id}`)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') navigate(`/publicaciones/${pub.id}`);
+                          }}
+                        >
+                          <div className="lotes-v-d__fig">
+                            {pub.imagenes?.length > 0 ? (
+                              <img src={getImageUrl(pub.imagenes[0])} alt="" />
+                            ) : (
+                              <div className="d-flex align-items-center justify-content-center h-100">
+                                <i className="fas fa-image fa-lg" style={{ opacity: 0.2 }} />
+                              </div>
+                            )}
+                            {pub.estado === 'ACTIVO' && <span className="lotes-v-d__badge">Abierto</span>}
+                          </div>
+                          <div className="lotes-v-d__body">
+                            {pub.categoria && (
+                              <div className="lotes-v-d__tags">
+                                <span className="lotes-v-d__tag">{pub.categoria}</span>
+                              </div>
+                            )}
+                            <h3 className="home-lotes-carousel__title">{pub.titulo}</h3>
+                            {pub.fechaFin && (
+                              <div className="home-lote-countdown">
+                                <div className="home-lote-countdown__row">
+                                  <i className="fas fa-hourglass-end home-lote-countdown__ico" aria-hidden />
+                                  <span className="home-lote-countdown__fin">{finTxt}</span>
+                                </div>
+                                <div
+                                  className={`home-lote-countdown__chip${cd.expired ? ' home-lote-countdown__chip--done' : ''}`}
+                                  aria-live="polite"
+                                >
+                                  <span className="home-lote-countdown__chip-main">{cd.expired ? cd.detail : cd.main}</span>
+                                  {!cd.expired && cd.detail ? (
+                                    <span className="home-lote-countdown__chip-sub">{cd.detail}</span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            )}
+                            <div className="lotes-v-d__foot">
+                              <div>
+                                <div className="lotes-v-d__price-lab">Mejor oferta</div>
+                                <div className="lotes-v-d__price">${formatearMonto(precioMostrar(pub))}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
-                  <div className="lotes-v-d__body">
-                    <div className="lotes-v-d__tags">
-                      <span className="lotes-v-d__tag">Lote {pub.id}</span>
-                      {pub.categoria && <span className="lotes-v-d__tag">{pub.categoria}</span>}
-                    </div>
-                    <h3 className="lotes-v-d__card-title">{pub.titulo}</h3>
-                    <div className="lotes-v-d__foot">
-                      <div>
-                        <div className="lotes-v-d__price-lab">Mejor oferta</div>
-                        <div className="lotes-v-d__price">${formatearMonto(precioMostrar(pub))}</div>
-                      </div>
-                      <div className="lotes-v-d__date">
-                        {pub.fechaFin
-                          ? new Date(pub.fechaFin).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-                          : '—'}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
+                ))}
+              </div>
+              {catalogChunks.length > 1 && (
+                <div className="home-lotes-carousel__dots" role="tablist" aria-label="Páginas del catálogo">
+                  {catalogChunks.map((_, i) => (
+                    <button
+                      key={`cat-dot-${i}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === catalogPage}
+                      className={`home-lotes-carousel__dot${i === catalogPage ? ' home-lotes-carousel__dot--active' : ''}`}
+                      onClick={() => setCatalogPage(i)}
+                      aria-label={`Grupo ${i + 1} de ${catalogChunks.length}`}
+                    />
+                  ))}
+                </div>
+              )}
+              </div>
             </div>
           )}
 
-          <button type="button" className="btn home-btn-ghost w-100 mt-4 d-sm-none" onClick={() => navigate('/publicaciones')}>
-            Ver catálogo completo
-          </button>
         </section>
 
         {/* —— Tres pilares / categorías —— */}

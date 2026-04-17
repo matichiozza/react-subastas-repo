@@ -6,15 +6,27 @@ import API_BASE_URL, { getImageUrl } from '../config/api';
 
 export const publicacionesLoader = async () => {
   const token = localStorage.getItem('token');
+  const url = `${API_BASE_URL}/publicaciones`;
   try {
-    const res = await fetch(`${API_BASE_URL}/publicaciones`, {
+    const res = await fetch(url, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      return {
+        publicaciones: [],
+        error: `El backend respondió ${res.status}. Comprobá que la API esté levantada en ${API_BASE_URL}.`,
+      };
+    }
     const data = await res.json();
-    return data.reverse();
-  } catch (e) {
-    return [];
+    if (!Array.isArray(data)) {
+      return { publicaciones: [], error: 'La API no devolvió una lista válida de publicaciones.' };
+    }
+    return { publicaciones: [...data].reverse(), error: null };
+  } catch {
+    return {
+      publicaciones: [],
+      error: `No hay conexión con ${API_BASE_URL}. En desarrollo tenés que ejecutar Spring Boot en el puerto 8080 (mismo host que configuraste en api.js).`,
+    };
   }
 };
 
@@ -66,13 +78,18 @@ function limpiarFormato(valor) {
 const TodasPublicaciones = () => {
   const { token } = useContext(AuthContext);
   const initialData = useLoaderData();
-  const [publicaciones, setPublicaciones] = useState(initialData || []);
+  const initialList = initialData?.publicaciones ?? (Array.isArray(initialData) ? initialData : []);
+  const initialErr = initialData?.error ?? null;
+  const [publicaciones, setPublicaciones] = useState(initialList);
+  const [fetchError, setFetchError] = useState(initialErr);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    setPublicaciones(initialData || []);
+    const list = initialData?.publicaciones ?? (Array.isArray(initialData) ? initialData : []);
+    setPublicaciones(list);
+    setFetchError(initialData?.error ?? null);
   }, [initialData]);
 
   // Estados para filtros
@@ -680,8 +697,16 @@ const TodasPublicaciones = () => {
                 )}
               </div>
             </div>
-            {publicacionesFiltradas.length === 0 ? (
-              <div className="alert alert-info">No hay publicaciones para esta categoría.</div>
+            {fetchError ? (
+              <div className="alert alert-danger" role="alert">
+                {fetchError}
+              </div>
+            ) : publicacionesFiltradas.length === 0 ? (
+              <div className="alert alert-info">
+                {publicaciones.length === 0
+                  ? 'No hay publicaciones cargadas desde el servidor (lista vacía o aún no hay lotes en la base de datos).'
+                  : 'No hay publicaciones que coincidan con los filtros o la categoría seleccionada.'}
+              </div>
             ) : (
               <div className="row g-4">
                 {publicacionesFiltradas.map((pub, idx) => (
