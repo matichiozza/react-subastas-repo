@@ -27,6 +27,11 @@ export const homeLoader = async () => {
 
 const heroBase = `${process.env.PUBLIC_URL || ''}/hero`;
 
+/** Carrusel de categorías en home: 4 columnas × 3 filas (12 ítems por página). */
+const HOME_CAT_COLS = 4;
+const HOME_CAT_ROWS = 3;
+const HOME_CAT_PAGE_SIZE = HOME_CAT_COLS * HOME_CAT_ROWS;
+
 /** Carrusel hero — imágenes en public/hero/ (la primera define el alto del viewport). */
 const HERO_SLIDES = [
   {
@@ -305,6 +310,31 @@ const Home = () => {
     [heroUseLoop, heroCount, heroSnapTo]
   );
 
+  const homeCatPages = useMemo(() => {
+    const list = categoriasCatalogo;
+    const pages = [];
+    for (let i = 0; i < list.length; i += HOME_CAT_PAGE_SIZE) {
+      pages.push(list.slice(i, i + HOME_CAT_PAGE_SIZE));
+    }
+    return pages;
+  }, []);
+
+  const [homeCatPage, setHomeCatPage] = useState(0);
+
+  useEffect(() => {
+    if (homeCatPage >= homeCatPages.length) setHomeCatPage(0);
+  }, [homeCatPage, homeCatPages.length]);
+
+  const homeCatGoPrev = () => {
+    if (homeCatPages.length <= 1) return;
+    setHomeCatPage((p) => (p - 1 + homeCatPages.length) % homeCatPages.length);
+  };
+
+  const homeCatGoNext = () => {
+    if (homeCatPages.length <= 1) return;
+    setHomeCatPage((p) => (p + 1) % homeCatPages.length);
+  };
+
   const subastasProximas = [...publicaciones]
     .filter((p) => p.fechaFin && new Date(p.fechaFin) > new Date())
     .sort((a, b) => new Date(a.fechaFin) - new Date(b.fechaFin))
@@ -577,20 +607,95 @@ const Home = () => {
         </section>
 
         <section className="home-cat-grid-section container px-3 px-lg-4 py-3 mb-3">
-          <div className="row g-2">
-            {categoriasCatalogo.map((cat) => (
-              <div key={cat.nombre} className="col-6 col-md-3">
-                <button
-                  type="button"
-                  className="home-cat-chip w-100 text-start"
-                  onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.nombre)}`)}
-                >
-                  <i className={cat.emoji} aria-hidden />
-                  <span>{cat.nombre}</span>
-                </button>
+          <header className="home-cat-section-head mb-3">
+            <p className="home-section-eyebrow mb-1">Explorar</p>
+            <h2 className="home-section-heading mb-0" style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.65rem)' }}>
+              Categorías
+            </h2>
+          </header>
+          <div
+            className={`home-cat-carousel${homeCatPages.length <= 1 ? ' home-cat-carousel--single' : ''}`}
+            role="region"
+            aria-roledescription="carrusel"
+            aria-label="Categorías"
+          >
+            {homeCatPages.length > 1 && (
+              <button
+                type="button"
+                className="home-cat-carousel__arrow home-cat-carousel__arrow--prev"
+                aria-label="Categorías anteriores"
+                onClick={homeCatGoPrev}
+              >
+                <i className="fas fa-chevron-left" aria-hidden />
+              </button>
+            )}
+            <div className="home-cat-carousel__viewport">
+              <div
+                className="home-cat-carousel__track"
+                style={{
+                  transform: `translateX(-${homeCatPage * (100 / Math.max(1, homeCatPages.length))}%)`,
+                  width: `${homeCatPages.length * 100}%`,
+                }}
+              >
+                {homeCatPages.map((page, pageIdx) => (
+                  <div
+                    key={`home-cat-page-${pageIdx}`}
+                    className="home-cat-carousel__page"
+                    style={{
+                      flex: `0 0 ${100 / Math.max(1, homeCatPages.length)}%`,
+                      maxWidth: `${100 / Math.max(1, homeCatPages.length)}%`,
+                    }}
+                    aria-hidden={pageIdx !== homeCatPage}
+                  >
+                    <div
+                      className="home-cat-carousel__grid"
+                      style={{
+                        gridTemplateColumns: `repeat(${HOME_CAT_COLS}, minmax(0, 1fr))`,
+                        gridTemplateRows: `repeat(${HOME_CAT_ROWS}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {page.map((cat) => (
+                        <button
+                          key={cat.nombre}
+                          type="button"
+                          className="home-cat-chip"
+                          onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.nombre)}`)}
+                        >
+                          <i className={cat.emoji} aria-hidden />
+                          <span className="home-cat-chip__label">{cat.nombre}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            {homeCatPages.length > 1 && (
+              <button
+                type="button"
+                className="home-cat-carousel__arrow home-cat-carousel__arrow--next"
+                aria-label="Categorías siguientes"
+                onClick={homeCatGoNext}
+              >
+                <i className="fas fa-chevron-right" aria-hidden />
+              </button>
+            )}
           </div>
+          {homeCatPages.length > 1 && (
+            <div className="home-cat-carousel__dots" role="tablist" aria-label="Página de categorías">
+              {homeCatPages.map((_, i) => (
+                <button
+                  key={`home-cat-dot-${i}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === homeCatPage}
+                  className={`home-cat-carousel__dot${i === homeCatPage ? ' home-cat-carousel__dot--active' : ''}`}
+                  onClick={() => setHomeCatPage(i)}
+                  aria-label={`Página ${i + 1} de ${homeCatPages.length}`}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* —— Próximos cierres —— */}

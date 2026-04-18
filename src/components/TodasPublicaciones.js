@@ -422,7 +422,7 @@ const TodasPublicaciones = () => {
                         navigate({ pathname: '/publicaciones', search: `?${params.toString()}` }, { replace: true });
                       }}
                     >
-                      <i className={cat.emoji} style={{ marginRight: 8 }}></i>
+                      <i className={cat.emoji} style={{ marginRight: 8, width: '1.1rem', textAlign: 'center', color: '#1976d2' }} aria-hidden />
                       <span>{cat.nombre}</span>
                     </li>
                   ))}

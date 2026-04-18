@@ -1,6 +1,7 @@
 /**
  * `nombre`: filtro / URL (normaliza igual que el enum en JSON).
  * `clave`: valor que envía el formulario de creación (nombre del enum Java).
+ * `emoji`: clases Font Awesome 5 (fas fa-…).
  */
 export const categoriasCatalogo = [
   { nombre: 'Autógrafos', clave: 'AUTOGRAFOS', emoji: 'fas fa-signature' },

@@ -21,3 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# scripts utilitarios (fotos Pexels)
+/scripts/node_modules
+/scripts/.env

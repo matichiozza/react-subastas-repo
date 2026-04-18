@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import API_BASE_URL, { getImageUrl } from '../config/api';
 import TopTicker from './TopTicker';
+import { categoriasCatalogo } from '../data/categoriasCatalogo';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -14,7 +15,9 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sancionesInfo, setSancionesInfo] = useState(null);
+  const [categoriasOpen, setCategoriasOpen] = useState(false);
   const menuRef = useRef();
+  const categoriasDropdownRef = useRef(null);
 
   // Obtener información de sanciones del usuario
   useEffect(() => {
@@ -63,11 +66,13 @@ const Navbar = () => {
     }
   };
 
-  // Funciones de navegación unificadas
-  const handleInicio = () => {
-    navigate('/');
+  const irCategoria = (nombre) => {
+    navigate(`/publicaciones?busqueda=${encodeURIComponent(nombre)}`);
+    setCategoriasOpen(false);
     setMobileMenuOpen(false);
   };
+
+  // Funciones de navegación unificadas
   const handleVender = () => {
     if (user) navigate('/crear-publicacion');
     else navigate('/login');
@@ -82,11 +87,14 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   };
 
-  // Cerrar menú al hacer click fuera
+  // Cerrar menús al hacer click fuera
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
+      }
+      if (categoriasDropdownRef.current && !categoriasDropdownRef.current.contains(event.target)) {
+        setCategoriasOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -106,7 +114,7 @@ const Navbar = () => {
           minHeight: 80,
         }}
       >
-      <div className="container-fluid" style={{ maxWidth: '1600px', padding: '0 1.5% 0 1%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="container-fluid" style={{ maxWidth: '1600px', padding: '0 clamp(8px, 1.5vw, 16px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Columna 1: Logo */}
         <div style={{ flex: '0 0 auto' }}>
           <Link className="navbar-brand fw-bold me-2 d-flex align-items-center" to="/" style={{ padding: 0 }}>
@@ -115,15 +123,16 @@ const Navbar = () => {
         </div>
         {/* Columna 2: Buscador centrado solo en desktop */}
         <div
-          className="d-none d-lg-flex navbar-search-col"
+          className="d-none d-lg-flex navbar-search-col navbar-search-h-margin"
           style={{
             flex: '1 1 0',
             justifyContent: 'center',
             minWidth: 0,
-            padding: '0 0.75rem',
+            paddingTop: 0,
+            paddingBottom: 0,
           }}
         >
-          <form className="navbar-search-shell navbar-search-shell--desktop d-flex" onSubmit={handleBuscar}>
+          <form className="navbar-search-shell navbar-search-shell--desktop d-flex w-100" onSubmit={handleBuscar}>
             <input
               className="form-control text-light border-0 shadow-none"
               type="search"
@@ -164,7 +173,7 @@ const Navbar = () => {
           <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul className="navbar-nav align-items-lg-center gap-1 gap-lg-2 mb-0 flex-lg-row flex-column text-center" style={{ fontWeight: 500, fontSize: '0.82em' }}>
               {/* Buscador en mobile */}
-              <li className="nav-item d-lg-none mb-2">
+              <li className="nav-item d-lg-none mb-2 navbar-search-h-margin">
                 <form className="navbar-search-shell navbar-search-shell--mobile d-flex w-100" onSubmit={handleBuscar}>
                   <input
                     className="form-control text-light border-0 shadow-none"
@@ -192,19 +201,59 @@ const Navbar = () => {
                   </button>
                 </form>
               </li>
-              <li className="nav-item mb-2 mb-lg-0">
+              <li className="nav-item mb-2 mb-lg-0 position-relative" ref={categoriasDropdownRef}>
                 <button
-                  className="nav-link btn"
-                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
-                  onClick={handleInicio}
+                  className="nav-link btn d-inline-flex align-items-center gap-1"
                   type="button"
-                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
-                  onFocus={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.color = '#fbbf24'; }}
-                  onBlur={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#e7e5e4'; }}
+                  aria-expanded={categoriasOpen}
+                  aria-haspopup="true"
+                  style={{ color: '#e7e5e4', padding: '0.2em 0.7em', fontSize: '0.95em', background: 'none', border: 'none', textShadow: 'none', boxShadow: 'none', outline: 'none', transition: 'color 0.18s, background 0.18s', borderRadius: '8px' }}
+                  onClick={() => setCategoriasOpen((o) => !o)}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
+                    e.currentTarget.style.color = '#fbbf24';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.color = '#e7e5e4';
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
+                    e.currentTarget.style.color = '#fbbf24';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.color = '#e7e5e4';
+                  }}
                 >
-                  Inicio
+                  Categorías
+                  <i
+                    className="fas fa-chevron-down"
+                    style={{
+                      fontSize: '0.62em',
+                      opacity: 0.85,
+                      transform: categoriasOpen ? 'rotate(-180deg)' : 'none',
+                      transition: 'transform 0.2s ease',
+                    }}
+                    aria-hidden
+                  />
                 </button>
+                {categoriasOpen && (
+                  <div className="navbar-cat-dropdown" role="menu" aria-label="Categorías">
+                    {categoriasCatalogo.map((cat) => (
+                      <button
+                        key={cat.clave}
+                        type="button"
+                        className="navbar-cat-dropdown__btn"
+                        role="menuitem"
+                        onClick={() => irCategoria(cat.nombre)}
+                      >
+                        <i className={cat.emoji} aria-hidden />
+                        <span>{cat.nombre}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </li>
               <li className="nav-item mb-2 mb-lg-0">
                 <button
@@ -411,7 +460,7 @@ const Navbar = () => {
           gap: '1.1em',
           alignItems: 'stretch',
         }}>
-          <form className="navbar-search-shell navbar-search-shell--mobile navbar-search-shell--on-light d-flex w-100 mb-2" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto' }}>
+          <form className="navbar-search-shell navbar-search-shell--mobile navbar-search-shell--on-light d-flex w-100 mb-2 navbar-search-h-margin" onSubmit={handleBuscar} style={{ maxWidth: 500, margin: '0 auto', boxSizing: 'border-box' }}>
             <input
               className="form-control border-0 shadow-none"
               type="search"
@@ -437,9 +486,22 @@ const Navbar = () => {
               <i className="fas fa-search" style={{ fontSize: '1.05em' }}></i>
             </button>
           </form>
-          <Link className="nav-link py-2" to="/" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
-            <span role="img" aria-label="inicio">🏠</span> Inicio
-          </Link>
+          <details className="navbar-mobile-cats">
+            <summary style={{ fontSize: '1.08em' }}>Categorías</summary>
+            <div className="navbar-mobile-cats__list">
+              {categoriasCatalogo.map((cat) => (
+                <button
+                  key={cat.clave}
+                  type="button"
+                  className="navbar-mobile-cats__btn"
+                  onClick={() => irCategoria(cat.nombre)}
+                >
+                  <i className={cat.emoji} aria-hidden />
+                  <span>{cat.nombre}</span>
+                </button>
+              ))}
+            </div>
+          </details>
           <Link className="nav-link py-2" to="/publicaciones" style={{ color: '#292524', fontSize: '1.08em' }} onClick={() => setMobileMenuOpen(false)}>
             <span role="img" aria-label="comprar">🛒</span> Comprar
           </Link>

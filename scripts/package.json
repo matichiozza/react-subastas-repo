@@ -1,0 +1,9 @@
+{
+  "name": "subastas-react-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Utilidades Node (p. ej. descargar fotos de categorías vía Pexels)",
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}
