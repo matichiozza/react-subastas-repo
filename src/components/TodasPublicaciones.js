@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import { categoriasCatalogo as categorias } from '../data/categoriasCatalogo';
 
 export const publicacionesLoader = async () => {
   const token = localStorage.getItem('token');
@@ -29,29 +30,6 @@ export const publicacionesLoader = async () => {
     };
   }
 };
-
-const categorias = [
-  { nombre: 'Accesorios', emoji: 'fas fa-briefcase' },
-  { nombre: 'Aire libre', emoji: 'fas fa-tree' },
-  { nombre: 'Arte', emoji: 'fas fa-palette' },
-  { nombre: 'Bebés', emoji: 'fas fa-baby' },
-  { nombre: 'Calzado', emoji: 'fas fa-shoe-prints' },
-  { nombre: 'Computación', emoji: 'fas fa-laptop' },
-  { nombre: 'Cocina', emoji: 'fas fa-utensils' },
-  { nombre: 'Deportes', emoji: 'fas fa-futbol' },
-  { nombre: 'Electrónica', emoji: 'fas fa-bolt' },
-  { nombre: 'Herramientas', emoji: 'fas fa-hammer' },
-  { nombre: 'Hogar', emoji: 'fas fa-home' },
-  { nombre: 'Joyería', emoji: 'fas fa-gem' },
-  { nombre: 'Juguetes', emoji: 'fas fa-teddy-bear' },
-  { nombre: 'Libros', emoji: 'fas fa-book' },
-  { nombre: 'Mascotas', emoji: 'fas fa-paw' },
-  { nombre: 'Moda', emoji: 'fas fa-tshirt' },
-  { nombre: 'Muebles', emoji: 'fas fa-couch' },
-  { nombre: 'Música', emoji: 'fas fa-music' },
-  { nombre: 'Teléfonos', emoji: 'fas fa-mobile-alt' },
-  { nombre: 'Vehículos', emoji: 'fas fa-car' },
-];
 
 // Función para normalizar tildes y minúsculas
 function normalizar(str) {

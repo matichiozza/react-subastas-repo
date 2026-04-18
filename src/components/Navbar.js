@@ -103,26 +103,33 @@ const Navbar = () => {
           boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
           borderBottom: '1px solid rgba(245, 158, 11, 0.18)',
           padding: '0.55em 0',
-          minHeight: 76,
+          minHeight: 80,
         }}
       >
-      <div className="container-fluid" style={{ maxWidth: '1600px', padding: '0 2% 0 1%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="container-fluid" style={{ maxWidth: '1600px', padding: '0 1.5% 0 1%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Columna 1: Logo */}
         <div style={{ flex: '0 0 auto' }}>
-          <Link className="navbar-brand fw-bold me-3 d-flex align-items-center" to="/" style={{ padding: 0 }}>
-            {/* Si el logo es oscuro, un filtro invert invert(1) puede venir bien. Si es logo blanco, no tocamos nada */}
-            <img src="/logo_transparent.png" alt="SubastasCorp Logo" style={{ height: '98px', objectFit: 'contain', margin: '-16px 6px', transform: 'scale(1.58)', transformOrigin: 'left center', filter: 'brightness(0) invert(1)' }} />
+          <Link className="navbar-brand fw-bold me-2 d-flex align-items-center" to="/" style={{ padding: 0 }}>
+            <img src="/logo_transparent.png" alt="SubastasCorp Logo" style={{ height: '72px', objectFit: 'contain', margin: '-6px 8px 0 0', transform: 'scale(1.22)', transformOrigin: 'left center', filter: 'brightness(0) invert(1)' }} />
           </Link>
         </div>
         {/* Columna 2: Buscador centrado solo en desktop */}
-        <div className="d-none d-lg-flex" style={{ flex: '1 1 0', justifyContent: 'center', minWidth: 0, padding: '0 2em' }}>
-          <form className="navbar-search-shell d-flex w-100" onSubmit={handleBuscar}>
+        <div
+          className="d-none d-lg-flex navbar-search-col"
+          style={{
+            flex: '1 1 0',
+            justifyContent: 'center',
+            minWidth: 0,
+            padding: '0 0.75rem',
+          }}
+        >
+          <form className="navbar-search-shell navbar-search-shell--desktop d-flex" onSubmit={handleBuscar}>
             <input
               className="form-control text-light border-0 shadow-none"
               type="search"
-              placeholder="Buscar productos, categorías, marcas..."
+              placeholder="Buscar..."
               aria-label="Buscar"
-              style={{ fontSize: '1em', background: 'transparent', color: '#fff7ed', padding: '0.65em 1.25rem', margin: 0 }}
+              style={{ fontSize: '0.88em', background: 'transparent', color: '#fff7ed', padding: '0.48em 0.9rem', margin: 0 }}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -130,8 +137,8 @@ const Navbar = () => {
               className="btn navbar-search-btn"
               type="submit"
               style={{
-                fontSize: '1em',
-                padding: '0.65em 1.55em',
+                fontSize: '0.88em',
+                padding: '0.48em 1.1em',
                 margin: 0,
                 zIndex: 2,
                 background: 'linear-gradient(180deg, #f59e0b 0%, #ea580c 100%)',
@@ -139,7 +146,7 @@ const Navbar = () => {
                 boxShadow: 'inset 0 1px 0 rgba(255,247,237,0.2)',
               }}
             >
-              <i className="fas fa-search" style={{ fontSize: '1.1em', color: '#fff7ed' }}></i>
+              <i className="fas fa-search" style={{ fontSize: '1em', color: '#fff7ed' }}></i>
             </button>
           </form>
         </div>
@@ -155,7 +162,7 @@ const Navbar = () => {
             <i className="fas fa-bars" style={{ fontSize: '1.2em' }}></i>
           </button>
           <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-            <ul className="navbar-nav align-items-lg-center gap-2 mb-0 flex-lg-row flex-column text-center" style={{ fontWeight: 500, fontSize: '0.89em' }}>
+            <ul className="navbar-nav align-items-lg-center gap-1 gap-lg-2 mb-0 flex-lg-row flex-column text-center" style={{ fontWeight: 500, fontSize: '0.82em' }}>
               {/* Buscador en mobile */}
               <li className="nav-item d-lg-none mb-2">
                 <form className="navbar-search-shell navbar-search-shell--mobile d-flex w-100" onSubmit={handleBuscar}>

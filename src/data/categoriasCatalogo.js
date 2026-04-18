@@ -1,0 +1,38 @@
+/**
+ * `nombre`: filtro / URL (normaliza igual que el enum en JSON).
+ * `clave`: valor que envía el formulario de creación (nombre del enum Java).
+ */
+export const categoriasCatalogo = [
+  { nombre: 'Autógrafos', clave: 'AUTOGRAFOS', emoji: 'fas fa-signature' },
+  { nombre: 'Calzado', clave: 'CALZADO', emoji: 'fas fa-shoe-prints' },
+  { nombre: 'Carteles', clave: 'CARTELES', emoji: 'fas fa-image' },
+  { nombre: 'Cerámica', clave: 'CERAMICA', emoji: 'fas fa-vase' },
+  { nombre: 'Coleccionables', clave: 'COLECCIONABLES', emoji: 'fas fa-box-open' },
+  { nombre: 'Cómics', clave: 'COMICS', emoji: 'fas fa-book-open' },
+  { nombre: 'Computación', clave: 'COMPUTACION', emoji: 'fas fa-laptop' },
+  { nombre: 'Dibujo', clave: 'DIBUJO', emoji: 'fas fa-pencil-alt' },
+  { nombre: 'Documentos', clave: 'DOCUMENTOS', emoji: 'fas fa-file-alt' },
+  { nombre: 'Electrónica', clave: 'ELECTRONICA', emoji: 'fas fa-bolt' },
+  { nombre: 'Escultura', clave: 'ESCULTURA', emoji: 'fas fa-monument' },
+  { nombre: 'Fotografía', clave: 'FOTOGRAFIA', emoji: 'fas fa-camera' },
+  { nombre: 'Gemas', clave: 'GEMAS', emoji: 'fas fa-gem' },
+  { nombre: 'Grabados', clave: 'GRABADOS', emoji: 'fas fa-scroll' },
+  { nombre: 'Herramientas', clave: 'HERRAMIENTAS', emoji: 'fas fa-hammer' },
+  { nombre: 'Instrumentos', clave: 'INSTRUMENTOS', emoji: 'fas fa-guitar' },
+  { nombre: 'Joyería', clave: 'JOYERIA', emoji: 'fas fa-ring' },
+  { nombre: 'Libros', clave: 'LIBROS', emoji: 'fas fa-book' },
+  { nombre: 'Mapas', clave: 'MAPAS', emoji: 'fas fa-map' },
+  { nombre: 'Miscelánea', clave: 'MISCELANEA', emoji: 'fas fa-box' },
+  { nombre: 'Moda', clave: 'MODA', emoji: 'fas fa-tshirt' },
+  { nombre: 'Muebles', clave: 'MUEBLES', emoji: 'fas fa-couch' },
+  { nombre: 'Música', clave: 'MUSICA', emoji: 'fas fa-music' },
+  { nombre: 'Numismática', clave: 'NUMISMATICA', emoji: 'fas fa-coins' },
+  { nombre: 'Perfumes', clave: 'PERFUMES', emoji: 'fas fa-spray-can' },
+  { nombre: 'Pintura', clave: 'PINTURA', emoji: 'fas fa-palette' },
+  { nombre: 'Porcelana', clave: 'PORCELANA', emoji: 'fas fa-mug-hot' },
+  { nombre: 'Radios', clave: 'RADIOS', emoji: 'fas fa-broadcast-tower' },
+  { nombre: 'Revistas', clave: 'REVISTAS', emoji: 'fas fa-newspaper' },
+  { nombre: 'Relojes', clave: 'RELOJES', emoji: 'fas fa-clock' },
+  { nombre: 'Teléfonos', clave: 'TELEFONOS', emoji: 'fas fa-mobile-alt' },
+  { nombre: 'Vajillas', clave: 'VAJILLAS', emoji: 'fas fa-utensils' },
+].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));

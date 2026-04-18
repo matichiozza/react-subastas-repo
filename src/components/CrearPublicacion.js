@@ -3,7 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import { categoriasCatalogo } from '../data/categoriasCatalogo';
 import './CrearPublicacion.css';
+
+function etiquetaCategoria(clave) {
+  const hit = categoriasCatalogo.find((c) => c.clave === clave);
+  return hit ? hit.nombre : clave;
+}
 
 const pasos = [
   { label: 'Datos Básicos', icon: 'fas fa-edit' },
@@ -11,29 +17,6 @@ const pasos = [
   { label: 'Imagen y Precio', icon: 'fas fa-dollar-sign' },
   { label: 'Confirmar', icon: 'fas fa-check' },
 ];
-
-const categorias = [
-  'ELECTRONICA',
-  'COMPUTACION',
-  'TELEFONOS',
-  'HOGAR',
-  'MUEBLES',
-  'COCINA',
-  'MODA',
-  'CALZADO',
-  'ACCESORIOS',
-  'JOYERIA',
-  'DEPORTES',
-  'AIRE_LIBRE',
-  'VEHICULOS',
-  'HERRAMIENTAS',
-  'JUGUETES',
-  'BEBES',
-  'MASCOTAS',
-  'LIBROS',
-  'MUSICA',
-  'ARTE',
-].sort((a, b) => a.localeCompare(b));
 
 const CrearPublicacion = ({ onPublicacionCreada }) => {
   const { user, token } = useContext(AuthContext);
@@ -315,7 +298,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
             {/* Información del producto */}
             <div className="preview-info">
               <div className="preview-categoria">
-                {form.categoria ? form.categoria.replace(/_/g, ' ').toLowerCase() : 'Sin categoría'}
+                {form.categoria ? etiquetaCategoria(form.categoria) : 'Sin categoría'}
               </div>
               
               <h2 className="preview-titulo">
@@ -423,9 +406,9 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                       <label className="form-label">Categoría <span className="required">*</span></label>
                       <select name="categoria" className="form-select" value={form.categoria} onChange={handleChange} required>
                         <option value="">Selecciona una categoría</option>
-                        {categorias.map(cat => (
-                          <option key={cat} value={cat}>
-                            {cat.replace(/_/g, ' ').charAt(0) + cat.replace(/_/g, ' ').slice(1).toLowerCase()}
+                        {categoriasCatalogo.map((cat) => (
+                          <option key={cat.clave} value={cat.clave}>
+                            {cat.nombre}
                           </option>
                         ))}
                       </select>
@@ -578,7 +561,7 @@ const CrearPublicacion = ({ onPublicacionCreada }) => {
                       </div>
                       <ul className="resumen-lista">
                         <li><strong>Título:</strong> {form.titulo}</li>
-                        <li><strong>Categoría:</strong> {form.categoria}</li>
+                        <li><strong>Categoría:</strong> {form.categoria ? etiquetaCategoria(form.categoria) : '—'}</li>
                         <li><strong>Condición:</strong> {form.condicion}</li>
                         <li><strong>Descripción:</strong> {form.descripcion}</li>
                         <li><strong>Imágenes:</strong> {form.imagenes.length} seleccionada(s)</li>

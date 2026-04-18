@@ -1,3 +1,7 @@
+footer {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+}
+
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;

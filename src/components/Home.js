@@ -3,19 +3,25 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLoaderData } from 'react-router-dom';
 import Footer from './Footer';
 import API_BASE_URL, { getImageUrl } from '../config/api';
+import { categoriasCatalogo } from '../data/categoriasCatalogo';
 import './Home.css';
 
 export const homeLoader = async () => {
   const token = localStorage.getItem('token');
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE_URL}/publicaciones`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
     });
     if (!res.ok) throw new Error('Error fetching');
     const data = await res.json();
     return data.reverse();
-  } catch (e) {
+  } catch {
     return [];
+  } finally {
+    clearTimeout(tid);
   }
 };
 
@@ -35,15 +41,6 @@ const HERO_SLIDES = [
   },
 ];
 
-const CATEGORIAS_SALON = [
-  { busqueda: 'Coleccionables', titulo: 'Coleccionables', desc: 'Piezas singulares, curiosidades y objetos de vitrina.', icono: 'fas fa-gem' },
-  { busqueda: 'Arte', titulo: 'Arte y papel', desc: 'Grabados, marcos y documentos gráficos con carácter.', icono: 'fas fa-palette' },
-  { busqueda: 'Moda', titulo: 'Moda y textiles', desc: 'Prendas, tejidos y accesorios con oficio antiguo.', icono: 'fas fa-scroll' },
-  { busqueda: 'Computación', titulo: 'Tecnología vintage', desc: 'Equipos y objetos de época con valor nostálgico.', icono: 'fas fa-keyboard' },
-  { busqueda: 'Inmuebles', titulo: 'Hogar y espacios', desc: 'Mobiliario, lámparas y piezas para el entorno doméstico.', icono: 'fas fa-archway' },
-  { busqueda: 'Vehículos', titulo: 'Vehículos clásicos', desc: 'Automóviles y piezas catalogadas para entusiastas.', icono: 'fas fa-car-side' },
-];
-
 function formatearMonto(valor) {
   if (!valor) return '0';
   return parseFloat(valor).toLocaleString('es-AR');
@@ -61,15 +58,15 @@ function formatFinCierre(fechaFin) {
   const d = new Date(fechaFin);
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleString('es-AR', {
-    weekday: 'short',
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
 }
 
-/** Cuenta regresiva legible hasta fechaFin (ms actual = nowMs). */
+/** Cuenta regresiva hasta fechaFin: solo días, horas y minutos (sin segundos). */
 function formatCountdown(fechaFin, nowMs) {
   if (!fechaFin) return { expired: false, main: '—', detail: '' };
   const end = new Date(fechaFin).getTime();
@@ -80,25 +77,32 @@ function formatCountdown(fechaFin, nowMs) {
   const days = Math.floor(totalSec / 86400);
   const h = Math.floor((totalSec % 86400) / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
   if (days >= 1) {
-    return { expired: false, main: `${days}d ${h}h ${m}m`, detail: `${String(s).padStart(2, '0')}s` };
+    return { expired: false, main: `${days}d ${h}h ${m}m`, detail: '' };
   }
-  return {
-    expired: false,
-    main: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
-    detail: 'restantes',
-  };
+  if (h >= 1) {
+    return { expired: false, main: `${h}h ${m}m`, detail: '' };
+  }
+  return { expired: false, main: `${m}m`, detail: '' };
+}
+
+/** Monto de la última oferta aceptada; si aún no hay ofertas, precio inicial. */
+function precioUltimaOferta(pub) {
+  const ofertas = Number(pub.ofertasTotales) || 0;
+  const act = Number(pub.precioActual);
+  if (ofertas > 0 && !Number.isNaN(act) && act > 0) return act;
+  const ini = Number(pub.precioInicial);
+  return Number.isNaN(ini) ? 0 : ini;
 }
 
 const Home = () => {
   const { token } = useContext(AuthContext);
   const initialData = useLoaderData();
-  const [publicaciones, setPublicaciones] = useState(initialData || []);
+  const [publicaciones, setPublicaciones] = useState(initialData ?? []);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setPublicaciones(initialData || []);
+    setPublicaciones(initialData ?? []);
   }, [initialData]);
 
   useEffect(() => {
@@ -306,8 +310,6 @@ const Home = () => {
     .sort((a, b) => new Date(a.fechaFin) - new Date(b.fechaFin))
     .slice(0, 4);
 
-  const precioMostrar = (pub) => pub.precioActual || pub.precioInicial;
-
   const heroTrackTransform =
     heroExtCount > 0 ? `translateX(-${(heroTrackIndex * 100) / heroExtCount}%)` : undefined;
   const heroTrackWidth = heroExtCount > 0 ? `${heroExtCount * 100}%` : '100%';
@@ -454,16 +456,17 @@ const Home = () => {
           </div>
         </section>
 
-        {/* —— Subastas relevantes (carrusel compacto) —— */}
+        {/* —— Subastas relevantes —— */}
         <section className="container px-3 px-lg-4 py-3 py-lg-4 mb-2 home-animate-in">
-          <header className="home-relevant-head mb-3">
+          <h2 className="visually-hidden">Subastas relevantes</h2>
+          <div className="home-relevant-head mb-3">
             <div className="home-relevant-head__band">
               <span className="home-relevant-head__logo" aria-hidden>
                 <i className="fas fa-gavel" />
               </span>
-              <h2 className="home-relevant-head__title">Subastas relevantes</h2>
+              <p className="home-relevant-head__title">Subastas relevantes</p>
             </div>
-          </header>
+          </div>
 
           {publicaciones.length === 0 ? (
             <div className="home-salon-block text-center py-5">
@@ -513,15 +516,21 @@ const Home = () => {
                                 <i className="fas fa-image fa-lg" style={{ opacity: 0.2 }} />
                               </div>
                             )}
-                            {pub.estado === 'ACTIVO' && <span className="lotes-v-d__badge">Abierto</span>}
+                            <span className="home-lotes-carousel__offers-badge" title="Cantidad de ofertas">
+                              <i className="fas fa-user" aria-hidden />
+                              <span>{Number(pub.ofertasTotales) || 0}</span>
+                            </span>
                           </div>
                           <div className="lotes-v-d__body">
-                            {pub.categoria && (
-                              <div className="lotes-v-d__tags">
-                                <span className="lotes-v-d__tag">{pub.categoria}</span>
+                            <div className="home-lotes-carousel__head">
+                              <h3 className="home-lotes-carousel__title">{pub.titulo}</h3>
+                              <div className="home-lotes-carousel__price-block">
+                                <div className="home-lotes-carousel__price-lab">Última oferta</div>
+                                <div className="home-lotes-carousel__price-val">
+                                  ${formatearMonto(precioUltimaOferta(pub))}
+                                </div>
                               </div>
-                            )}
-                            <h3 className="home-lotes-carousel__title">{pub.titulo}</h3>
+                            </div>
                             {pub.fechaFin && (
                               <div className="home-lote-countdown">
                                 <div className="home-lote-countdown__row">
@@ -539,12 +548,6 @@ const Home = () => {
                                 </div>
                               </div>
                             )}
-                            <div className="lotes-v-d__foot">
-                              <div>
-                                <div className="lotes-v-d__price-lab">Mejor oferta</div>
-                                <div className="lotes-v-d__price">${formatearMonto(precioMostrar(pub))}</div>
-                              </div>
-                            </div>
                           </div>
                         </article>
                       );
@@ -573,30 +576,20 @@ const Home = () => {
 
         </section>
 
-        {/* —— Tres pilares / categorías —— */}
-        <section className="py-5 border-top border-bottom" style={{ borderColor: 'rgba(245,158,11,0.1) !important' }}>
-          <div className="container px-3 px-lg-4">
-            <header className="text-center mb-5">
-              <p className="home-section-eyebrow">Cómo navegamos el catálogo</p>
-              <h2 className="home-section-heading">Ejes para encontrar tu próximo hallazgo</h2>
-            </header>
-            <div className="row g-4">
-              {CATEGORIAS_SALON.map((cat) => (
-                <div key={cat.busqueda} className="col-md-6 col-xl-4">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.busqueda)}`)}
-                    className="home-salon-block w-100 text-start h-100 border-0 bg-transparent"
-                  >
-                    <div className="home-salon-block__icon">
-                      <i className={cat.icono} aria-hidden />
-                    </div>
-                    <h3>{cat.titulo}</h3>
-                    <p>{cat.desc}</p>
-                  </button>
-                </div>
-              ))}
-            </div>
+        <section className="home-cat-grid-section container px-3 px-lg-4 py-3 mb-3">
+          <div className="row g-2">
+            {categoriasCatalogo.map((cat) => (
+              <div key={cat.nombre} className="col-6 col-md-3">
+                <button
+                  type="button"
+                  className="home-cat-chip w-100 text-start"
+                  onClick={() => navigate(`/publicaciones?busqueda=${encodeURIComponent(cat.nombre)}`)}
+                >
+                  <i className={cat.emoji} aria-hidden />
+                  <span>{cat.nombre}</span>
+                </button>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -634,7 +627,7 @@ const Home = () => {
                       <div className="home-lot-card__foot">
                         <div>
                           <div className="home-lot-card__price-label">Puja actual</div>
-                          <div className="home-lot-card__price">${formatearMonto(precioMostrar(pub))}</div>
+                          <div className="home-lot-card__price">${formatearMonto(precioUltimaOferta(pub))}</div>
                         </div>
                         <div className="home-lot-card__date text-end">
                           Cierra el
